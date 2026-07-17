@@ -1,0 +1,164 @@
+/* ---- Tablero: mismas piezas visuales que Recepción ---- */
+/* En el tablero la página SÍ hace scroll y las tarjetas tienen altura natural
+   (en Recepción es al revés: la tabla scrollea por dentro). Evita filas cortadas. */
+.main {
+  overflow-y: auto;
+}
+
+.table-card {
+  flex: none;
+  height: auto;
+  overflow: hidden;
+}
+
+.tb-hola {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tb-fecha {
+  font-size: 12.5px;
+  color: #94a3b8;
+  text-transform: capitalize;
+}
+
+.rowg {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.9fr) minmax(0, 1.1fr) 110px;
+}
+
+.tb-grafico {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 150px;
+  padding: 8px 4px 0;
+}
+
+.tb-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.tb-bar .bv {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-bar .bb {
+  width: 100%;
+  max-width: 44px;
+  border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  min-height: 4px;
+  transition: opacity .15s;
+}
+
+.tb-bar .bb:hover {
+  opacity: .8;
+}
+
+.tb-bar .bb.cero {
+  background: #eef1f5;
+}
+
+.tb-bar .bl {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.tb-bar .bf {
+  font-size: 10px;
+  color: #cbd5e1;
+}
+
+.rp-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 12.5px;
+}
+
+.rp-mini:last-child {
+  border-bottom: 0;
+}
+
+.rp-mini .mi {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.rp-mini .mt {
+  flex: 1;
+  color: #475569;
+}
+
+.rp-mini .mn {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+  letter-spacing: -0.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rp-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid #eef1f5;
+  border-radius: 10px;
+  margin-bottom: 7px;
+  text-decoration: none;
+  color: #1e293b;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.rp-link:hover {
+  border-color: #bfdbfe;
+  background: #f8fafc;
+}
+
+.rp-link i:first-child {
+  color: #2563eb;
+  width: 16px;
+  text-align: center;
+}
+
+.rp-link i:last-child {
+  margin-left: auto;
+  color: #cbd5e1;
+}
+
+/* Responsive del tablero */
+@media (max-width: 640px) {
+  .tb-hola {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .tb-grafico {
+    gap: 5px;
+    height: 120px;
+  }
+  .tb-bar .bf {
+    display: none;
+  }
+}

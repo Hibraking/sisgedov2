@@ -1,0 +1,21 @@
+/* Ajustes de la vista de Emisión sobre la base de v_recepcion_proveido.css */
+
+/* Tabla de 7 columnas: Documento | Asunto | Detalles | Destino | Estado | Fecha | Acciones */
+.rowg {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.6fr) minmax(0, 1.1fr) minmax(0, 1fr) 128px 108px 96px;
+}
+
+/* Botón de acción rojo (eliminar) */
+.ab-r {
+  color: #dc2626;
+}
+.ab-r:hover {
+  background: #fef2f2;
+}
+
+/* Select múltiple del modal */
+/* (El selector de oficinas ahora usa .ofi-lista / .ofi-item del CSS compartido) */
+#md_fichero {
+  font-size: 12px;
+  color: var(--sisgedo-color-muted, #64748b);
+}

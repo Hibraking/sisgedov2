@@ -1,0 +1,3 @@
+# SISGEDO v2 — no convertir saltos de línea:
+# el proyecto se despliega en Linux (cPanel) y los archivos deben viajar tal cual.
+* -text

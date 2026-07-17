@@ -1,0 +1,46 @@
+/* Ajustes de la vista de Archivo sobre la base de v_recepcion_proveido.css */
+
+/* Tabla de 6 columnas: Documento | Asunto | Detalles | Archivador/Clase | Fecha | Acciones */
+.rowg {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.8fr) minmax(0, 1.3fr) 130px 110px 92px;
+}
+
+/* Lista de archivadores en el panel derecho */
+.arch-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--sisgedo-color-border-soft, #e2e8f0);
+  border-radius: 10px;
+  margin-bottom: 7px;
+  cursor: pointer;
+  background: var(--sisgedo-color-surface, #fff);
+}
+.arch-item:hover {
+  border-color: #bfdbfe;
+  background: var(--sisgedo-color-page-soft, #f8fafc);
+}
+.arch-item .nm {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--sisgedo-color-text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.arch-item .ss {
+  font-size: 11px;
+  color: var(--sisgedo-color-muted-soft, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.arch-item .pill {
+  background: var(--sisgedo-color-primary-ghost, #eef2ff);
+  color: #4f46e5;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}

@@ -1,0 +1,39 @@
+# ===== SISGEDO v2 — exclusiones de Git =====
+
+# Copias de la base de datos (34 MB, no van al repositorio)
+/bd/
+
+# Respaldos de la limpieza (no son parte del sistema)
+/_cuarentena_limpieza/
+
+# Logs y archivos de runtime (se generan solos)
+/logs/*
+!/logs/.htaccess
+error_log
+
+# Archivos subidos por los usuarios (adjuntos y fotos de perfil):
+# NO van a GitHub; viven en el hosting y en los respaldos.
+/docs adjs reg_doc/*
+!/docs adjs reg_doc/.htaccess
+/docs adjs docs_emitidos/*
+!/docs adjs docs_emitidos/.htaccess
+/docs adjs respuestas/*
+!/docs adjs respuestas/.htaccess
+/images/perfiles/*
+!/images/perfiles/.htaccess
+
+# Script de subida por lotes (ya no se usa)
+subir_adjuntos.ps1
+
+# Archivos del hosting cPanel (no son del proyecto)
+.ftpquota
+/cgi-bin/
+
+# Prototipo huérfano (no se despliega)
+recepcion_ui.php
+
+# Sistema operativo / editores
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/

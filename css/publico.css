@@ -1,0 +1,149 @@
+/* ============================================================
+   SISGEDO — Páginas públicas (Mesa de Partes Virtual y Consulta)
+   Mismo lenguaje visual del sistema interno, pensado para
+   ciudadanos y pantallas de celular.
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  background: linear-gradient(180deg, #f8fbff 0, #eef2f7 220px, #eef2f7 100%);
+  color: #1e293b;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ---- Cabecera municipal ---- */
+.pub-hdr {
+  background: linear-gradient(90deg, #123a7a 0%, #1e56b0 100%);
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.25);
+}
+.pub-hdr img { height: 52px; width: auto; }
+.pub-hdr .th { flex: 1; }
+.pub-hdr .t1 { font-size: 15px; font-weight: 700; letter-spacing: 0.4px; }
+.pub-hdr .t2 { font-size: 11.5px; opacity: 0.85; }
+.pub-hdr a.enl {
+  color: #fff; text-decoration: none; font-size: 12.5px; font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.45); border-radius: 999px; padding: 7px 14px;
+  white-space: nowrap;
+}
+.pub-hdr a.enl:hover { background: rgba(255,255,255,0.12); }
+
+/* ---- Contenido ---- */
+.pub-main { flex: 1; width: 100%; max-width: 780px; margin: 0 auto; padding: 26px 16px 30px; }
+.pub-hero { text-align: center; margin-bottom: 18px; }
+.pub-hero h1 { font-size: 24px; font-weight: 700; color: #123a7a; letter-spacing: -0.3px; }
+.pub-hero p { font-size: 13px; color: #64748b; margin-top: 6px; }
+
+.pub-card {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+  padding: 22px 24px; margin-bottom: 14px;
+}
+
+/* ---- Pasos (stepper) ---- */
+.pasos { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 20px; }
+.paso { display: flex; align-items: center; gap: 8px; }
+.paso .pnum {
+  width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; background: #eef1f5; color: #94a3b8; border: 2px solid #e2e8f0;
+}
+.paso .ptxt { font-size: 12.5px; color: #94a3b8; font-weight: 600; }
+.paso.activo .pnum { background: #2563eb; color: #fff; border-color: #2563eb; }
+.paso.activo .ptxt { color: #1e293b; }
+.paso.hecho .pnum { background: #16a34a; color: #fff; border-color: #16a34a; }
+.paso.hecho .ptxt { color: #16a34a; }
+.paso-linea { width: 56px; height: 2px; background: #e2e8f0; margin: 0 12px; }
+@media (max-width: 560px) { .paso .ptxt { display: none; } .paso-linea { width: 28px; } }
+/* Cabecera municipal en celulares: se compacta sin desbordar */
+@media (max-width: 560px) {
+  .pub-hdr { padding: 10px 12px; gap: 10px; flex-wrap: wrap; }
+  .pub-hdr img { height: 40px; }
+  .pub-hdr .t1 { font-size: 13px; }
+  .pub-hdr .t2 { font-size: 10.5px; }
+  .pub-hdr a.enl { font-size: 11.5px; padding: 6px 11px; }
+}
+
+/* ---- Formulario ---- */
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+.fgrid .full { grid-column: 1 / -1; }
+@media (max-width: 560px) { .fgrid { grid-template-columns: 1fr; } }
+label { font-size: 12.5px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px; }
+.req { color: #ef4444; }
+input, select, textarea {
+  width: 100%; border: 1px solid #e2e8f0; border-radius: 9px; padding: 10px 12px;
+  font-size: 13.5px; color: #334155; outline: none; background: #fff; font-family: inherit;
+}
+input:focus, select:focus, textarea:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08); }
+select { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, #94a3b8 50%), linear-gradient(135deg, #94a3b8 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+.hint { font-size: 11.5px; color: #94a3b8; margin-top: 4px; }
+.error-msg { display: none; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 14px; }
+.error-msg.visible { display: block; }
+
+/* ---- Botones ---- */
+.acciones { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0; background: #fff;
+  color: #475569; border-radius: 10px; padding: 10px 18px; font-size: 13.5px; font-weight: 600;
+  cursor: pointer; text-decoration: none; font-family: inherit;
+}
+.btn:hover { border-color: #cbd5e1; background: #f8fafc; }
+.btn-p { background: #2563eb; border-color: #2563eb; color: #fff; }
+.btn-p:hover { background: #1d4ed8; border-color: #1d4ed8; }
+.btn:disabled { opacity: 0.55; cursor: default; }
+
+/* ---- Éxito ---- */
+.exito { text-align: center; padding: 10px 0 4px; }
+.exito .ic { width: 68px; height: 68px; border-radius: 50%; background: #ecfdf3; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 14px; }
+.exito h2 { font-size: 18px; color: #1e293b; }
+.exito .expnum {
+  font-size: 30px; font-weight: 700; letter-spacing: 1px; color: #123a7a;
+  background: #eef2ff; border: 1px dashed #93c5fd; border-radius: 12px;
+  padding: 12px 22px; display: inline-block; margin: 14px 0; font-variant-numeric: tabular-nums;
+}
+.exito p { font-size: 13px; color: #64748b; }
+
+/* ---- Consulta: cabecera del expediente ---- */
+.exp-head { display: flex; align-items: flex-start; gap: 14px; }
+.exp-head .di { width: 46px; height: 46px; border-radius: 12px; background: #eef2ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
+.exp-head .dt { font-size: 15px; font-weight: 700; color: #1e293b; }
+.exp-head .ds { font-size: 12px; color: #64748b; margin-top: 2px; }
+.badge { display: inline-block; border-radius: 999px; padding: 3px 11px; font-size: 11.5px; font-weight: 700; }
+.badge.azul { background: #eef2ff; color: #1d4ed8; }
+.badge.verde { background: #ecfdf3; color: #16a34a; }
+.badge.ambar { background: #fffbeb; color: #b45309; }
+.exp-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; margin-top: 16px; }
+@media (max-width: 560px) { .exp-datos { grid-template-columns: 1fr; } }
+.exp-datos div { display: grid; grid-template-columns: 130px 1fr; font-size: 12.5px; padding: 7px 0; border-bottom: 1px solid #f1f5f9; }
+.exp-datos dt { color: #94a3b8; }
+.exp-datos dd { color: #1e293b; font-weight: 500; overflow-wrap: break-word; }
+
+/* ---- Línea de tiempo pública ---- */
+.linea { position: relative; padding-left: 22px; margin-top: 14px; }
+.linea::before { content: ""; position: absolute; left: 8px; top: 10px; bottom: 10px; width: 2px; background: linear-gradient(180deg, #dbe3ef, #bfdbfe); border-radius: 99px; }
+.evt { position: relative; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.evt::before {
+  content: ""; position: absolute; left: -20px; top: 15px; width: 11px; height: 11px; border-radius: 50%;
+  background: #16a34a; border: 2px solid #fff; box-shadow: 0 0 0 2px #16a34a33;
+}
+.evt.actual::before { background: #fff; border: 3px solid #2563eb; box-shadow: 0 0 0 2px #2563eb22; }
+.evt .ehead { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.evt .eofi { font-size: 13px; font-weight: 700; color: #1e293b; }
+.evt .efecha { font-size: 11.5px; color: #94a3b8; white-space: nowrap; }
+.evt .edet { display: flex; gap: 18px; margin-top: 6px; font-size: 12px; color: #475569; flex-wrap: wrap; }
+.evt .edet i { color: #94a3b8; margin-right: 5px; }
+
+/* ---- Avisos ---- */
+.aviso { text-align: center; padding: 30px 16px; color: #94a3b8; font-size: 13px; }
+.aviso i { font-size: 26px; color: #f59e0b; display: block; margin-bottom: 10px; }
+
+/* ---- Pie ---- */
+.pub-footer { text-align: center; font-size: 12px; color: #64748b; padding: 16px; }
+.pub-footer b { color: #1e56b0; }

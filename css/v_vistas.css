@@ -1,0 +1,437 @@
+/* SISGEDO - Estilos específicos de vistas extraídos desde PHP */
+/* Archivo consolidado: Contiene grid layouts y estilos particulares de diferentes vistas */
+
+:root {
+  /* Variables de grid reutilizables */
+  --sisgedo-grid-xs: 96px;
+  --sisgedo-grid-sm: 110px;
+  --sisgedo-grid-md: 130px;
+  --sisgedo-grid-lg: 140px;
+  --sisgedo-grid-xl: 150px;
+}
+
+/* ============================================================================
+   PERSONAL - Grid layout para tabla de personal
+   ========================================================================== */
+.v-personal .rowg {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) 130px minmax(0, 1.2fr) 110px 96px;
+}
+
+/* ============================================================================
+   ACCESOS PERSONAL - Grid layout para tabla de accesos
+   ========================================================================== */
+.v-accesos-personal .rowg {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr) 140px 150px;
+}
+
+/* ============================================================================
+   REMITENTES - Grid layout para tabla de remitentes
+   ========================================================================== */
+.v-remitentes .rowg {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.1fr) minmax(0, 1.3fr) minmax(0, 1.1fr) 110px 96px;
+}
+
+/* ============================================================================
+   RESPONSABLES - Grid layout para tabla de responsables
+   ========================================================================== */
+.v-responsables .rowg {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.6fr) 130px 96px;
+}
+
+/* ============================================================================
+   PERFIL DE USUARIO - Estilos específicos
+   ========================================================================== */
+.v-profile .main {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.pf-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--sisgedo-color-muted);
+  margin-bottom: 8px;
+}
+
+.pf-crumbs a {
+  color: var(--sisgedo-color-primary);
+  text-decoration: none;
+}
+
+.pf-crumbs b {
+  color: var(--sisgedo-color-text);
+  font-weight: 600;
+}
+
+.pf-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pf-hero {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  background: var(--sisgedo-color-surface);
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px 22px;
+  margin-top: 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+}
+
+.pf-avatar {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: #eef2ff;
+  border: 4px solid var(--sisgedo-color-page);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.pf-avatar::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--sisgedo-color-success);
+  border: 2.5px solid var(--sisgedo-color-surface);
+}
+
+.pf-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+#ep_prev::after {
+  display: none;
+}
+
+.pf-nombre {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--sisgedo-color-text);
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+
+.pf-rol {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ecfdf3;
+  color: var(--sisgedo-color-success);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 7px 0;
+}
+
+.pf-meta {
+  font-size: 12.5px;
+  color: var(--sisgedo-color-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pf-meta i {
+  color: #94a3b8;
+  width: 14px;
+}
+
+.pf-stats {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.pf-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 22px;
+  border-left: 1px solid #eef1f5;
+}
+
+.pf-stat:first-child {
+  border-left: 0;
+}
+
+.pf-stat .ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+}
+
+.pf-stat .n {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--sisgedo-color-text);
+  line-height: 1.05;
+  letter-spacing: -0.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-stat .l {
+  font-size: 11.5px;
+  color: var(--sisgedo-color-muted);
+}
+
+.pf-cards {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.pf-card {
+  background: var(--sisgedo-color-surface);
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 14px 20px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+}
+
+.pf-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--sisgedo-color-text);
+  margin-bottom: 10px;
+}
+
+.pf-card h2 i {
+  color: var(--sisgedo-color-primary);
+}
+
+.pf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+}
+
+.pf-fila {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  border: 1px solid #eef1f5;
+  border-bottom: 0;
+  font-size: 12.5px;
+}
+
+.pf-fila:first-child {
+  border-radius: 10px 10px 0 0;
+}
+
+.pf-fila:last-child {
+  border-bottom: 1px solid #eef1f5;
+  border-radius: 0 0 10px 10px;
+}
+
+.pf-fila .k {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  color: #475569;
+  font-weight: 600;
+  background: var(--sisgedo-color-page);
+}
+
+.pf-fila .k i {
+  color: #94a3b8;
+  width: 14px;
+}
+
+.pf-fila .v {
+  padding: 9px 12px;
+  color: var(--sisgedo-color-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pf-fila .v .txt {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-vacio {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.pf-ofi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #eef1f5;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.pf-ofi+.pf-ofi {
+  margin-top: 8px;
+}
+
+.pf-ofi .oi {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ecfdf3;
+  color: var(--sisgedo-color-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.pf-ofi .on {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sisgedo-color-text);
+}
+
+.pf-ofi .od {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+.pf-badge-ppal {
+  background: #ecfdf3;
+  color: var(--sisgedo-color-success);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pf-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--sisgedo-color-muted);
+  padding: 10px 0 2px;
+  flex-shrink: 0;
+}
+
+.pf-footer b {
+  color: var(--sisgedo-color-primary);
+}
+
+@media (max-height:820px) {
+  .pf-avatar {
+    width: 76px;
+    height: 76px;
+    font-size: 32px;
+  }
+
+  .pf-fila .k,
+  .pf-fila .v {
+    padding: 7px 12px;
+  }
+}
+
+/* ============================================================================
+   REPORTES - Cuaderno externo e interno (tablas con scroll)
+   ========================================================================== */
+.v-reporte-cuadernoexterno .main,
+.v-reporte-cuadernointerno .main {
+  overflow-y: auto;
+}
+
+.v-reporte-cuadernoexterno .table-card,
+.v-reporte-cuadernointerno .table-card {
+  flex: none;
+  height: auto;
+  overflow: hidden;
+}
+
+.v-reporte-cuadernoexterno .rowg {
+  grid-template-columns: 100px minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 1.6fr) minmax(0, 1fr) 115px 62px;
+}
+
+.v-reporte-cuadernointerno .rowg {
+  grid-template-columns: 85px minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 1.7fr) minmax(0, 1fr) 115px 62px;
+}
+
+/* ============================================================================
+   ESTADOS DE DOCUMENTO - Grid layout para tabla de estados
+   ========================================================================== */
+.v-reporte-estados-documento .rowg {
+  grid-template-columns: 105px minmax(0, 1.2fr) minmax(0, 1.8fr) 135px 115px 100px 70px;
+}
+
+/* ============================================================================
+   RESPONSIVE — Mi perfil y vistas específicas (móvil/tablet).
+   En escritorio nada cambia: el perfil sigue en una sola pantalla.
+   ========================================================================== */
+@media (max-width: 980px) {
+  /* El perfil pasa a scroll de página normal */
+  .v-profile .main {
+    overflow: visible;
+    height: auto;
+  }
+  .pf-cards {
+    overflow: visible;
+    flex: none;
+  }
+  .pf-hero {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .pf-stats {
+    margin-left: 0;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px 0;
+  }
+  .pf-stat {
+    border-left: 0;
+    padding: 6px 18px 6px 0;
+  }
+  .pf-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .pf-fila {
+    grid-template-columns: 124px 1fr;
+  }
+  .pf-hero {
+    padding: 14px;
+  }
+  .pf-top {
+    flex-wrap: wrap;
+  }
+}

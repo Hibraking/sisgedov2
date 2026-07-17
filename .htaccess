@@ -1,0 +1,29 @@
+# --- Seguridad básica SISGEDO ---
+
+# Bloquear acceso web a archivos sensibles (dumps, logs, backups, config, scripts)
+
+<FilesMatch "\.(sql|log|bak|backup|ini|md|sh|old|bat)$">
+Require all denied
+</FilesMatch>
+
+# Cabeceras de seguridad (protegidas por IfModule para no romper si falta el módulo)
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Bloquear el error_log clásico de cPanel si reaparece
+
+<Files "error_log">
+Require all denied
+</Files>
+
+# No listar el contenido de las carpetas
+
+Options -Indexes
+
+# No exponer la versión de PHP/Apache en las cabeceras
+
+ServerSignature Off
