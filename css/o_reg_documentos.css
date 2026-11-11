@@ -31,3 +31,24 @@
   font-size: 12px;
   color: var(--sisgedo-color-muted, #64748b);
 }
+
+/* Etiqueta NEW: documento de Mesa de Partes Virtual sin revisar/derivar */
+.b-new {
+  background: #dc2626;
+  color: #fff;
+  gap: 3px;
+  animation: bnew-pulse 1.6s ease-in-out infinite;
+}
+.b-new .fa {
+  font-size: 8px;
+}
+.row.row-nuevo {
+  box-shadow: inset 3px 0 0 #dc2626;
+}
+@keyframes bnew-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.45); }
+  50% { box-shadow: 0 0 0 4px rgba(220, 38, 38, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .b-new { animation: none; }
+}

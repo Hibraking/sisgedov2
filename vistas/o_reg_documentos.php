@@ -274,11 +274,15 @@ $tok = csrf_token();
               $esWeb = isset($r[20]) && intval($r[20]) === 1;
               $origenReg = $esWeb ? 'Mesa de Partes Virtual' : ((isset($r[21]) && $r[21] !== '') ? $r[21] : 'Mesa de Partes');
               $sinDestino = ($r[4] === '');
+              // NUEVO: llegó por Mesa de Partes Virtual y aún no se revisa/deriva.
+              // Al derivarlo se le asigna oficina y la etiqueta desaparece.
+              $esNuevo = $esWeb && $sinDestino && $editable
+                && strtotime((string)$r[12]) >= strtotime('-' . intval(SISGEDO_DIAS_NUEVO) . ' days');
             ?>
-              <div class="row rowg <?= $i === 0 ? 'sel' : '' ?>" data-id="<?= h($r[0]) ?>" data-exp="<?= h($r[5]) ?>" data-doc="<?= h($r[1] . ' ' . $r[6]) ?>" data-iddoc="<?= h($r[15]) ?>" data-num="<?= h($r[6]) ?>" data-remit="<?= h($r[2]) ?>" data-idremit="<?= h($r[16]) ?>" data-tram="<?= h($r[3]) ?>" data-idtram="<?= h($r[17]) ?>" data-destino="<?= h($r[4]) ?>" data-idofi="<?= h($r[18]) ?>" data-asunto="<?= h($r[7]) ?>" data-parasu="<?= h($r[8]) ?>" data-obs="<?= h($r[9]) ?>" data-folios="<?= h($r[10]) ?>" data-proc="<?= h($r[19]) ?>" data-estado="<?= h($est) ?>" data-fecha="<?= h($r[11]) ?>" data-adj="<?= h($adj) ?>" data-editable="<?= $editable ? '1' : '0' ?>" data-origen="<?= h($origenReg) ?>" data-web="<?= $esWeb ? '1' : '0' ?>">
+              <div class="row rowg <?= $i === 0 ? 'sel' : '' ?><?= $esNuevo ? ' row-nuevo' : '' ?>" data-id="<?= h($r[0]) ?>" data-exp="<?= h($r[5]) ?>" data-doc="<?= h($r[1] . ' ' . $r[6]) ?>" data-iddoc="<?= h($r[15]) ?>" data-num="<?= h($r[6]) ?>" data-remit="<?= h($r[2]) ?>" data-idremit="<?= h($r[16]) ?>" data-tram="<?= h($r[3]) ?>" data-idtram="<?= h($r[17]) ?>" data-destino="<?= h($r[4]) ?>" data-idofi="<?= h($r[18]) ?>" data-asunto="<?= h($r[7]) ?>" data-parasu="<?= h($r[8]) ?>" data-obs="<?= h($r[9]) ?>" data-folios="<?= h($r[10]) ?>" data-proc="<?= h($r[19]) ?>" data-estado="<?= h($est) ?>" data-fecha="<?= h($r[11]) ?>" data-adj="<?= h($adj) ?>" data-editable="<?= $editable ? '1' : '0' ?>" data-origen="<?= h($origenReg) ?>" data-web="<?= $esWeb ? '1' : '0' ?>">
                 <span class="exp"><?= h($r[5]) ?></span>
                 <div class="dcell">
-                  <div style="display:flex;gap:8px"><i class="fa <?= $esWeb ? 'fa-globe' : 'fa-file-text-o' ?>" style="color:<?= $esWeb ? '#a855f7' : '#3b82f6' ?>;margin-top:2px"></i><span class="nm"><?= h($r[1]) ?> <?= h($r[6]) ?></span></div><span class="badge b-blue"><?= h(strtoupper($r[3])) ?></span><?php if ($esWeb) { ?> <span class="badge b-purple">VIRTUAL</span><?php } ?>
+                  <div style="display:flex;gap:8px"><i class="fa <?= $esWeb ? 'fa-globe' : 'fa-file-text-o' ?>" style="color:<?= $esWeb ? '#a855f7' : '#3b82f6' ?>;margin-top:2px"></i><span class="nm"><?= h($r[1]) ?> <?= h($r[6]) ?></span></div><span class="badge b-blue"><?= h(strtoupper($r[3])) ?></span><?php if ($esWeb) { ?> <span class="badge b-purple">VIRTUAL</span><?php } ?><?php if ($esNuevo) { ?> <span class="badge b-new" title="Documento nuevo de Mesa de Partes Virtual, pendiente de revisar y derivar"><i class="fa fa-star"></i> NEW</span><?php } ?>
                 </div>
                 <div class="dcell"><span class="cell-txt"><?= h($r[2]) ?></span></div>
                 <div class="dcell">

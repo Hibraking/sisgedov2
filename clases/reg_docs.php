@@ -156,9 +156,11 @@ class Reg_docs
                       inner join tipo_tram on rd.idtipo_tramite=tipo_tram.idtipo_tram
                       left join oficinas o on rd.idoficina=o.idoficinas
                       where date(rd.fecha_registro) between ? and ?
+                         or (coalesce(rd.recepcion_web,0)=1 and rd.idoficina is null and rd.estado_recepcion=0
+                             and rd.fecha_registro >= date_sub(now(), interval ? day))
                       order by rd.fecha_registro desc";
             $st = $conectado->prepare($sql);
-            $st->execute([$desde, $hasta]);
+            $st->execute([$desde, $hasta, intval(SISGEDO_DIAS_NUEVO)]);
             return $st->fetchAll(PDO::FETCH_NUM);
         } catch (Exception $exc) {
             error_log($exc->getMessage());

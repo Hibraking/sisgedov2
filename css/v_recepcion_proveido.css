@@ -1618,3 +1618,17 @@ h1.t {
   color: #94a3b8;
   font-size: 12px;
 }
+
+/* Contador de documentos nuevos (Mesa de Partes Virtual) en el menú lateral */
+.side .nav-new {
+  margin-left: auto;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 9px;
+  padding: 3px 6px;
+  min-width: 18px;
+  text-align: center;
+}

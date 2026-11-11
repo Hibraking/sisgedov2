@@ -38,6 +38,11 @@ if (!defined('SISGEDO_IMG_FAVICON'))  define('SISGEDO_IMG_FAVICON', 'images/icon
 // Logo de la cabecera de los PDF (archivo DENTRO de tcpdf/examples/images/)
 if (!defined('SISGEDO_PDF_LOGO'))     define('SISGEDO_PDF_LOGO', 'logo huaytara.png');
 
+/* ---- Etiqueta "NEW" de la Mesa de Partes Virtual ---- */
+// Un documento virtual sin derivar se marca como NEW solo si llegó en los
+// últimos N días (evita marcar registros antiguos que nunca se derivaron).
+if (!defined('SISGEDO_DIAS_NUEVO'))   define('SISGEDO_DIAS_NUEVO', 30);
+
 /* ---- Derivados automáticos (NO editar) ---- */
 if (!defined('SISGEDO_ENTIDAD')) {
     define('SISGEDO_ENTIDAD', 'Municipalidad ' . SISGEDO_MUNI_TIPO . ' de ' . SISGEDO_MUNI_LUGAR);

@@ -94,6 +94,22 @@ if (!isset($_SESSION['foto_perfil'])) {
     error_log('nav foto: ' . $nav_e2->getMessage());
   }
 }
+// Documentos NUEVOS de la Mesa de Partes Virtual (sin revisar ni derivar):
+// se muestran como contador junto a "Registro". Dejan de contarse al derivarlos.
+$NAV_NUEVOS_VIRTUAL = 0;
+if (nav_puede('vistas/o_reg_documentos.php')) {
+  try {
+    $nav_pdo3 = (isset($nav_pdo) && $nav_pdo) ? $nav_pdo : (new Conexion())->conectar();
+    if ($nav_pdo3) {
+      $nav_stn = $nav_pdo3->prepare("SELECT COUNT(*) FROM registro_documentos WHERE COALESCE(recepcion_web,0)=1 AND idoficina IS NULL AND estado_recepcion=0 AND fecha_registro >= DATE_SUB(NOW(), INTERVAL ? DAY)");
+      if ($nav_stn !== false && $nav_stn->execute(array(intval(SISGEDO_DIAS_NUEVO)))) {
+        $NAV_NUEVOS_VIRTUAL = intval($nav_stn->fetchColumn());
+      }
+    }
+  } catch (Exception $nav_e3) {
+    error_log('nav nuevos: ' . $nav_e3->getMessage());
+  }
+}
 $NAV_FOTO = '';
 if ($_SESSION['foto_perfil'] !== '' && is_file(__DIR__ . '/../images/perfiles/' . $_SESSION['foto_perfil'])) {
   $NAV_FOTO = $NAV_PREFIJO . 'images/perfiles/' . rawurlencode($_SESSION['foto_perfil']);
@@ -125,7 +141,7 @@ if ($_SESSION['foto_perfil'] !== '' && is_file(__DIR__ . '/../images/perfiles/' 
       <div class="grp<?= $nav_grupo_activo ? ' open' : '' ?>" onclick="navToggleGrupo(this)"><i class="fa <?= $nav_grupo['icono'] ?>"></i> <span class="sp"><?= h($nav_grupo['grupo']) ?></span><i class="fa fa-angle-down caret"></i></div>
       <div class="subm<?= $nav_grupo_activo ? '' : ' cerrado' ?>">
         <?php foreach ($nav_items_visibles as $nav_v) { ?>
-          <a href="<?= $NAV_PREFIJO . h($nav_v[1]) ?>" <?= $nav_v[3] ? ' class="active"' : '' ?>><i class="fa <?= $nav_v[2] ?>"></i> <?= h($nav_v[0]) ?></a>
+          <a href="<?= $NAV_PREFIJO . h($nav_v[1]) ?>" <?= $nav_v[3] ? ' class="active"' : '' ?>><i class="fa <?= $nav_v[2] ?>"></i> <?= h($nav_v[0]) ?><?php if ($nav_v[1] === 'vistas/o_reg_documentos.php' && $NAV_NUEVOS_VIRTUAL > 0) { ?> <span class="nav-new" title="Documentos nuevos de Mesa de Partes Virtual por revisar"><?= $NAV_NUEVOS_VIRTUAL > 99 ? '99+' : $NAV_NUEVOS_VIRTUAL ?></span><?php } ?></a>
         <?php } ?>
       </div>
     <?php } ?>
