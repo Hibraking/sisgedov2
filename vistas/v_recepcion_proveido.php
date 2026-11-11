@@ -315,7 +315,7 @@ $queryBase = array(
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><?= $vistaEstado === 'enviado' ? 'Documentos Derivados' : 'Recepción de Documentos' ?> — SISGEDO</title>
-  <link rel="icon" type="image/png" href="../images/icono sistema.jpg" />
+  <link rel="icon" type="image/png" href="../<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="../assets/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link rel="stylesheet" href="../css/sisgedo-theme.css" />
   <link rel="stylesheet" href="../css/v_recepcion_proveido.css" />

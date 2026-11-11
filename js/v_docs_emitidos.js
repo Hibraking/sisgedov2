@@ -182,8 +182,83 @@ $("#tbody").on("click", ".row", function () {
   S("d-fecha", d.fecha);
   S("d-asunto", d.asunto);
   S("d-det", d.det);
+  S("d-cvd", d.cvd || "—");
+  var lk = document.getElementById("d-cvd-link");
+  if (lk) {
+    lk.style.display = d.cvd ? "" : "none";
+    lk.href = "../verificar.php?c=" + encodeURIComponent(d.cvd || "");
+  }
+  var fd = document.getElementById("d-firma");
+  if (fd) {
+    fd.innerHTML = d.firma
+      ? '<span class="firma-ok"><i class="fa fa-certificate"></i> ' + $("<div>").text(d.firma).html() + "</span>"
+      : '<span class="muted">Sin firma digital</span>';
+  }
+  var fb = document.getElementById("d-firmar");
+  if (fb) fb.style.display = d.pdf === "1" && d.editable === "1" ? "" : "none";
   $(".row").removeClass("sel");
   $(this).addClass("sel");
+});
+
+/* ====================== Numeración automática (MGD) ====================== */
+function modoNumeracion() {
+  var r = document.querySelector('input[name="md_num_modo"]:checked');
+  return r ? r.value : "auto";
+}
+function ayudaNumero(txt, esError) {
+  var a = document.getElementById("md_num_ayuda");
+  if (!a) return;
+  a.textContent = txt || "";
+  a.style.color = esError ? "#b91c1c" : "";
+}
+function aplicarModoNumeracion() {
+  var inp = document.getElementById("md_numero");
+  if (modoDoc !== "nuevo") {
+    inp.readOnly = false;
+    ayudaNumero("");
+    return;
+  }
+  if (modoNumeracion() === "manual") {
+    inp.readOnly = false;
+    inp.value = "";
+    inp.placeholder = "Ej. 001-2026-MPH/OFI";
+    ayudaNumero("Use numeración manual solo en casos excepcionales; el sistema evita números repetidos.");
+    inp.focus();
+    return;
+  }
+  inp.readOnly = true;
+  inp.value = "";
+  inp.placeholder = "Seleccione el tipo de documento";
+  var tipo = document.getElementById("md_tipo").value;
+  if (tipo === "") {
+    ayudaNumero("El número se asigna automáticamente al emitir (correlativo de su oficina).");
+    return;
+  }
+  ayudaNumero("Consultando el siguiente número...");
+  $.ajax({
+    url: URL_EMI,
+    type: "post",
+    dataType: "json",
+    data: { previsualizar_numero: "-", Documento: tipo, _csrf: CSRF },
+  })
+    .done(function (r) {
+      if (modoDoc !== "nuevo" || modoNumeracion() !== "auto") return;
+      if (r && r.ok) {
+        inp.value = r.numero;
+        ayudaNumero("Número referencial: se confirma al emitir (si otra persona emite antes, se asigna el siguiente).");
+      } else {
+        ayudaNumero((r && r.mensaje) || "No se pudo obtener el número.", true);
+      }
+    })
+    .fail(function () {
+      ayudaNumero("No se pudo consultar la numeración automática.", true);
+    });
+}
+document.querySelectorAll('input[name="md_num_modo"]').forEach(function (r) {
+  r.addEventListener("change", aplicarModoNumeracion);
+});
+document.getElementById("md_tipo").addEventListener("change", function () {
+  if (modoDoc === "nuevo" && modoNumeracion() === "auto") aplicarModoNumeracion();
 });
 
 /* ====================== Nuevo / Editar documento ====================== */
@@ -206,6 +281,9 @@ function abrirNuevo() {
   );
   document.getElementById("md_adj_wrap").style.display = "";
   document.getElementById("md_ofi_wrap").style.display = "";
+  document.getElementById("md_num_modo_wrap").style.display = "";
+  document.querySelector('input[name="md_num_modo"][value="auto"]').checked = true;
+  aplicarModoNumeracion();
   document.getElementById("modalDoc").classList.add("show");
 }
 function abrirEditar(el) {
@@ -228,6 +306,8 @@ function abrirEditar(el) {
   // El destino y el adjunto no se cambian al editar (mantiene el comportamiento del sistema)
   document.getElementById("md_adj_wrap").style.display = "none";
   document.getElementById("md_ofi_wrap").style.display = "none";
+  document.getElementById("md_num_modo_wrap").style.display = "none";
+  aplicarModoNumeracion();
   document.getElementById("modalDoc").classList.add("show");
 }
 var docIdOfi = "";
@@ -245,7 +325,8 @@ $("#md_guardar").on("click", function () {
     alert("Seleccione el tipo de documento.");
     return;
   }
-  if (numero === "") {
+  var auto = modoDoc === "nuevo" && modoNumeracion() === "auto";
+  if (numero === "" && !auto) {
     alert("Ingrese el número del documento.");
     return;
   }
@@ -261,6 +342,12 @@ $("#md_guardar").on("click", function () {
       alert(resp.replace(/^ERROR_[A-Z]+:\s*/, ""));
       return;
     }
+    if (typeof resp === "string" && resp.indexOf("OK|") === 0) {
+      var p = resp.split("|");
+      var msg = "Documento emitido con el número: " + p[1];
+      if (p[2]) msg += "\nCódigo de verificación: " + p[2];
+      alert(msg);
+    }
     location.reload();
   }
   function fallo(xhr) {
@@ -275,7 +362,8 @@ $("#md_guardar").on("click", function () {
     fd.append("listaoficinas", seleccion.join(","));
     fd.append("Asunto", asunto);
     fd.append("Detalles", det);
-    fd.append("NumDoc", numero);
+    fd.append("NumDoc", auto ? "" : numero);
+    fd.append("Numeracion", auto ? "auto" : "manual");
     fd.append("_csrf", CSRF);
     var f = document.getElementById("md_fichero");
     if (f.files && f.files[0]) fd.append("fichero", f.files[0]);
@@ -384,3 +472,48 @@ document.getElementById("expPrint").addEventListener("click", function (e) {
   e.preventDefault();
   window.print();
 });
+
+/* ====================== Firma digital (FIRMA PERÚ) ====================== */
+// Callbacks obligatorios del componente web de FIRMA PERÚ
+function signatureInit() {
+  console.log("FIRMA PERÚ: proceso de firma iniciado");
+}
+function signatureOk() {
+  alert("Documento firmado correctamente. El adjunto se reemplazó por la versión firmada.");
+  location.reload();
+}
+function signatureCancel() {
+  alert("Se canceló la firma del documento.");
+}
+function firmarDoc(tipo) {
+  var row = document.querySelector("#tbody .row.sel");
+  if (!row) {
+    alert("Seleccione un documento.");
+    return;
+  }
+  if (row.dataset.pdf !== "1") {
+    alert("Para firmar digitalmente, el adjunto debe ser un PDF.");
+    return;
+  }
+  if (typeof startSignature !== "function") {
+    alert("No se pudo cargar el componente de FIRMA PERÚ. Verifique su conexión a internet.");
+    return;
+  }
+  $.ajax({
+    url: "../clases/firmaperu.php",
+    type: "post",
+    dataType: "json",
+    data: { accion: "iniciar", id: row.dataset.id, tipo: tipo, _csrf: CSRF },
+  })
+    .done(function (r) {
+      if (!r || !r.ok) {
+        alert((r && r.mensaje) || "No se pudo iniciar la firma.");
+        return;
+      }
+      startSignature(r.puerto, r.param);
+    })
+    .fail(function (xhr) {
+      var r = xhr.responseJSON;
+      alert((r && r.mensaje) || "No se pudo iniciar la firma.");
+    });
+}

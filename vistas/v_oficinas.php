@@ -18,8 +18,14 @@ $conResp = 0;
 $recibieronMes = 0;
 try {
     $pdo = (new Conexion())->conectar();
-    $st = $pdo->prepare("SELECT idoficinas, nombre, COALESCE(descripcion,'') FROM oficinas ORDER BY nombre ASC");
-    $st->execute();
+    // Con siglas (migración 001 del MGD); si aún no se ejecutó la migración, sin ellas.
+    try {
+        $st = $pdo->prepare("SELECT idoficinas, nombre, COALESCE(descripcion,''), COALESCE(siglas,'') FROM oficinas ORDER BY nombre ASC");
+        $st->execute();
+    } catch (Exception $e) {
+        $st = $pdo->prepare("SELECT idoficinas, nombre, COALESCE(descripcion,''), '' FROM oficinas ORDER BY nombre ASC");
+        $st->execute();
+    }
     $filas = $st->fetchAll(PDO::FETCH_NUM);
     $conResp = intval($pdo->query("SELECT COUNT(DISTINCT idoficina) FROM responsables WHERE estado=1")->fetchColumn());
     $recibieronMes = intval($pdo->query("SELECT COUNT(DISTINCT idoficina_derivar) FROM movimientos WHERE year(fecha_hora)=year(now()) AND month(fecha_hora)=month(now())")->fetchColumn());
@@ -34,10 +40,11 @@ $CAT = array(
     'activo'    => 'vistas/v_oficinas.php',
     'endpoint'  => '../clases/oficinas.php',
     'singular'  => 'la oficina',
-    'columnas'  => array('Nombre', 'Descripción'),
+    'columnas'  => array('Nombre', 'Descripción', 'Siglas (numeración)'),
     'campos'    => array(
         array('post' => 'Nombre', 'label' => 'Nombre', 'tipo' => 'text', 'req' => true),
         array('post' => 'Descripcion', 'label' => 'Descripción', 'tipo' => 'textarea', 'req' => false),
+        array('post' => 'Siglas', 'label' => 'Siglas para numerar documentos (ej. MPH/GM, MPH-OTIyC)', 'tipo' => 'text', 'req' => false),
     ),
     'datos'     => $filas,
     'kpis_extra' => array(

@@ -80,21 +80,29 @@ FROM oficinas";
             error_log($exc->getMessage());
         }
     }
-    public function insertar_datos($nombre, $descripcion)
+    public function insertar_datos($nombre, $descripcion, $siglas = null)
     {
 
         try {
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
-            $sql = "INSERT INTO oficinas(nombre,descripcion)
-                        VALUES(?,?);";
+            $sql = "INSERT INTO oficinas(nombre,descripcion,siglas)
+                        VALUES(?,?,?);";
             $result = $conectado->prepare($sql);
-            $result->execute([$nombre, $descripcion]);
+            try {
+                $ok = $result->execute([$nombre, $descripcion, $siglas]);
+            } catch (Exception $e) {
+                $ok = false;
+            }
+            if (!$ok) {
+                // Sin la migración 001 (columna siglas aún no existe)
+                $conectado->prepare("INSERT INTO oficinas(nombre,descripcion) VALUES(?,?)")->execute([$nombre, $descripcion]);
+            }
         } catch (Exception $exc) {
             error_log($exc->getMessage());
         }
     }
-    public function modificar_datos($codigo, $nombre, $descripcion)
+    public function modificar_datos($codigo, $nombre, $descripcion, $siglas = null)
     {
 
         try {
@@ -103,11 +111,19 @@ FROM oficinas";
             $sql = "UPDATE oficinas
                             SET
                             nombre = ?,
-                            descripcion = ?
+                            descripcion = ?,
+                            siglas = ?
                             WHERE idoficinas =?;
                             ";
             $result = $conectado->prepare($sql);
-            $result->execute([$nombre, $descripcion, $codigo]);
+            try {
+                $ok = $result->execute([$nombre, $descripcion, $siglas, $codigo]);
+            } catch (Exception $e) {
+                $ok = false;
+            }
+            if (!$ok) {
+                $conectado->prepare("UPDATE oficinas SET nombre = ?, descripcion = ? WHERE idoficinas = ?")->execute([$nombre, $descripcion, $codigo]);
+            }
         } catch (Exception $exc) {
             error_log($exc->getMessage());
         }
@@ -133,11 +149,13 @@ if (isset($_POST["Insertar"]) || isset($_POST["insertar"]) || isset($_POST["Modi
     exigir_acceso_endpoint();
 }
 if (isset($_POST['Codigo'])) {
-    if ($_POST['Codigo'] == '' & $_POST['Nombre'] != '') {
-        $dml_oficina->insertar_datos($_POST['Nombre'], $_POST['Descripcion']);
+    $siglas = isset($_POST['Siglas']) ? trim((string)$_POST['Siglas']) : '';
+    $siglas = $siglas === '' ? null : substr($siglas, 0, 60);
+    if ($_POST['Codigo'] == '' && $_POST['Nombre'] != '') {
+        $dml_oficina->insertar_datos($_POST['Nombre'], $_POST['Descripcion'], $siglas);
         header("location: ../vistas/v_oficinas.php");
     } elseif ($_POST['Codigo'] != '') {
-        $dml_oficina->modificar_datos($_POST['Codigo'], $_POST['Nombre'], $_POST['Descripcion']);
+        $dml_oficina->modificar_datos($_POST['Codigo'], $_POST['Nombre'], $_POST['Descripcion'], $siglas);
         header("location: ../vistas/v_oficinas.php");
     }
 }

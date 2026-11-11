@@ -20,7 +20,7 @@ $loginError = isset($_GET['e']) ? (int) $_GET['e'] : 0;
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/png" href="images/icono sistema.jpg" />
+  <link rel="icon" type="image/png" href="<?= SISGEDO_IMG_FAVICON ?>" />
   <title>SISGEDO — Ingresar al sistema</title>
   <link rel="stylesheet" href="css/sisgedo-theme.css" />
   <link rel="stylesheet" href="css/login.css" />
@@ -43,13 +43,13 @@ $loginError = isset($_GET['e']) ? (int) $_GET['e'] : 0;
         <div class="kicker">SISTEMA DE</div>
         <h1>Gestión de Trámite<br />Documentario</h1>
         <div class="rule"></div>
-        <h2>Municipalidad Provincial de Huaytará</h2>
+        <h2><?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?></h2>
         <p class="desc">Plataforma digital para la gestión, recepción, derivación y seguimiento de documentos de manera eficiente y segura.</p>
 
         <div class="building-wrap">
-          <img class="building" src="images/edificio_svg_trans.svg" alt="Municipalidad Provincial de Huaytará" />
+          <img class="building" src="<?= SISGEDO_IMG_EDIFICIO ?>" alt="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>" />
         </div>
-        <svg class="building-fallback" viewBox="0 0 1780 880" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Municipalidad Provincial de Huaytará">
+        <svg class="building-fallback" viewBox="0 0 1780 880" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>">
           <circle cx="986" cy="104" r="5" />
           <path d="M986 250 V100" />
           <path d="M986 116 C1020 128 1055 104 1092 120 L1092 158 C1055 142 1020 166 986 152 Z" />
@@ -65,7 +65,7 @@ $loginError = isset($_GET['e']) ? (int) $_GET['e'] : 0;
           <path d="M876 424 V446 M1096 424 V446" />
           <path d="M604 470 H1176 M604 530 H1176 M604 470 V530 M1176 470 V530" />
           <path d="M690 486 H1092 V520 H690 Z" />
-          <text x="891" y="509" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" letter-spacing="1" fill="#ffffff" stroke="none">MUNICIPALIDAD PROVINCIAL DE HUAYTARÁ</text>
+          <text x="891" y="509" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" letter-spacing="1" fill="#ffffff" stroke="none"><?= htmlspecialchars(SISGEDO_ENTIDAD_MAYUS, ENT_QUOTES, 'UTF-8') ?></text>
           <path d="M632 636 H1150" />
           <path d="M640 540 H672 M644 548 V748 M668 548 V748 M652 552 V744 M660 552 V744 M638 752 H674 M636 762 H676" />
           <path d="M756 540 H788 M760 548 V748 M784 548 V748 M768 552 V744 M776 552 V744 M754 752 H790 M752 762 H792" />
@@ -253,7 +253,7 @@ $loginError = isset($_GET['e']) ? (int) $_GET['e'] : 0;
   </div>
 
   <div class="footer">
-    &copy; 2025 Municipalidad Provincial de Huaytará. Todos los derechos reservados.
+    &copy; <?= date('Y') ?> <?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>. Todos los derechos reservados.
     <span class="sep">|</span> Versión 2.0.0
   </div>
 </body>

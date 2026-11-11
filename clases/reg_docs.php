@@ -396,23 +396,20 @@ VALUES
     }
     public function nro_expediente()
     {
+        // Número atómico (sin duplicados en registros simultáneos) — MGD.
+        require_once __DIR__ . '/gestion_documental.php';
+        return sgd_nuevo_expediente();
+    }
+    /** Reemplaza el adjunto de un registro (antes el archivo se subía al editar pero no se guardaba). */
+    public function actualizar_adjunto($codigo, $adjunto)
+    {
         try {
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
-            $sql = "select if(max(nro_exp) is null,concat(year(now()),'0001'),max(nro_exp)+1)
-                        from registro_documentos
-                        where year(fecha_registro)=year(now())";
-            $result = $conectado->prepare($sql);
-            $result->execute();
-            $max_exp = "";
-            foreach ($result as $filas) {
-                $max_exp = $filas[0];
-            }
-
-            return $max_exp;
+            $st = $conectado->prepare("UPDATE registro_documentos SET adjunto = ? WHERE idregistro_documentos = ?");
+            $st->execute([$adjunto, $codigo]);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
-            die();
         }
     }
 }
@@ -478,6 +475,9 @@ if (isset($_POST["Insertar"])) {
                 echo "ERROR AL SUBIR EL ARCHIVO";
                 return;
             }
+            // Integridad (MGD): huella SHA-256 y metadatos del archivo recibido
+            require_once __DIR__ . '/gestion_documental.php';
+            sgd_registrar_archivo('REGISTRO', $nombre_fichero, $upload, $_FILES['fichero']['name'], 'PRESENCIAL');
         }
     }
     $nro_exp = $dml_reg_docs->nro_expediente();
@@ -485,6 +485,8 @@ if (isset($_POST["Insertar"])) {
     foreach ($oficinas as $idoficina) {
         $dml_reg_docs->insertar_datos($documento, $remitente, $tipotram, intval($idoficina), $nro_exp, $numdoc, $asunto, $parasu, $observacion, $folios, $nombre_fichero, $idpersonal, $Procedencia);
     }
+    // Código de verificación digital del expediente (aparece en el cargo con QR)
+    sgd_obtener_cvd('EXPEDIENTE', $nro_exp);
     //                echo $documento," :: ", $remitente, " :: ",$tipotram," :: ", $idoficina," :: ", $nro_exp," :: ", $numdoc," :: ", $asunto," :: ", $parasu," :: ", $observacion," :: ", $folios," :: ", $nombre_fichero," :: ",$idpersonal," :: ",$Procedencia;
 }
 if (isset($_POST["Modificar"])) {
@@ -523,10 +525,16 @@ if (isset($_POST["Modificar"])) {
                 echo "ERROR AL SUBIR EL ARCHIVO";
                 return;
             }
+            // Integridad (MGD): huella SHA-256 y metadatos del archivo recibido
+            require_once __DIR__ . '/gestion_documental.php';
+            sgd_registrar_archivo('REGISTRO', $nombre_fichero, $upload, $_FILES['fichero']['name'], 'PRESENCIAL');
         }
     }
 
     $dml_reg_docs->modificar_datos($documento, $remitente, $tipotram, intval($cadena), $numdoc, $asunto, $parasu, $observacion, $folios, $idpersonal, $Procedencia, $codigo);
+    if ($nombre_fichero !== null) {
+        $dml_reg_docs->actualizar_adjunto($codigo, $nombre_fichero);
+    }
 }
 
 if (isset($_POST['Emilinar'])) {

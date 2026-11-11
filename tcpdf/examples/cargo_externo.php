@@ -8,6 +8,7 @@
 
 require_once('tcpdf_include.php');
 require_once '../../conexion/conexion.php';
+require_once '../../clases/gestion_documental.php';
 
 // Este script genera un PDF (salida binaria): NO debe imprimir avisos/notices,
 // pues cualquier texto antes del PDF lo corrompe. Los errores van al log.
@@ -17,10 +18,10 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_WARNING);
 // Cabecera institucional
 class MYPDF extends TCPDF {
     public function Header() {
-        $image_file = K_PATH_IMAGES.'logo huaytara.png';
+        $image_file = K_PATH_IMAGES.SISGEDO_PDF_LOGO;
         $this->Image($image_file, 8, 8, 35, 10, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false);
         $this->SetFont('helvetica', 'B', 12);
-        $this->Cell(0, 15, 'MUNICIPALIDAD PROVINCIAL DE HUAYTARA', 0, false, 'C', 0, '', 0, false, 'C', 'M');
+        $this->Cell(0, 15, SISGEDO_ENTIDAD_MAYUS, 0, false, 'C', 0, '', 0, false, 'C', 'M');
     }
     public function Footer() {
         $this->SetY(-13);
@@ -54,7 +55,7 @@ function cuadricula_recepcion(){
         $html .= '</tr><tr>';
         for ($c = 0; $c < 3; $c++) { $html .= '<th width="9%" align="center"><b>Obs.:</b></th><td width="24.33%">&nbsp;</td>'; }
         $html .= '</tr><tr>';
-        for ($c = 0; $c < 3; $c++) { $html .= '<td colspan="2" width="33.33%" height="80">&nbsp;</td>'; }
+        for ($c = 0; $c < 3; $c++) { $html .= '<td colspan="2" width="33.33%" height="58">&nbsp;</td>'; }
         $html .= '</tr><tr>';
         for ($c = 0; $c < 3; $c++) { $html .= '<td colspan="2" width="33.33%" align="center">SELLO O V° B°</td>'; }
         $html .= '</tr>';
@@ -94,10 +95,13 @@ function lista_datos($numexp){
         $derivarA = count($oficinas) > 0 ? implode(' / ', array_unique($oficinas)) : 'Por asignar';
         $asunto   = acotar_pdf($dato[8], 200);
         $urlCons  = sisgedo_base_url('consulta_publico.php');
+        // Código de verificación digital (MGD). Si la migración no se ejecutó, el cargo sale igual sin QR.
+        $cvd = null;
+        try { $cvd = sgd_obtener_cvd('EXPEDIENTE', $dato[2]); } catch (Exception $e) { $cvd = null; }
 
         // Cuadro de datos (se imprime DOS veces: una para el ciudadano y otra
         // para la entidad), como en el formato clásico.
-        $tabla = '<table border="1" cellpadding="3" width="100%">
+        $tabla = '<table border="1" cellpadding="3" width="80%">
             <thead>
                 <tr style="background-color:#F0F0F0;"><th colspan="4" align="center"><b>RECIBIDO MESA DE PARTES</b></th></tr>
             </thead>
@@ -124,10 +128,12 @@ function lista_datos($numexp){
             </tbody>
             <tfoot>
                 <tr><td colspan="4" style="font-size:8px;">Verifique el estado en: <a href="'.$urlCons.'">'.$urlCons.'</a></td></tr>
+                '.sgd_html_fila_verificacion($cvd).'
             </tfoot>
         </table>';
 
-        return $tabla . '<br /><br />' . $tabla . '<br /><br />' . cuadricula_recepcion();
+        // Se devuelven las piezas: el cuadro va DOS veces (ciudadano/entidad) con su QR al costado.
+        return array('tabla' => $tabla, 'cvd' => $cvd);
     } catch (Exception $exc) {
         error_log('cargo_externo: ' . $exc->getMessage());
         return '<p>Error al generar el cargo.</p>';
@@ -156,7 +162,17 @@ if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
 $pdf->SetFont('times', '', 9);
 $pdf->AddPage();
 
-$html = lista_datos(isset($_GET['exp']) ? $_GET['exp'] : '');
-$pdf->writeHTML($html, true, false, true, false, '');
+$res = lista_datos(isset($_GET['exp']) ? $_GET['exp'] : '');
+if (is_array($res)) {
+    for ($copia = 0; $copia < 2; $copia++) {
+        $y0 = $pdf->GetY();
+        $pdf->writeHTML($res['tabla'], true, false, true, false, '');
+        sgd_pdf_qr($pdf, $y0, $res['cvd']);
+        $pdf->Ln(1);
+    }
+    $pdf->writeHTML(cuadricula_recepcion(), true, false, true, false, '');
+} else {
+    $pdf->writeHTML($res, true, false, true, false, '');
+}
 
 $pdf->Output('Cargo.pdf', 'I');

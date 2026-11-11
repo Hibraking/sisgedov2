@@ -965,23 +965,14 @@ order by idMovimientos desc;";
     }
     public function gen_num_exp($idoficina)
     {
-
+        // Número de registro interno por oficina, atómico (MGD) — antes usaba
+        // MAX()+1 y podía repetirse si dos personas recibían al mismo tiempo.
+        require_once __DIR__ . '/gestion_documental.php';
         try {
-            $conexion = new Conexion();
-            $conectado = $conexion->conectar();
-            $sql = "SELECT if(max(movimientos.num_exp) is null,concat(year(now()),'0000'),max(movimientos.num_exp))+1 
-                    FROM movimientos
-                    left join responsables on movimientos.idresponsable=responsables.idresponsables
-                    left join oficinas on responsables.idoficina=oficinas.idoficinas
-                    where oficinas.idoficinas=?  and year(movimientos.fecha_hora)=year(now());";
-            $result = $conectado->prepare($sql);
-            $result->execute([$idoficina]);
-            foreach ($result as $filas) {
-                $num_exp = $filas[0];
-            }
-            return $num_exp;
+            return sgd_nuevo_registro_interno($idoficina);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
+            return null;
         }
     }
     public function insertar_datos_respuesta($iddocumento, $idresponsable, $idoficina, $asunto, $detalles, $numero, $adjunto)
@@ -1332,6 +1323,8 @@ if (isset($_POST['insert_deriv_resp_dev'])) {
                 echo "ERROR AL SUBIR EL ARCHIVO";
                 return;
             }
+            require_once __DIR__ . '/gestion_documental.php';
+            sgd_registrar_archivo('EMITIDO', $nombre_fichero, $upload, $_FILES['fichero']['name'], 'INTERNO');
         }
     }
     //insertamos el documento de respuesta SOLO si realmente hay uno
@@ -1339,7 +1332,21 @@ if (isset($_POST['insert_deriv_resp_dev'])) {
     //  una fila vacía en docs_emitidos con iddocumento=0)
     $iddocrespuesta = null;
     if ($iddocumento > 0) {
+        // Numeración automática (MGD) si no se indicó número
+        require_once __DIR__ . '/gestion_documental.php';
+        $ofiResp = !empty($_SESSION['idoficina']) ? intval($_SESSION['idoficina']) : 0;
+        if (trim((string)$numero) === '' && $ofiResp > 0) {
+            $auto = sgd_reservar_numero_emitido($ofiResp, $iddocumento);
+            if ($auto !== null) {
+                $numero = $auto;
+            }
+        } elseif ($ofiResp > 0) {
+            sgd_registrar_numero_manual($ofiResp, $iddocumento, $numero);
+        }
         $iddocrespuesta = $dml_recep_docs->insertar_datos_respuesta($iddocumento, $idresponsable, null, $asunto, $detalles, $numero, $nombre_fichero);
+        if ($iddocrespuesta) {
+            sgd_obtener_cvd('EMITIDO', $iddocrespuesta);
+        }
     }
     //insertamos el movimiento
     $dml_recep_docs->insert_deriv_resp_dev($_POST['idregdocs'], $_POST['iddocs_emitidos'], $_POST['idacciondocs'], $_POST['idestadodocs'], $_POST['idoficina_derivar'], $_POST['detalles'], $_POST['Codigo'], $_POST['NuevoEstado'], $iddocrespuesta);

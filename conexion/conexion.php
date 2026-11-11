@@ -5,6 +5,9 @@
  * Deteccion de entorno (local Laragon vs produccion). Se ejecuta una sola vez
  * porque este archivo se incluye con require_once.
  */
+// Datos de la institución (nombre y tipo de municipalidad): un solo lugar editable.
+require_once __DIR__ . '/institucion.php';
+
 if (!defined('SISGEDO_ES_LOCAL')) {
     // Hora oficial del Perú para TODO el sistema:
     // - PHP: date(), strtotime(), etc.

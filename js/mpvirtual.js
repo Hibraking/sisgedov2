@@ -159,6 +159,14 @@ function enviarTramite() {
         }
         var exp = m[0];
         document.getElementById('expNum').textContent = exp;
+        var msgCorreo = document.getElementById('msgCorreo');
+        if (msgCorreo) {
+          msgCorreo.innerHTML = texto.indexOf('CORREO_OK') !== -1
+            ? 'También te enviamos la constancia a <b></b>. Si no la ves, revisa tu carpeta de spam.'
+            : '<b>No pudimos enviarte la constancia por correo</b>; anota o copia tu número de expediente.';
+          var b = msgCorreo.querySelector('b');
+          if (texto.indexOf('CORREO_OK') !== -1 && b) b.textContent = email;
+        }
         document.getElementById('lnkSeguimiento').href = 'consulta_publico.php?num_exp=' + encodeURIComponent(exp);
         marcarPasos(3);
         document.getElementById('ind3').classList.add('hecho');

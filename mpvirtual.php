@@ -9,8 +9,8 @@ require_once './conexion/conexion.php';
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mesa de Partes Virtual — Municipalidad Provincial de Huaytará</title>
-  <link rel="icon" type="image/png" href="images/icono sistema.jpg" />
+  <title>Mesa de Partes Virtual — <?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?></title>
+  <link rel="icon" type="image/png" href="<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="assets/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link rel="stylesheet" href="css/publico.css" />
   <script src="assets/js/jquery-2.1.4.min.js"></script>
@@ -19,9 +19,9 @@ require_once './conexion/conexion.php';
 <body>
   <!-- CABECERA MUNICIPAL -->
   <div class="pub-hdr">
-    <img src="images/LOGO.png" alt="Municipalidad Provincial de Huaytará" />
+    <img src="<?= SISGEDO_IMG_LOGO ?>" alt="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>" />
     <div class="th">
-      <div class="t1">MUNICIPALIDAD PROVINCIAL DE HUAYTARÁ</div>
+      <div class="t1"><?= htmlspecialchars(SISGEDO_ENTIDAD_MAYUS, ENT_QUOTES, 'UTF-8') ?></div>
       <div class="t2">Sistema de Gestión Documentario — SISGEDO</div>
     </div>
     <a class="enl" href="consulta_publico.php"><i class="fa fa-search"></i> Consultar expediente</a>
@@ -94,7 +94,7 @@ require_once './conexion/conexion.php';
         <div class="ic"><i class="fa fa-check"></i></div>
         <h2>¡Tu documento fue presentado con éxito!</h2>
         <div class="expnum" id="expNum">—</div>
-        <p>Guarda este <b>número de expediente</b>: con él puedes hacer el seguimiento de tu trámite.<br />También te enviamos la constancia a tu correo electrónico.</p>
+        <p>Guarda este <b>número de expediente</b>: con él puedes hacer el seguimiento de tu trámite.<br /><span id="msgCorreo">También te enviamos la constancia a tu correo electrónico.</span></p>
         <div class="acciones" style="justify-content:center;flex-wrap:wrap">
           <button class="btn" onclick="copiarExp()"><i class="fa fa-clipboard"></i> Copiar número</button>
           <a class="btn btn-p" id="lnkSeguimiento" href="consulta_publico.php"><i class="fa fa-search"></i> Hacer seguimiento</a>
@@ -109,10 +109,10 @@ require_once './conexion/conexion.php';
   </div>
 
   <div class="pub-footer">
-    <b>MPH — Municipalidad Provincial de Huaytará</b> · Mesa de Partes Virtual © <?= date('Y') ?>
+    <b><?= htmlspecialchars(SISGEDO_MUNI_SIGLAS, ENT_QUOTES, 'UTF-8') ?> — <?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?></b> · Mesa de Partes Virtual © <?= date('Y') ?>
   </div>
 
-  <script src="./js/mpvirtual.js"></script>
+  <script src="./js/mpvirtual.js?v=<?php echo @filemtime(__DIR__ . '/js/mpvirtual.js'); ?>"></script>
 </body>
 
 </html>

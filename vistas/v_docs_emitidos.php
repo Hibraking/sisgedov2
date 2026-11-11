@@ -145,6 +145,39 @@ $inicioPagina = ($paginaActual - 1) * $porPagina;
 $datosPagina = array_slice($datosFiltrados, $inicioPagina, $porPagina);
 $first = isset($datosPagina[0]) ? $datosPagina[0] : null;
 
+// Código de verificación digital (MGD) de los documentos de esta página
+$cvdMap = array();
+try {
+  require_once '../clases/gestion_documental.php';
+  foreach ($datosPagina as $rCvd) {
+    $c = sgd_obtener_cvd('EMITIDO', $rCvd[0]);
+    if ($c) $cvdMap[$rCvd[0]] = sgd_formato_cvd($c);
+  }
+} catch (Exception $e) {
+  error_log('v_docs_emitidos CVD: ' . $e->getMessage());
+}
+
+// Firma digital (FIRMA PERÚ): estado de firma de los documentos de esta página
+require_once '../conexion/firmaperu_config.php';
+$firmaActiva = sgd_firmaperu_activo();
+$firmaMap = array();
+try {
+  if (count($datosPagina) > 0) {
+    $idsF = array_map(function ($x) { return intval($x[0]); }, $datosPagina);
+    // Las filas de un mismo envío (una por destino) comparten el adjunto: la firma vale para todas.
+    $stF = sgd_db()->prepare("SELECT de.iddocs_emitidos, GROUP_CONCAT(DISTINCT IF(f.tipo_firma='FIRMA','Firmado','V°B°') ORDER BY f.tipo_firma SEPARATOR ' + ')
+                                FROM docs_emitidos de
+                                INNER JOIN docs_emitidos g ON g.adjunto = de.adjunto AND g.idoficina_registro = de.idoficina_registro
+                                INNER JOIN sgd_firma f ON f.iddocs_emitidos = g.iddocs_emitidos AND f.estado = 'FIRMADO'
+                               WHERE de.adjunto IS NOT NULL AND de.iddocs_emitidos IN (" . implode(',', $idsF) . ")
+                               GROUP BY de.iddocs_emitidos");
+    $stF->execute();
+    foreach ($stF->fetchAll(PDO::FETCH_NUM) as $f) $firmaMap[$f[0]] = $f[1];
+  }
+} catch (Exception $e) {
+  error_log('v_docs_emitidos firma: ' . $e->getMessage());
+}
+
 $queryBase = array('q' => $qFiltro, 'desde' => $desdeFiltro, 'hasta' => $hastaFiltro, 'estado' => $estadoFiltro, 'sort' => $sortFiltro, 'per_page' => $porPagina);
 $emitidosVentana = count($datos);
 $tok = csrf_token();
@@ -156,7 +189,7 @@ $tok = csrf_token();
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Emisión de Documentos — SISGEDO</title>
-  <link rel="icon" type="image/png" href="../images/icono sistema.jpg" />
+  <link rel="icon" type="image/png" href="../<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="../assets/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link rel="stylesheet" href="../css/sisgedo-theme.css" />
   <link rel="stylesheet" href="../css/v_recepcion_proveido.css" />
@@ -279,7 +312,7 @@ $tok = csrf_token();
               $editable = (intval($r[6]) === 0);
               $adj = $r[7];
             ?>
-              <div class="row rowg <?= $i === 0 ? 'sel' : '' ?>" data-id="<?= h($r[0]) ?>" data-doc="<?= h($r[1] . ' N° ' . $r[2]) ?>" data-iddoc="<?= h($r[10]) ?>" data-num="<?= h($r[2]) ?>" data-asunto="<?= h($r[3]) ?>" data-det="<?= h($r[4]) ?>" data-destino="<?= h($r[5]) ?>" data-idofi="<?= h($r[11]) ?>" data-estado="<?= h($est) ?>" data-fecha="<?= h($r[8]) ?>" data-adj="<?= h($adj) ?>" data-editable="<?= $editable ? '1' : '0' ?>">
+              <div class="row rowg <?= $i === 0 ? 'sel' : '' ?>" data-id="<?= h($r[0]) ?>" data-doc="<?= h($r[1] . ' N° ' . $r[2]) ?>" data-iddoc="<?= h($r[10]) ?>" data-num="<?= h($r[2]) ?>" data-asunto="<?= h($r[3]) ?>" data-det="<?= h($r[4]) ?>" data-destino="<?= h($r[5]) ?>" data-idofi="<?= h($r[11]) ?>" data-estado="<?= h($est) ?>" data-fecha="<?= h($r[8]) ?>" data-adj="<?= h($adj) ?>" data-editable="<?= $editable ? '1' : '0' ?>" data-cvd="<?= h(isset($cvdMap[$r[0]]) ? $cvdMap[$r[0]] : '') ?>" data-firma="<?= h(isset($firmaMap[$r[0]]) ? $firmaMap[$r[0]] : '') ?>" data-pdf="<?= (is_string($adj) && strtolower(substr($adj, -4)) === '.pdf') ? '1' : '0' ?>">
                 <div class="dcell">
                   <div style="display:flex;gap:8px"><i class="fa fa-file-text-o" style="color:#3b82f6;margin-top:2px"></i><span class="nm"><?= h($r[1]) ?> <?= h($r[2]) ?></span></div><span class="badge b-purple"><?= h(strtoupper($r[1])) ?></span>
                 </div>
@@ -374,7 +407,26 @@ $tok = csrf_token();
                   <dt>Fecha</dt>
                   <dd id="d-fecha"><?= h($first[8]) ?></dd>
                 </div>
+                <div>
+                  <dt>Cód. verificación</dt>
+                  <?php $cvdFirst = isset($cvdMap[$first[0]]) ? $cvdMap[$first[0]] : ''; ?>
+                  <dd><span id="d-cvd" class="cvd-code"><?= $cvdFirst !== '' ? h($cvdFirst) : '—' ?></span>
+                    <a id="d-cvd-link" class="cvd-link" target="_blank" href="../verificar.php?c=<?= h($cvdFirst) ?>" style="<?= $cvdFirst === '' ? 'display:none' : '' ?>" title="Abrir la página pública de verificación"><i class="fa fa-qrcode"></i> Verificar</a></dd>
+                </div>
+                <div>
+                  <dt>Firma digital</dt>
+                  <?php $fFirst = isset($firmaMap[$first[0]]) ? $firmaMap[$first[0]] : ''; ?>
+                  <dd id="d-firma"><?= $fFirst !== '' ? '<span class="firma-ok"><i class="fa fa-certificate"></i> ' . h($fFirst) . '</span>' : '<span class="muted">Sin firma digital</span>' ?></dd>
+                </div>
               </dl>
+              <?php if ($firmaActiva) { ?>
+                <?php $firstPdf = is_string($first[7]) && strtolower(substr($first[7], -4)) === '.pdf'; ?>
+                <div id="d-firmar" class="firma-acc" style="<?= ($firstPdf && intval($first[6]) === 0) ? '' : 'display:none' ?>">
+                  <button class="btn btn-p btn-sm" onclick="firmarDoc('FIRMA')"><i class="fa fa-pencil-square-o"></i> Firmar digitalmente</button>
+                  <button class="btn btn-sm" onclick="firmarDoc('VISTO_BUENO')"><i class="fa fa-check-square-o"></i> Dar V° B°</button>
+                  <div class="muted" style="font-size:11px;margin-top:6px">Requiere el adjunto en PDF, su DNIe o certificado digital y el cliente FIRMA PERÚ instalado.</div>
+                </div>
+              <?php } ?>
               <div class="sect">Asunto</div>
               <p id="d-asunto" style="margin-top:8px;font-size:13px;color:#475569;line-height:1.6"><?= h($first[3]) ?></p>
               <div class="sect">Detalles</div>
@@ -399,7 +451,14 @@ $tok = csrf_token();
         <div><label>Tipo de documento <span class="req">*</span></label><select id="md_tipo">
             <option value="">Seleccione...</option><?php foreach ($catDocumentos as $d) { ?><option value="<?= h($d[0]) ?>"><?= h($d[1]) ?></option><?php } ?>
           </select></div>
-        <div><label>Número <span class="req">*</span></label><input id="md_numero" type="text" placeholder="Ej. 001-2026-MPH/OFI" /></div>
+        <div id="md_num_modo_wrap"><label>Numeración</label>
+          <div class="num-modo">
+            <label><input type="radio" name="md_num_modo" value="auto" checked> Automática <span class="muted">(recomendado)</span></label>
+            <label><input type="radio" name="md_num_modo" value="manual"> Manual <span class="muted">(excepcional)</span></label>
+          </div>
+        </div>
+        <div><label>Número <span class="req">*</span></label><input id="md_numero" type="text" placeholder="Ej. 001-2026-MPH/OFI" />
+          <div id="md_num_ayuda" class="muted" style="font-size:11px;margin-top:4px"></div></div>
         <div><label>Asunto <span class="req">*</span></label><input id="md_asunto" type="text" placeholder="Asunto del documento" /></div>
         <div><label>Detalles</label><textarea id="md_detalles" rows="2" placeholder="Contenido o indicaciones (opcional)"></textarea></div>
         <div id="md_ofi_wrap"><label>Enviar a (oficinas destino)</label>
@@ -424,6 +483,13 @@ $tok = csrf_token();
     </div>
   </div>
 
+  <?php if ($firmaActiva) { ?>
+    <!-- Componente web de FIRMA PERÚ (requiere jQuery 3.6.0 en la variable jqFirmaPeru) -->
+    <div id="addComponent" style="display:none;"></div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>var jqFirmaPeru = jQuery.noConflict(true);</script>
+    <script src="<?= h(SGD_FIRMAPERU_JS) ?>"></script>
+  <?php } ?>
   <script src="../js/v_docs_emitidos.js"></script>
 </body>
 

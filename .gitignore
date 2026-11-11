@@ -22,6 +22,9 @@ error_log
 /images/perfiles/*
 !/images/perfiles/.htaccess
 
+# Contraseña del correo institucional (se crea a mano en cada servidor)
+/conexion/correo_clave.php
+
 # Script de subida por lotes (ya no se usa)
 subir_adjuntos.ps1
 
@@ -37,3 +40,6 @@ Thumbs.db
 Desktop.ini
 .vscode/
 .idea/
+
+# Respaldos locales antes de actualizaciones (no se despliegan)
+/_respaldo_*/

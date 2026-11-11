@@ -79,8 +79,8 @@ if (count($eventos) > 0) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Consulta tu Expediente — Municipalidad Provincial de Huaytará</title>
-  <link rel="icon" type="image/png" href="images/icono sistema.jpg" />
+  <title>Consulta tu Expediente — <?= hpub(SISGEDO_ENTIDAD) ?></title>
+  <link rel="icon" type="image/png" href="<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="assets/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link rel="stylesheet" href="css/publico.css" />
 </head>
@@ -88,9 +88,9 @@ if (count($eventos) > 0) {
 <body>
   <!-- CABECERA MUNICIPAL -->
   <div class="pub-hdr">
-    <img src="images/LOGO.png" alt="Municipalidad Provincial de Huaytará" />
+    <img src="<?= SISGEDO_IMG_LOGO ?>" alt="<?= hpub(SISGEDO_ENTIDAD) ?>" />
     <div class="th">
-      <div class="t1">MUNICIPALIDAD PROVINCIAL DE HUAYTARÁ</div>
+      <div class="t1"><?= hpub(SISGEDO_ENTIDAD_MAYUS) ?></div>
       <div class="t2">Consulta de Trámite Documentario</div>
     </div>
     <a class="enl" href="mpvirtual.php"><i class="fa fa-send-o"></i> Mesa de Partes Virtual</a>
@@ -226,7 +226,7 @@ if (count($eventos) > 0) {
   </div>
 
   <div class="pub-footer">
-    <b>MPH — Municipalidad Provincial de Huaytará</b> · Consulta de Trámite Documentario © <?= date('Y') ?>
+    <b><?= hpub(SISGEDO_MUNI_SIGLAS) ?> — <?= hpub(SISGEDO_ENTIDAD) ?></b> · Consulta de Trámite Documentario © <?= date('Y') ?>
   </div>
 </body>
 

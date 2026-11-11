@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($d = \"C:\\\\Users\\\\VICTUS\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\5bf8a827686980de\\\\131221a3-d1d1-4241-bd56-cf7725f3c1c3\\\\scratchpad\\\\pm\"; New-Item -ItemType Directory -Force $d | Out-Null; Set-Location $d; composer require phpmailer/phpmailer:6.9.3 --no-interaction --no-scripts --no-plugins; Get-ChildItem \"$d\\\\vendor\\\\phpmailer\\\\phpmailer\\\\src\" | Select-Object Name)"
+    ]
+  }
+}

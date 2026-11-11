@@ -227,11 +227,25 @@ class Reg_docs
             $result->execute([$iddocumento, $idresponsable, $idoficina, $asunto, $detalles, $numero, $adjunto]);
             $stmt = $conectado->prepare("SELECT LAST_INSERT_ID()");
             $stmt->execute();
-            $lastId = $stmt->fetchColumn();
-            echo $lastId;
+            return $stmt->fetchColumn();
         } catch (Exception $exc) {
-            echo $exc->getMessage();
-            die();
+            error_log($exc->getMessage());
+            echo 'ERROR_BD: No se pudo registrar el documento.';
+            exit;
+        }
+    }
+    /** Oficina a la que pertenece el responsable (la que numera el documento). */
+    public function oficina_responsable($idresponsable)
+    {
+        try {
+            $conexion = new Conexion();
+            $conectado = $conexion->conectar();
+            $st = $conectado->prepare("SELECT idoficina FROM responsables WHERE idresponsables = ?");
+            $st->execute([$idresponsable]);
+            return intval($st->fetchColumn());
+        } catch (Exception $exc) {
+            error_log($exc->getMessage());
+            return 0;
         }
     }
     public function modificar_datos($iddocumento, $idresponsable, $idoficina, $asunto, $detalles, $numero, $codigo)
@@ -319,7 +333,26 @@ if (isset($_POST["Insertar"]) || isset($_POST["insertar"]) || isset($_POST["Modi
     csrf_require();
     exigir_acceso_endpoint();
 }
+// Vista previa del siguiente número (no lo reserva). Responde JSON.
+if (isset($_POST["previsualizar_numero"])) {
+    require_once __DIR__ . '/gestion_documental.php';
+    $idresp = !empty($_SESSION['idresponsable']) ? intval($_SESSION['idresponsable']) : 0;
+    $ofi = $dml_reg_docs->oficina_responsable($idresp);
+    header('Content-Type: application/json; charset=utf-8');
+    if ($ofi < 1 || intval($_POST["Documento"]) < 1) {
+        echo json_encode(array('ok' => false, 'numero' => '', 'mensaje' => 'Seleccione el tipo de documento.'));
+        exit;
+    }
+    try {
+        echo json_encode(sgd_previsualizar_numero_emitido($ofi, intval($_POST["Documento"])));
+    } catch (Exception $e) {
+        error_log($e->getMessage());
+        echo json_encode(array('ok' => false, 'numero' => '', 'mensaje' => 'Numeración automática no disponible (¿se ejecutó la migración 001?).'));
+    }
+    exit;
+}
 if (isset($_POST["Insertar"])) {
+    require_once __DIR__ . '/gestion_documental.php';
     $iddocumento = intval($_POST["Documento"]);
     // (Seguridad) El responsable emisor sale de la SESIÓN, no del POST.
     $idresponsable = !empty($_SESSION['idresponsable']) ? intval($_SESSION['idresponsable']) : intval($_POST["idresponsable"]);
@@ -327,6 +360,9 @@ if (isset($_POST["Insertar"])) {
     $asunto = isset($_POST["Asunto"]) ? trim($_POST["Asunto"]) : '';
     $detalles = isset($_POST["Detalles"]) ? $_POST["Detalles"] : '';
     $numero = isset($_POST["NumDoc"]) ? trim($_POST["NumDoc"]) : '';
+    // MGD: numeración automática por defecto; "manual" solo para casos excepcionales.
+    $automatico = !isset($_POST["Numeracion"]) || $_POST["Numeracion"] !== 'manual';
+    $ofiEmisora = $dml_reg_docs->oficina_responsable($idresponsable);
     // Validación de servidor (no confiar solo en el JavaScript)
     if ($iddocumento < 1) {
         echo 'ERROR_VALIDACION: Seleccione el tipo de documento.';
@@ -336,39 +372,60 @@ if (isset($_POST["Insertar"])) {
         echo 'ERROR_VALIDACION: Ingrese el asunto.';
         exit;
     }
-    if ($numero === '') {
+    if (!$automatico && $numero === '') {
         echo 'ERROR_VALIDACION: Ingrese el número del documento.';
         exit;
     }
+    if ($automatico && sgd_siglas_oficina($ofiEmisora) === '') {
+        echo 'ERROR_VALIDACION: Su oficina no tiene siglas configuradas para la numeración automática. Pida al administrador registrarlas en Oficinas, o use numeración manual.';
+        exit;
+    }
+    if (!$automatico && sgd_numero_emitido_existe($ofiEmisora, $iddocumento, $numero)) {
+        echo 'ERROR_VALIDACION: Ya existe un documento de este tipo con el número ' . $numero . ' en su oficina este año.';
+        exit;
+    }
     $nombre_fichero = null;
+    $upload = null;
     if (isset($_FILES['fichero'])) {
         if (is_uploaded_file($_FILES['fichero']['tmp_name'])) {
             require_once __DIR__ . '/util_subida.php';
             if (!sisgedo_validar_archivo($_FILES['fichero'], $err_subida)) {
-                echo $err_subida;
+                echo 'ERROR_ARCHIVO: ' . $err_subida;
                 return;
             }
             $nombre_fichero = sisgedo_nombre_seguro($_FILES['fichero']);
             $ruta = "../docs adjs docs_emitidos/";
             $upload = $ruta . $nombre_fichero;
             if (!move_uploaded_file($_FILES['fichero']['tmp_name'], $upload)) { //movemos el archivo a su ubicacion
-                echo "ERROR AL SUBIR EL ARCHIVO";
+                echo "ERROR_ARCHIVO: No se pudo guardar el archivo.";
                 return;
             }
+            // Integridad (MGD): huella SHA-256 y metadatos
+            sgd_registrar_archivo('EMITIDO', $nombre_fichero, $upload, $_FILES['fichero']['name'], 'INTERNO');
         }
     }
 
-    $oficinas = explode(",", $cadena);
-    if ($cadena === '') {
-        $dml_reg_docs->insertar_datos($iddocumento, $idresponsable, null, $asunto, $detalles, $numero, $nombre_fichero);
-
-        return;
+    // El número se reserva recién aquí (después de validar), para no "quemar" correlativos.
+    if ($automatico) {
+        $numero = sgd_reservar_numero_emitido($ofiEmisora, $iddocumento);
+    } else {
+        sgd_registrar_numero_manual($ofiEmisora, $iddocumento, $numero);
     }
+
+    $oficinas = $cadena === '' ? array(null) : explode(",", $cadena);
+    $primerId = null;
     foreach ($oficinas as $idoficina) {
-        $dml_reg_docs->insertar_datos($iddocumento, $idresponsable, $idoficina, $asunto, $detalles, $numero, $nombre_fichero);
+        $id = $dml_reg_docs->insertar_datos($iddocumento, $idresponsable, $idoficina === null ? null : intval($idoficina), $asunto, $detalles, $numero, $nombre_fichero);
+        if ($primerId === null) {
+            $primerId = $id;
+        }
+        // Cada envío (una fila por destino) tiene su propio código de verificación
+        sgd_obtener_cvd('EMITIDO', $id);
     }
-    //                    echo $iddocumento,$idresponsable,$idoficina,$asunto,$detalles,$numero,$nombre_fichero;
-
+    $cvd = $primerId ? sgd_obtener_cvd('EMITIDO', $primerId) : null;
+    // Respuesta: OK|<número asignado>|<CVD del primer envío>
+    echo 'OK|' . $numero . '|' . ($cvd ? sgd_formato_cvd($cvd) : '');
+    exit;
 }
 if (isset($_POST["Modificar"])) {
     $codigo = intval($_POST["Codigo"]);
@@ -383,7 +440,13 @@ if (isset($_POST["Modificar"])) {
     $cadena = isset($_POST["listaoficinas"]) ? $_POST["listaoficinas"] : '';
     $asunto = isset($_POST["Asunto"]) ? $_POST["Asunto"] : '';
     $detalles = isset($_POST["Detalles"]) ? $_POST["Detalles"] : '';
-    $numero = isset($_POST["NumDoc"]) ? $_POST["NumDoc"] : '';
+    $numero = isset($_POST["NumDoc"]) ? trim($_POST["NumDoc"]) : '';
+    if ($numero === '') {
+        echo 'ERROR_VALIDACION: Ingrese el número del documento.';
+        exit;
+    }
+    require_once __DIR__ . '/gestion_documental.php';
+    sgd_registrar_numero_manual($dml_reg_docs->oficina_responsable($idresponsable), $iddocumento, $numero);
     $oficinas = explode(",", $cadena);
     foreach ($oficinas as $oficina) {
     }

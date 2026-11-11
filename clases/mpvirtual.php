@@ -25,22 +25,17 @@ class mpvirtual
         try {
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
-            // Serializa la generación del número de expediente para evitar colisiones
-            // cuando dos personas envían al mismo tiempo (bloqueo con nombre, misma conexión).
-            $conectado->query("SELECT GET_LOCK('sisgedo_nro_exp', 10)");
-            try {
-                $sqlNe = "select if(max(nro_exp) is null,concat(year(now()),'0001'),max(nro_exp)+1)
-                            from registro_documentos where year(fecha_registro)=year(now())";
-                $rNe = $conectado->query($sqlNe);
-                $num_exp = $rNe ? $rNe->fetchColumn() : (date('Y') . '0001');
+            // Número de expediente atómico (sin duplicados aunque dos ciudadanos
+            // envíen al mismo tiempo) — ver clases/gestion_documental.php
+            require_once __DIR__ . '/gestion_documental.php';
+            $num_exp = sgd_nuevo_expediente();
 
-                $sql = "INSERT INTO registro_documentos(iddocumento,idremitente,idtipo_tramite,numero_docu,asunto,folios,adjunto,nro_exp,recepcion_web)
-                                                        VALUES(?,?,?,?,?,?,?,?,1);";
-                $result = $conectado->prepare($sql);
-                $result->execute([$iddocumento, $idremitente, $idtipo_tramite, $numero_docu, $asunto, $folios, $adjunto, $num_exp]);
-            } finally {
-                $conectado->query("SELECT RELEASE_LOCK('sisgedo_nro_exp')");
-            }
+            $sql = "INSERT INTO registro_documentos(iddocumento,idremitente,idtipo_tramite,numero_docu,asunto,folios,adjunto,nro_exp,recepcion_web)
+                                                    VALUES(?,?,?,?,?,?,?,?,1);";
+            $result = $conectado->prepare($sql);
+            $result->execute([$iddocumento, $idremitente, $idtipo_tramite, $numero_docu, $asunto, $folios, $adjunto, $num_exp]);
+            // Código de verificación digital del expediente (MGD)
+            sgd_obtener_cvd('EXPEDIENTE', $num_exp);
             return $num_exp;
         } catch (Exception $exc) {
             error_log($exc->getMessage());
@@ -49,23 +44,9 @@ class mpvirtual
     }
     public function nro_expediente()
     {
-        try {
-            $conexion = new Conexion();
-            $conectado = $conexion->conectar();
-            $sql = "select if(max(nro_exp) is null,concat(year(now()),'0001'),max(nro_exp)+1)
-                        from registro_documentos
-                        where year(fecha_registro)=year(now())";
-            $result = $conectado->prepare($sql);
-            $result->execute();
-            $max_exp = "";
-            foreach ($result as $filas) {
-                $max_exp = $filas[0];
-            }
-            return $max_exp;
-        } catch (Exception $exc) {
-            error_log($exc->getMessage());
-            die();
-        }
+        // Se mantiene por compatibilidad; ahora usa la secuencia atómica.
+        require_once __DIR__ . '/gestion_documental.php';
+        return sgd_nuevo_expediente();
     }
     public function lista_tipo_tram()
     {
@@ -116,79 +97,46 @@ class mpvirtual
             error_log($exc->getMessage());
         }
     }
-    public function envio_correo($destino, $numexp)
+    /**
+     * Envía al ciudadano la constancia de recepción de la Mesa de Partes Virtual.
+     * Devuelve true si el servidor de correo la aceptó. El intento (éxito o
+     * error) queda registrado en la tabla sgd_correo.
+     */
+    public function envio_correo($destino, $numexp, $asunto_doc = '')
     {
+        require_once __DIR__ . '/correo.php';
+        $e = function ($s) {
+            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+        };
+        $url = sisgedo_base_url('consulta_publico.php?num_exp=' . rawurlencode((string)$numexp));
 
-        function limpiarAsunto($asunto)
-        {
-            $cadena = "Subject";
-            $longitud = strlen($cadena) + 2;
-            return substr(
-                iconv_mime_encode(
-                    $cadena,
-                    $asunto,
-                    [
-                        "input-charset" => "UTF-8",
-                        "output-charset" => "UTF-8",
-                    ]
-                ),
-                $longitud
-            );
+        $cvd = '';
+        if (function_exists('sgd_obtener_cvd') && ($c = sgd_obtener_cvd('EXPEDIENTE', $numexp))) {
+            $urlv = sgd_url_verificacion($c);
+            $cvd = '<tr><td style="padding:6px 0;color:#52606d">Código de verificación</td>'
+                 . '<td style="padding:6px 0"><strong>' . $e(sgd_formato_cvd($c)) . '</strong><br>'
+                 . '<a href="' . $e($urlv) . '" style="font-size:12px;color:#1f5bbf">Verificar autenticidad</a></td></tr>';
         }
 
-        $asunto = limpiarAsunto("Recepción del Trámite Documentario");
-        $destinatario = $destino;
+        $cuerpo = '<p style="font-size:15px;line-height:1.5">Su documento fue <strong>recibido correctamente</strong> en la Mesa de Partes Virtual de la '
+            . $e(SISGEDO_ENTIDAD) . '. Guarde este correo como constancia de presentación.</p>'
+            . '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;margin:16px 0;width:100%">'
+            . '<tr><td style="padding:6px 0;color:#52606d;width:45%">Número de expediente</td>'
+            . '<td style="padding:6px 0;font-size:18px"><strong>' . $e($numexp) . '</strong></td></tr>'
+            . ($asunto_doc !== '' ? '<tr><td style="padding:6px 0;color:#52606d">Asunto</td><td style="padding:6px 0">' . $e($asunto_doc) . '</td></tr>' : '')
+            . '<tr><td style="padding:6px 0;color:#52606d">Fecha y hora de recepción</td><td style="padding:6px 0">' . $e(date('d/m/Y H:i')) . '</td></tr>'
+            . $cvd
+            . '</table>'
+            . '<p style="text-align:center;margin:24px 0">'
+            . '<a href="' . $e($url) . '" style="background:#1f5bbf;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:6px;font-weight:bold;display:inline-block">Ver el estado de mi trámite</a></p>'
+            . '<p style="font-size:12px;color:#7b8794">Si el botón no funciona, copie este enlace en su navegador:<br>' . $e($url) . '</p>';
 
-        $encabezados = "MIME-Version: 1.0" . "\r\n";
-
-        # ojo, es una concatenación:
-        $encabezados .= "Content-type:text/html; charset=UTF-8" . "\r\n";
-        $encabezados .= 'From: Municipalidad de Huaytará<mesadepartes@munihuaytara.gob.pe>' . "\r\n";
-
-        $mensaje = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-                <html xmlns="http://www.w3.org/1999/xhtml">
-                <head>
-                    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-                    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-                    <title>Este es un mensaje</title>
-                    <style type="text/css">
-                        h1{
-                            color: #8bc34a;
-                        }
-                        p{
-                            font-size: 1rem;
-                        }
-                        .detail{
-                        font-size: 10px;
-                            }
-                        img{
-                            width: 200px;
-                            height: 80px;
-                        }
-                    </style>
-                </head>
-                <body>
-                <h1>MUNICIPALIDAD PROVINCIAL DE HUAYTARA - MESA DE PARTES VIRTUAL</h1>
-                <p>Sus documentos, fueron recepcionados correctamente en la mesa de partes virutal de la Municipalidad provincial de Huaytar&aacute; a continuaci&oacute;n Ud. 
-                podr&aacute; verificar los detalles.</p>
-                <p>
-                Número de Expediente: <strong>' . $numexp . '</strong><br>
-                Tambi&eacute;n se puede realizar el seguimiento del tr&aacute;mite desde  <a href="' . sisgedo_base_url('consulta_publico.php?num_exp=' . rawurlencode((string)$numexp)) . '">aqu&iacute;</a>,o en el siguiente enlace:
-                <a href="' . sisgedo_base_url('consulta_publico.php?num_exp=' . rawurlencode((string)$numexp)) . '">' . sisgedo_base_url('consulta_publico.php?num_exp=' . rawurlencode((string)$numexp)) . '</a>
-                </p>
-                <p>Wilmer Cabrera - Alcalde</p>
-                <p>Gestión Edil 2023 - 2026</p>
-                <img src="' . sisgedo_base_url('images/LOGO.png') . '" alt="Municipalidad Provincial de Huaytará">
-                <p class="detail">Sistema de trámite Documentario - Municipalidad Provincial de Huaytará</p>
-                </body>';
-        $mensaje = wordwrap($mensaje, 70, "\r\n");
-        $resultado = mail($destinatario, $asunto, $mensaje, $encabezados); #Mandar al final los encabezados
-        if ($resultado) {
-            echo "Correo enviado";
-        } else {
-            echo "Correo NO enviado";
-        }
+        return sgd_correo_enviar(
+            $destino,
+            'Constancia de recepción - Expediente N° ' . $numexp,
+            sgd_correo_plantilla('Mesa de Partes Virtual', $cuerpo),
+            array('tipo' => 'MPV_RECEPCION', 'referencia' => $numexp)
+        );
     }
     public function get_correo($idremitente)
     {
@@ -200,6 +148,7 @@ class mpvirtual
                         where idremitente=?;";
             $result = $conectado->prepare($sql);
             $result->execute([$idremitente]);
+            $correo = "";
             foreach ($result as $filas) {
                 $correo = $filas[0];
             }
@@ -264,6 +213,9 @@ if (isset($_POST['Insertar'])) {
                 echo "ERROR_ARCHIVO: No se pudo guardar el archivo.";
                 return;
             }
+            // Integridad (MGD): huella SHA-256 y metadatos del archivo recibido
+            require_once __DIR__ . '/gestion_documental.php';
+            sgd_registrar_archivo('REGISTRO', $nombre_fichero, $upload, $_FILES['fichero']['name'], 'VIRTUAL');
         }
     }
     require_once '../conexion/conexion.php';
@@ -276,12 +228,12 @@ if (isset($_POST['Insertar'])) {
     }
     echo $numexp;
     if ($numexp !== "-1") {
-        if (isset($_POST['email'])) {
-            $email = $_POST['email'];
-        } else {
+        $email = $g('email');
+        if ($email === '' && isset($_POST['idremitente'])) {
             $email = $mpvirtual->get_correo($_POST['idremitente']);
         }
-        $mpvirtual->envio_correo($email, $numexp);
+        // Respuesta para js/mpvirtual.js: el número va primero, luego el estado del correo
+        echo $mpvirtual->envio_correo($email, $numexp, $g('asunto')) ? ' CORREO_OK' : ' CORREO_FALLO';
     } else {
         echo "no se registro";
     }

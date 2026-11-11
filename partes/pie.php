@@ -4,7 +4,7 @@
 	<div class="footer-inner">
 		<div class="footer-content">
 			<span class="bigger-120">
-				<span class="blue bolder">SISGEDO — Municipalidad Provincial de Huaytará</span>
+				<span class="blue bolder">SISGEDO — <?= defined('SISGEDO_ENTIDAD') ? htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') : 'Municipalidad' ?></span>
 				Sistema de Gestión Documentario &copy; <?php echo date("Y"); ?>
 			</span>
 		</div>
