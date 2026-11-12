@@ -21,36 +21,10 @@
 --       mysql -u root sisgedov2 < migraciones/001_mgd_numeracion_integridad.sql
 --   - Producción (cPanel): phpMyAdmin > BD xyltrylx_sisgedov2 > Importar.
 --  Es IDEMPOTENTE: puede ejecutarse más de una vez sin error.
+--  No usa procedimientos ni DELIMITER (compatible con phpMyAdmin de hosting compartido).
 --  Compatible con MySQL 5.7 / 8.0 y MariaDB 10.x.
 -- =====================================================================
 
--- ---------------------------------------------------------------------
--- Procedimientos auxiliares (se eliminan al final)
--- ---------------------------------------------------------------------
-DROP PROCEDURE IF EXISTS sgd_add_column;
-DROP PROCEDURE IF EXISTS sgd_add_index;
-DELIMITER $$
-CREATE PROCEDURE sgd_add_column(IN p_tabla VARCHAR(64), IN p_col VARCHAR(64), IN p_def VARCHAR(255))
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = DATABASE() AND table_name = p_tabla AND column_name = p_col
-    ) THEN
-        SET @sql = CONCAT('ALTER TABLE `', p_tabla, '` ADD COLUMN `', p_col, '` ', p_def);
-        PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
-    END IF;
-END$$
-CREATE PROCEDURE sgd_add_index(IN p_tabla VARCHAR(64), IN p_indice VARCHAR(64), IN p_cols VARCHAR(255))
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.statistics
-        WHERE table_schema = DATABASE() AND table_name = p_tabla AND index_name = p_indice
-    ) THEN
-        SET @sql = CONCAT('ALTER TABLE `', p_tabla, '` ADD INDEX `', p_indice, '` (', p_cols, ')');
-        PREPARE st FROM @sql; EXECUTE st; DEALLOCATE PREPARE st;
-    END IF;
-END$$
-DELIMITER ;
 
 -- ---------------------------------------------------------------------
 -- 1. Secuencias (numeración sin duplicados aunque dos usuarios registren
@@ -70,7 +44,8 @@ CREATE TABLE IF NOT EXISTS `sgd_secuencia` (
 -- ---------------------------------------------------------------------
 -- 2. Siglas / nomenclatura de cada oficina para la numeración automática
 -- ---------------------------------------------------------------------
-CALL sgd_add_column('oficinas', 'siglas', "VARCHAR(60) NULL DEFAULT NULL COMMENT 'Nomenclatura para numerar documentos, ej. MPH/GM'");
+SET @s=(SELECT IF(COUNT(*)=0, 'ALTER TABLE `oficinas` ADD COLUMN `siglas` VARCHAR(60) NULL DEFAULT NULL COMMENT ''Nomenclatura para numerar documentos, ej. MPH/GM''', 'DO 0') FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='oficinas' AND column_name='siglas');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 
 -- ---------------------------------------------------------------------
 -- 3. Metadatos e integridad de archivos adjuntos
@@ -135,14 +110,19 @@ CREATE TABLE IF NOT EXISTS `sgd_firma` (
 -- ---------------------------------------------------------------------
 -- 6. Índices de apoyo (búsqueda por número y siembra de secuencias)
 -- ---------------------------------------------------------------------
-CALL sgd_add_index('registro_documentos', 'idx_rd_nro_exp', '`nro_exp`');
-CALL sgd_add_index('registro_documentos', 'idx_rd_adjunto', '`adjunto`(100)');
-CALL sgd_add_index('docs_emitidos', 'idx_de_ofireg_doc_fecha', '`idoficina_registro`, `iddocumento`, `fecha`');
-CALL sgd_add_index('docs_emitidos', 'idx_de_adjunto', '`adjunto`(100)');
-CALL sgd_add_index('movimientos', 'idx_mv_num_exp', '`num_exp`');
+SET @t='registro_documentos', @i='idx_rd_nro_exp', @c='`nro_exp`';
+SET @s=(SELECT IF(COUNT(*)=0, CONCAT('ALTER TABLE `',@t,'` ADD INDEX `',@i,'` (',@c,')'), 'DO 0') FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name=@t AND index_name=@i);
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @t='registro_documentos', @i='idx_rd_adjunto', @c='`adjunto`(100)';
+SET @s=(SELECT IF(COUNT(*)=0, CONCAT('ALTER TABLE `',@t,'` ADD INDEX `',@i,'` (',@c,')'), 'DO 0') FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name=@t AND index_name=@i);
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @t='docs_emitidos', @i='idx_de_ofireg_doc_fecha', @c='`idoficina_registro`, `iddocumento`, `fecha`';
+SET @s=(SELECT IF(COUNT(*)=0, CONCAT('ALTER TABLE `',@t,'` ADD INDEX `',@i,'` (',@c,')'), 'DO 0') FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name=@t AND index_name=@i);
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @t='docs_emitidos', @i='idx_de_adjunto', @c='`adjunto`(100)';
+SET @s=(SELECT IF(COUNT(*)=0, CONCAT('ALTER TABLE `',@t,'` ADD INDEX `',@i,'` (',@c,')'), 'DO 0') FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name=@t AND index_name=@i);
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @t='movimientos', @i='idx_mv_num_exp', @c='`num_exp`';
+SET @s=(SELECT IF(COUNT(*)=0, CONCAT('ALTER TABLE `',@t,'` ADD INDEX `',@i,'` (',@c,')'), 'DO 0') FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name=@t AND index_name=@i);
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 
--- ---------------------------------------------------------------------
--- Limpieza
--- ---------------------------------------------------------------------
-DROP PROCEDURE IF EXISTS sgd_add_column;
-DROP PROCEDURE IF EXISTS sgd_add_index;
