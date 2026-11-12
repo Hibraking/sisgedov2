@@ -502,7 +502,7 @@ $tok = csrf_token();
     </div>
   </div>
 
-  <script src="../js/o_reg_documentos.js"></script>
+  <script src="../js/o_reg_documentos.js?v=<?= @filemtime(__DIR__ . '/../js/o_reg_documentos.js') ?>"></script>
 </body>
 
 </html>

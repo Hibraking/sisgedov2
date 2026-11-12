@@ -328,9 +328,12 @@ VALUES
             $sql = "DELETE FROM registro_documentos WHERE idregistro_documentos=?;";
             $result = $conectado->prepare($sql);
             $result->execute([$codigo]);
+            return $result->rowCount() > 0 ? true : 'No se encontró el registro (puede que ya se haya eliminado).';
         } catch (Exception $exc) {
-            error_log($exc->getMessage());
-            die();
+            error_log('elimnar_datos(' . $codigo . '): ' . $exc->getMessage());
+            // Antes se cortaba con die() sin respuesta y la vista recargaba
+            // como si se hubiera eliminado: ahora se informa el motivo real.
+            return 'No se pudo eliminar en la base de datos: ' . $exc->getMessage();
         }
     }
     public function lista_oficinas()
@@ -546,7 +549,9 @@ if (isset($_POST['Emilinar'])) {
         echo 'ERROR_VALIDACION: El documento ya fue recepcionado o tiene movimientos; no puede eliminarse.';
         exit;
     }
-    $dml_reg_docs->elimnar_datos($_POST['Codigo']);
+    $resElim = $dml_reg_docs->elimnar_datos(intval($_POST['Codigo']));
+    echo ($resElim === true) ? 'OK' : 'ERROR_ELIMINAR: ' . $resElim;
+    exit;
 }
 if (isset($_POST['carga_tramite'])) {
     $dml_reg_docs->lista_tipo_tram();

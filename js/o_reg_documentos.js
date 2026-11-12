@@ -497,14 +497,24 @@ function eliminarReg(el) {
     data: { Emilinar: "-", Codigo: String(d.id), _csrf: CSRF },
   })
     .done(function (resp) {
-      if (typeof resp === "string" && resp.indexOf("ERROR_") !== -1) {
-        alert(resp.replace(/^ERROR_[A-Z]+:\s*/, ""));
+      var txt = typeof resp === "string" ? resp.trim() : "";
+      if (txt.indexOf("ERROR_") !== -1) {
+        alert(txt.replace(/^[\s\S]*?ERROR_[A-Z]+:\s*/, ""));
+        return;
+      }
+      // El servidor confirma con "OK"; cualquier otra respuesta es un fallo
+      // (antes se recargaba igual y parecía que "no hacía nada").
+      if (txt !== "OK") {
+        alert(
+          "No se pudo confirmar la eliminación. Respuesta del servidor:\n" +
+            (txt || "(vacía)").substring(0, 500),
+        );
         return;
       }
       location.reload();
     })
     .fail(function (xhr) {
-      alert("Error al eliminar: " + (xhr.responseText || ""));
+      alert("Error al eliminar (" + xhr.status + "): " + (xhr.responseText || ""));
     });
 }
 
