@@ -2,7 +2,7 @@
 --  SISGEDO — MIGRACIÓN 004: Recuperar responsables borrados
 -- ---------------------------------------------------------------------
 --  QUÉ HACE:
---   Los responsables 19, 21, 34, 36, 44 y 50 quedaron sin persona ni
+--   Los responsables 19, 21, 22, 23, 30, 34, 36, 44, 45, 50, 56 y 63 quedaron sin persona ni
 --   oficina (idpersonal/idoficina = NULL), por eso el historial y los
 --   reportes mostraban nombres y oficinas en blanco.
 --   - La oficina de cada uno se dedujo de sus movimientos.
@@ -58,11 +58,26 @@ UPDATE responsables SET idoficina = 5,
        idpersonal = (SELECT idpersonal FROM (SELECT idpersonal FROM personal WHERE nombres = 'Responsable anterior' AND apellidos = '(Gerencia Municipal)' LIMIT 1) t)
  WHERE idresponsables = 50 AND idpersonal IS NULL;
 
+-- 4) Otros responsables vacíos con pocos documentos (2019-2021)
+--    #56 Sala de Regidores -> firma JAECH = José Antonio ESCOBAR CHUQUIHUACCHA (personal 50)
+UPDATE responsables SET idpersonal = 50, idoficina = 39 WHERE idresponsables = 56 AND idpersonal IS NULL;
+
+--    Sin iniciales de firma: persona provisional común, oficina deducida
+INSERT INTO personal (nombres, apellidos)
+SELECT 'Responsable anterior', '(no identificado)' FROM DUAL
+ WHERE NOT EXISTS (SELECT 1 FROM personal WHERE nombres = 'Responsable anterior' AND apellidos = '(no identificado)');
+SET @ni = (SELECT idpersonal FROM personal WHERE nombres = 'Responsable anterior' AND apellidos = '(no identificado)' LIMIT 1);
+UPDATE responsables SET idpersonal = @ni, idoficina = 24 WHERE idresponsables = 22 AND idpersonal IS NULL; -- Defensa Civil
+UPDATE responsables SET idpersonal = @ni, idoficina = 18 WHERE idresponsables = 23 AND idpersonal IS NULL; -- Turismo y Artesanía
+UPDATE responsables SET idpersonal = @ni, idoficina = 31 WHERE idresponsables = 30 AND idpersonal IS NULL; -- Área de Adquisiciones
+UPDATE responsables SET idpersonal = @ni, idoficina = 36 WHERE idresponsables = 45 AND idpersonal IS NULL; -- Portal de Transparencia
+UPDATE responsables SET idpersonal = @ni, idoficina = 41 WHERE idresponsables = 63 AND idpersonal IS NULL; -- Registro Único de Víctimas
+
 COMMIT;
 
--- Verificación: deben salir las 6 filas con persona y oficina
+-- Verificación: deben salir las 12 filas con persona y oficina
 SELECT r.idresponsables, r.estado, o.nombre AS oficina, CONCAT_WS(' ', p.nombres, p.apellidos) AS persona
   FROM responsables r
   LEFT JOIN oficinas o ON o.idoficinas = r.idoficina
   LEFT JOIN personal p ON p.idpersonal = r.idpersonal
- WHERE r.idresponsables IN (19, 21, 34, 36, 44, 50);
+ WHERE r.idresponsables IN (19, 21, 22, 23, 30, 34, 36, 44, 45, 50, 56, 63);
