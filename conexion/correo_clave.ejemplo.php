@@ -10,4 +10,4 @@
    En local (Laragon + Mailpit) no hace falta crear este archivo.
    ===================================================================== */
 
-return 'ESCRIBA_AQUI_LA_CONTRASENA';
+return '@@Munixd26';

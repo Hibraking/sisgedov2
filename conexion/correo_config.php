@@ -51,7 +51,9 @@ if ($sgd_es_local) {
     if (!defined('SGD_CORREO_AUTH'))      define('SGD_CORREO_AUTH', false);
 } else {
     // ---- PRODUCCIÓN: servidor de correo de la institución ----
-    if (!defined('SGD_CORREO_HOST'))      define('SGD_CORREO_HOST', 'mail.munihuaytara.gob.pe');
+    // Datos de cPanel > Cuentas de correo > Connect Devices (Outgoing Server).
+    // OJO: es "munihuaytara.gob.pe", NO "mail.munihuaytara.gob.pe" (ese nombre no existe en el DNS).
+    if (!defined('SGD_CORREO_HOST'))      define('SGD_CORREO_HOST', 'munihuaytara.gob.pe');
     if (!defined('SGD_CORREO_PUERTO'))    define('SGD_CORREO_PUERTO', 465);
     if (!defined('SGD_CORREO_SEGURIDAD')) define('SGD_CORREO_SEGURIDAD', 'ssl'); // 465 = 'ssl', 587 = 'tls'
     if (!defined('SGD_CORREO_AUTH'))      define('SGD_CORREO_AUTH', true);
