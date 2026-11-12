@@ -150,6 +150,108 @@ function sgd_correo_plantilla($titulo, $cuerpo_html)
 }
 
 /**
+ * Guarda una copia del mensaje ya enviado en la carpeta "Enviados" de la
+ * cuenta (IMAP APPEND), para que se vea en el webmail como cualquier correo
+ * enviado. No usa la extensión imap de PHP (retirada del núcleo en PHP 8.4):
+ * habla IMAP directamente por un socket, con un timeout corto.
+ * Devuelve true si el servidor guardó la copia; $error explica el fallo.
+ */
+function sgd_correo_guardar_en_enviados($mime, &$error = '')
+{
+    $error = '';
+    $debug = !empty($GLOBALS['sgd_correo_debug']);
+    $log = function ($t) use ($debug) {
+        if ($debug) echo $t . "\n";
+    };
+    $mime = preg_replace("/\r\n|\r|\n/", "\r\n", (string)$mime);
+    if ($mime === '') {
+        $error = 'Mensaje vacío.';
+        return false;
+    }
+
+    $host = SGD_CORREO_IMAP_HOST;
+    $puerto = (int)SGD_CORREO_IMAP_PUERTO;
+    $esquema = SGD_CORREO_IMAP_SEGURIDAD === 'ssl' ? 'ssl' : 'tcp';
+    $ctx = stream_context_create(array('ssl' => SGD_CORREO_VERIFICAR_SSL
+        ? array('verify_peer' => true, 'verify_peer_name' => true, 'peer_name' => $host, 'SNI_enabled' => true)
+        : array('verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true)));
+    $espera = max(3, min(10, (int)SGD_CORREO_TIMEOUT));
+
+    $log("IMAP: conectando a $esquema://$host:$puerto (carpeta " . SGD_CORREO_CARPETA_ENVIADOS . ')');
+    $s = @stream_socket_client("$esquema://$host:$puerto", $errno, $errstr, $espera, STREAM_CLIENT_CONNECT, $ctx);
+    if (!$s) {
+        $error = "No se pudo conectar a $host:$puerto ($errstr).";
+        $log("IMAP: $error");
+        return false;
+    }
+    stream_set_timeout($s, $espera);
+
+    $leer = function () use ($s, $log) {
+        $l = fgets($s, 8192);
+        if ($l !== false) $log('IMAP S: ' . rtrim($l));
+        return $l;
+    };
+    // Envía un comando y lee hasta su respuesta etiquetada ("Ann OK|NO|BAD ...")
+    $n = 0;
+    $cmd = function ($texto, $mostrar = null) use ($s, &$n, $leer, $log) {
+        $tag = 'A' . (++$n);
+        fwrite($s, $tag . ' ' . $texto . "\r\n");
+        $log('IMAP C: ' . $tag . ' ' . ($mostrar !== null ? $mostrar : $texto));
+        while (($l = $leer()) !== false) {
+            if (strpos($l, $tag . ' ') === 0) return rtrim($l);
+        }
+        return $tag . ' NO (sin respuesta del servidor)';
+    };
+    $q = function ($v) {   // cadena IMAP entre comillas
+        return '"' . str_replace(array('\\', '"'), array('\\\\', '\\"'), (string)$v) . '"';
+    };
+    $ok = function ($resp) {
+        return (bool)preg_match('/^A\d+ OK/i', $resp);
+    };
+
+    try {
+        $saludo = $leer();
+        if ($saludo === false || stripos($saludo, '* OK') !== 0) {
+            $error = 'El servidor IMAP no respondió el saludo.';
+            return false;
+        }
+        $r = $cmd('LOGIN ' . $q(SGD_CORREO_USUARIO) . ' ' . $q(SGD_CORREO_CLAVE), 'LOGIN ' . $q(SGD_CORREO_USUARIO) . ' [contraseña oculta]');
+        if (!$ok($r)) {
+            $error = 'IMAP rechazó el usuario/contraseña: ' . $r;
+            return false;
+        }
+
+        // APPEND con literal: el servidor responde "+" antes de recibir el mensaje
+        $tag = 'A' . (++$n);
+        $linea = $tag . ' APPEND ' . $q(SGD_CORREO_CARPETA_ENVIADOS) . ' (\\Seen) {' . strlen($mime) . '}';
+        fwrite($s, $linea . "\r\n");
+        $log('IMAP C: ' . $linea);
+        $resp = '';
+        while (($l = $leer()) !== false) {
+            if ($l[0] === '+') break;
+            if (strpos($l, $tag . ' ') === 0) { $resp = rtrim($l); break; }
+        }
+        if ($resp === '') {
+            fwrite($s, $mime . "\r\n");
+            $log('IMAP C: [mensaje de ' . strlen($mime) . ' bytes]');
+            while (($l = $leer()) !== false) {
+                if (strpos($l, $tag . ' ') === 0) { $resp = rtrim($l); break; }
+            }
+        }
+        if (!$ok($resp)) {
+            $error = 'IMAP no guardó la copia en ' . SGD_CORREO_CARPETA_ENVIADOS . ': ' . ($resp !== '' ? $resp : 'sin respuesta');
+            return false;
+        }
+        $log('IMAP: copia guardada en ' . SGD_CORREO_CARPETA_ENVIADOS);
+        return true;
+    } finally {
+        @$cmd('LOGOUT');
+        @fclose($s);
+        if ($error !== '') $log('IMAP: ' . $error);
+    }
+}
+
+/**
  * Envía un correo HTML. Devuelve true si el servidor SMTP lo aceptó.
  * $opc: tipo, referencia, texto (versión texto plano), responder_a
  */
@@ -231,7 +333,12 @@ function sgd_correo_enviar($destino, $asunto, $html, array $opc = array())
         }
         $mail->addAddress($destino);
 
-        $logo = __DIR__ . '/../' . SISGEDO_IMG_LOGO;
+        // Versión reducida del logo (281x96, ~10 KB). El original pesa ~450 KB y
+        // hacía que cada correo (y su copia en Enviados) ocupara ~630 KB.
+        $logo = __DIR__ . '/../images/logo_correo.png';
+        if (!is_file($logo)) {
+            $logo = __DIR__ . '/../' . SISGEDO_IMG_LOGO;
+        }
         if (is_file($logo)) {
             $mail->addEmbeddedImage($logo, 'logo', basename($logo));
         }
@@ -244,6 +351,13 @@ function sgd_correo_enviar($destino, $asunto, $html, array $opc = array())
 
         $mail->send();
         sgd_correo_registrar($tipo, $referencia, $destino, $asunto, 'ENVIADO', null, $mail->getLastMessageID());
+        // Copia en la carpeta "Enviados" del webmail. Si falla, el correo ya salió:
+        // no se reporta error al ciudadano, solo se anota en el log del servidor.
+        if (defined('SGD_CORREO_GUARDAR_ENVIADOS') && SGD_CORREO_GUARDAR_ENVIADOS) {
+            if (!sgd_correo_guardar_en_enviados($mail->getSentMIMEMessage(), $errImap)) {
+                error_log('SISGEDO correo: no se guardó copia en Enviados (' . $referencia . '): ' . $errImap);
+            }
+        }
         return true;
     } catch (PHPMailerException $e) {
         $detalle = $mail->ErrorInfo !== '' ? $mail->ErrorInfo : $e->getMessage();

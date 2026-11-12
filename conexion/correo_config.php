@@ -78,3 +78,18 @@ if (!defined('SGD_CORREO_VERIFICAR_SSL')) define('SGD_CORREO_VERIFICAR_SSL', tru
 
 // Segundos máximos de espera al servidor SMTP (el ciudadano espera mientras tanto)
 if (!defined('SGD_CORREO_TIMEOUT')) define('SGD_CORREO_TIMEOUT', 15);
+
+/* ---------------------------------------------------------------------
+   COPIA EN "ENVIADOS"
+   SMTP solo entrega el correo; no lo guarda en la carpeta Enviados de la
+   cuenta. Para que cada constancia se vea en Roundcube (webmail) > Enviados,
+   después de enviarla se sube una copia por IMAP (como hace Outlook).
+   Si la copia falla, el correo YA fue enviado: solo se anota en el log.
+   Datos: cPanel > Cuentas de correo > Connect Devices (Incoming Server, IMAP).
+   --------------------------------------------------------------------- */
+if (!defined('SGD_CORREO_GUARDAR_ENVIADOS')) define('SGD_CORREO_GUARDAR_ENVIADOS', (bool)SGD_CORREO_AUTH); // en local (Mailpit) no hay IMAP
+if (!defined('SGD_CORREO_IMAP_HOST'))        define('SGD_CORREO_IMAP_HOST', SGD_CORREO_HOST);
+if (!defined('SGD_CORREO_IMAP_PUERTO'))      define('SGD_CORREO_IMAP_PUERTO', 993);
+if (!defined('SGD_CORREO_IMAP_SEGURIDAD'))   define('SGD_CORREO_IMAP_SEGURIDAD', 'ssl'); // 993 = 'ssl'
+// Nombre de la carpeta en el servidor (Roundcube la muestra en la URL: _mbox=INBOX.Sent)
+if (!defined('SGD_CORREO_CARPETA_ENVIADOS')) define('SGD_CORREO_CARPETA_ENVIADOS', 'INBOX.Sent');
