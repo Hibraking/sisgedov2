@@ -87,7 +87,15 @@ class Conexion
             $db_host = 'localhost';
             $db_name = 'xyltrylx_sisgedov2';
             $db_user = 'xyltrylx_sisgedov2';
-            $db_pass = '@@Munixd26';
+            // La contraseña NO va en el repositorio (es público): se lee de
+            // conexion/db_clave.php, que se crea a mano en el hosting a partir
+            // de conexion/db_clave.ejemplo.php y está en .gitignore.
+            $archivo_clave = __DIR__ . '/db_clave.php';
+            $db_pass = is_file($archivo_clave) ? include $archivo_clave : '';
+            if (!is_string($db_pass) || $db_pass === '') {
+                error_log('SISGEDO: falta conexion/db_clave.php con la contraseña de MySQL.');
+                $db_pass = '';
+            }
         }
 
         $conexion = null;

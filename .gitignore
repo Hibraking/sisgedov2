@@ -22,8 +22,9 @@ error_log
 /images/perfiles/*
 !/images/perfiles/.htaccess
 
-# Contraseña del correo institucional (se crea a mano en cada servidor)
+# Contraseñas (se crean a mano en cada servidor; el repositorio es público)
 /conexion/correo_clave.php
+/conexion/db_clave.php
 
 # Script de subida por lotes (ya no se usa)
 subir_adjuntos.ps1
