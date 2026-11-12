@@ -20,7 +20,7 @@ try {
   $pdo = (new Conexion())->conectar();
   $totalRemitentes = intval($pdo->query("SELECT COUNT(*) FROM remitente")->fetchColumn());
   $conEmail = intval($pdo->query("SELECT COUNT(*) FROM remitente WHERE email IS NOT NULL AND TRIM(email)<>''")->fetchColumn());
-  $nuevosMes = intval($pdo->query("SELECT COUNT(DISTINCT idremitente) FROM registro_documentos WHERE year(fecha_registro)=year(now()) AND month(fecha_registro)=month(now())")->fetchColumn());
+  $nuevosMes = intval($pdo->query("SELECT COUNT(DISTINCT idremitente) FROM registro_documentos WHERE fecha_registro >= date_format(now(),'%Y-%m-01') and fecha_registro < date_format(now(),'%Y-%m-01') + interval 1 month")->fetchColumn());
 } catch (Exception $e) {
   error_log($e->getMessage());
 }

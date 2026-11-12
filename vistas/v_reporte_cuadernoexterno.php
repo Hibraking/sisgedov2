@@ -23,12 +23,12 @@ $enRango = 0;
 $vista = array();
 try {
   $pdo = (new Conexion())->conectar();
-  $q = $pdo->query("SELECT COUNT(*) FROM registro_documentos WHERE date(fecha_registro)=curdate()");
+  $q = $pdo->query("SELECT COUNT(*) FROM registro_documentos WHERE fecha_registro >= curdate() and fecha_registro < curdate() + interval 1 day");
   $regHoy = intval($q->fetchColumn());
-  $q = $pdo->query("SELECT COUNT(*) FROM registro_documentos WHERE year(fecha_registro)=year(now()) AND month(fecha_registro)=month(now())");
+  $q = $pdo->query("SELECT COUNT(*) FROM registro_documentos WHERE fecha_registro >= date_format(now(),'%Y-%m-01') and fecha_registro < date_format(now(),'%Y-%m-01') + interval 1 month");
   $regMes = intval($q->fetchColumn());
   // Vista previa real del rango seleccionado
-  $q = $pdo->prepare("SELECT COUNT(*) FROM registro_documentos WHERE date(fecha_registro) BETWEEN ? AND ?");
+  $q = $pdo->prepare("SELECT COUNT(*) FROM registro_documentos WHERE fecha_registro >= ? and fecha_registro < date_add(?, interval 1 day)");
   $q->execute(array($desdeSel, $hastaSel));
   $enRango = intval($q->fetchColumn());
   $q = $pdo->prepare("SELECT rd.nro_exp, documentos.nombre_documento, CONCAT(remitente.apellidos,', ',remitente.nombres), rd.asunto,
@@ -37,7 +37,7 @@ try {
                             INNER JOIN documentos ON rd.iddocumento=documentos.iddocumentos
                             INNER JOIN remitente ON rd.idremitente=remitente.idremitente
                             LEFT JOIN oficinas o ON rd.idoficina=o.idoficinas
-                            WHERE date(rd.fecha_registro) BETWEEN ? AND ?
+                            WHERE rd.fecha_registro >= ? and rd.fecha_registro < date_add(?, interval 1 day)
                             ORDER BY rd.fecha_registro DESC LIMIT 100");
   $q->execute(array($desdeSel, $hastaSel));
   $vista = $q->fetchAll(PDO::FETCH_NUM);

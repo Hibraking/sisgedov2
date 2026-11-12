@@ -42,7 +42,7 @@ try {
                inner join registro_documentos rd on m.idregdocs=rd.idregistro_documentos
                inner join documentos on rd.iddocumento=documentos.iddocumentos
                left join estado_documento ed on m.idestadodocs=ed.idestado_documento
-               where m.idoficina_derivar=? and m.estado=1 and date(m.fecha_hora) between ? and ?" . $cond;
+               where m.idoficina_derivar=? and m.estado=1 and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)" . $cond;
   $st = $pdo->prepare($q1);
   $st->execute(array($idoficina, $desdeSql, $hastaSql));
   $filas = $st->fetchAll(PDO::FETCH_NUM);
@@ -53,7 +53,7 @@ try {
                inner join docs_emitidos de on m.iddocs_emitidos=de.iddocs_emitidos
                inner join documentos on de.iddocumento=documentos.iddocumentos
                left join estado_documento ed on m.idestadodocs=ed.idestado_documento
-               where m.idoficina_derivar=? and m.estado=1 and date(m.fecha_hora) between ? and ?" . $cond;
+               where m.idoficina_derivar=? and m.estado=1 and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)" . $cond;
   $st = $pdo->prepare($q2);
   $st->execute(array($idoficina, $desdeSql, $hastaSql));
   $filas = array_merge($filas, $st->fetchAll(PDO::FETCH_NUM));
@@ -65,7 +65,7 @@ try {
   $st = $pdo->prepare("select coalesce(ed.nombre,'Sin estado'), count(*)
                              from movimientos m
                              left join estado_documento ed on m.idestadodocs=ed.idestado_documento
-                             where m.idoficina_derivar=? and m.estado=1 and date(m.fecha_hora) between ? and ?
+                             where m.idoficina_derivar=? and m.estado=1 and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)
                              group by ed.nombre order by count(*) desc");
   $st->execute(array($idoficina, $desdeSql, $hastaSql));
   $porEstado = $st->fetchAll(PDO::FETCH_NUM);

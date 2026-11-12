@@ -66,17 +66,17 @@ $destinosMesKpi = 0;
 try {
   $pdoKpi = (new Conexion())->conectar();
   if ($vistaEstado === 'enviado') {
-    $qk = $pdoKpi->prepare("select count(*) from movimientos m inner join movimientos ma on m.idmovimientoant=ma.idMovimientos inner join responsables r on ma.idresponsable=r.idresponsables where r.idoficina=? and date(m.fecha_hora)=curdate()");
+    $qk = $pdoKpi->prepare("select count(*) from movimientos m inner join movimientos ma on m.idmovimientoant=ma.idMovimientos inner join responsables r on ma.idresponsable=r.idresponsables where r.idoficina=? and m.fecha_hora >= curdate() and m.fecha_hora < curdate() + interval 1 day");
     $qk->execute(array($idoficina));
     $envHoyKpi = intval($qk->fetchColumn());
-    $qk = $pdoKpi->prepare("select count(*) from movimientos m inner join movimientos ma on m.idmovimientoant=ma.idMovimientos inner join responsables r on ma.idresponsable=r.idresponsables where r.idoficina=? and year(m.fecha_hora)=year(now()) and month(m.fecha_hora)=month(now())");
+    $qk = $pdoKpi->prepare("select count(*) from movimientos m inner join movimientos ma on m.idmovimientoant=ma.idMovimientos inner join responsables r on ma.idresponsable=r.idresponsables where r.idoficina=? and m.fecha_hora >= date_format(now(),'%Y-%m-01') and m.fecha_hora < date_format(now(),'%Y-%m-01') + interval 1 month");
     $qk->execute(array($idoficina));
     $envMesKpi = intval($qk->fetchColumn());
-    $qk = $pdoKpi->prepare("select count(distinct m.idoficina_derivar) from movimientos m inner join movimientos ma on m.idmovimientoant=ma.idMovimientos inner join responsables r on ma.idresponsable=r.idresponsables where r.idoficina=? and year(m.fecha_hora)=year(now()) and month(m.fecha_hora)=month(now())");
+    $qk = $pdoKpi->prepare("select count(distinct m.idoficina_derivar) from movimientos m inner join movimientos ma on m.idmovimientoant=ma.idMovimientos inner join responsables r on ma.idresponsable=r.idresponsables where r.idoficina=? and m.fecha_hora >= date_format(now(),'%Y-%m-01') and m.fecha_hora < date_format(now(),'%Y-%m-01') + interval 1 month");
     $qk->execute(array($idoficina));
     $destinosMesKpi = intval($qk->fetchColumn());
   } else {
-    $qk = $pdoKpi->prepare("select count(*) from movimientos where idoficina_derivar=? and estado=1 and date(fecha_hora)=curdate()");
+    $qk = $pdoKpi->prepare("select count(*) from movimientos where idoficina_derivar=? and estado=1 and fecha_hora >= curdate() and fecha_hora < curdate() + interval 1 day");
     $qk->execute(array($idoficina));
     $recepHoyKpi = intval($qk->fetchColumn());
   }

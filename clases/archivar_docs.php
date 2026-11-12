@@ -103,7 +103,7 @@ class Archivar_docs
                     from movimientos m
                     inner join registro_documentos rd on m.idregdocs=rd.idregistro_documentos
                     inner join documentos on rd.iddocumento=documentos.iddocumentos
-                    where m.idoficina_derivar=? and m.estado=1 and date(m.fecha_hora) between ? and ?
+                    where m.idoficina_derivar=? and m.estado=1 and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)
                       and not exists (select 1 from docs_archivados da where da.idmovimientos=m.idMovimientos)";
          $st = $conectado->prepare($q);
          $st->execute([$idoficina, $desde, $hasta]);
@@ -115,7 +115,7 @@ class Archivar_docs
                     from movimientos m
                     inner join docs_emitidos de on m.iddocs_emitidos=de.iddocs_emitidos
                     inner join documentos on de.iddocumento=documentos.iddocumentos
-                    where m.idoficina_derivar=? and m.estado=1 and date(m.fecha_hora) between ? and ?
+                    where m.idoficina_derivar=? and m.estado=1 and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)
                       and not exists (select 1 from docs_archivados da where da.idmovimientos=m.idMovimientos)";
          $st = $conectado->prepare($q);
          $st->execute([$idoficina, $desde, $hasta]);

@@ -87,7 +87,7 @@ where idMovimientos=anterior )) as origen,
     inner join tipo_tram on registro_documentos.idtipo_tramite=tipo_tram.idtipo_tram
     left join estado_documento on movimientos.idestadodocs=estado_documento.idestado_documento 
     inner join documentos on registro_documentos.iddocumento=documentos.iddocumentos
-    where oficinas.idoficinas=? and date(movimientos.fecha_hora) between ? and ?
+    where oficinas.idoficinas=? and movimientos.fecha_hora >= ? and movimientos.fecha_hora < date_add(?, interval 1 day)
     group by idMovimientos)
     
     union
@@ -116,7 +116,7 @@ where idMovimientos=anterior )) as origen,
 		inner join aciones_documento on movimientos.idacciondocs=aciones_documento.idaciones_documento
 		left join estado_documento on movimientos.idestadodocs=estado_documento.idestado_documento
 		inner join documentos on docs_emitidos.iddocumento=documentos.iddocumentos
-		where oficinas.idoficinas=? and date(movimientos.fecha_hora) between ? and ?
+		where oficinas.idoficinas=? and movimientos.fecha_hora >= ? and movimientos.fecha_hora < date_add(?, interval 1 day)
         group by idMovimientos)
         order by idmovi desc;";
             $result = $conectado->prepare($sql);
@@ -240,7 +240,7 @@ inner join responsables on movimientos.idresponsable=responsables.idresponsables
 inner join registro_documentos on movimientos.idregdocs=registro_documentos.idregistro_documentos
 inner join oficinas on movimientos.idoficina_derivar=oficinas.idoficinas
 inner join documentos on registro_documentos.iddocumento=documentos.iddocumentos
-where responsables.idoficina=? and date(movimientos.fecha_hora)>=?) as recibidos
+where responsables.idoficina=? and movimientos.fecha_hora >= ?) as recibidos
 inner join 
 (select movimientos.num_exp,movimientos.idMovimientos, movimientos.idmovimientoant,date_format( date_add(movimientos.fecha_hora,interval 0 hour),'%d/%m/%y %h:%i %p') as fecha_hora,
 estado_documento.nombre,movimientos.idoficina_derivar as idof,
@@ -260,7 +260,7 @@ inner join responsables on movimientos.idresponsable=responsables.idresponsables
 inner join docs_emitidos on movimientos.iddocs_emitidos=docs_emitidos.iddocs_emitidos
 inner join oficinas on movimientos.idoficina_derivar=oficinas.idoficinas
 inner join documentos on docs_emitidos.iddocumento=documentos.iddocumentos
-where responsables.idoficina=? and date(movimientos.fecha_hora)>=?) as recibidos
+where responsables.idoficina=? and movimientos.fecha_hora >= ?) as recibidos
 inner join 
 (select movimientos.num_exp,movimientos.idMovimientos, movimientos.idmovimientoant,date_format( date_add(movimientos.fecha_hora,interval 0 hour),'%d/%m/%y %h:%i %p') as fecha_hora,
 estado_documento.nombre,movimientos.idoficina_derivar as idof,
@@ -315,7 +315,7 @@ order by idMovimientos desc;";
                         left join responsables on docs_emitidos.idresponsable=responsables.idresponsables
                         left join oficinas on responsables.idoficina=oficinas.idoficinas
                         left join documentos on docs_emitidos.iddocumento=documentos.iddocumentos
-                        where docs_emitidos.idoficina=? and docs_emitidos.estado=0 and date(docs_emitidos.fecha)>=?;";
+                        where docs_emitidos.idoficina=? and docs_emitidos.estado=0 and docs_emitidos.fecha >= ?;";
             $result = $conectado->prepare($sql);
             $result->execute([$idoficina, $this->fecha_actual]);
             echo json_encode($result->fetchAll());
@@ -513,7 +513,7 @@ order by idMovimientos desc;";
                 inner join oficinas on m.idoficina_derivar=oficinas.idoficinas
                 inner join documentos on registro_documentos.iddocumento=documentos.iddocumentos
                 left join aciones_documento on m.idacciondocs=aciones_documento.idaciones_documento
-                where oficinas.idoficinas=? and date(m.fecha_hora) between ? and ?";
+                where oficinas.idoficinas=? and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)";
             // NOTA: las dos partes se ejecutan POR SEPARADO y se unen en PHP.
             // Un UNION en SQL falla con "Illegal mix of collations" porque
             // registro_documentos y docs_emitidos quedaron con collations
@@ -532,7 +532,7 @@ order by idMovimientos desc;";
                 inner join oficinas on m.idoficina_derivar=oficinas.idoficinas
                 inner join documentos on docs_emitidos.iddocumento=documentos.iddocumentos
                 left join aciones_documento on m.idacciondocs=aciones_documento.idaciones_documento
-                where oficinas.idoficinas=? and date(m.fecha_hora) between ? and ?";
+                where oficinas.idoficinas=? and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)";
             $st1 = $conectado->prepare($sql);
             $st1->execute([$idoficina, $desde, $hasta]);
             $filas = $st1->fetchAll(PDO::FETCH_NUM);
@@ -572,7 +572,7 @@ order by idMovimientos desc;";
                 inner join registro_documentos on m.idregdocs=registro_documentos.idregistro_documentos
                 inner join documentos on registro_documentos.iddocumento=documentos.iddocumentos
                 left join estado_documento on m.idestadodocs=estado_documento.idestado_documento
-                where r.idoficina=? and date(m.fecha_hora) between ? and ?";
+                where r.idoficina=? and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)";
             $sql2 = "select m.idMovimientos as codigo,
                 (select o2.nombre from oficinas o2 where o2.idoficinas=m.idoficina_derivar) as destino,
                 'INTERNO' as tramite,documentos.nombre_documento,cast(docs_emitidos.iddocs_emitidos as char) as nro_exp,docs_emitidos.numero,docs_emitidos.asunto,
@@ -586,7 +586,7 @@ order by idMovimientos desc;";
                 inner join docs_emitidos on m.iddocs_emitidos=docs_emitidos.iddocs_emitidos
                 inner join documentos on docs_emitidos.iddocumento=documentos.iddocumentos
                 left join estado_documento on m.idestadodocs=estado_documento.idestado_documento
-                where r.idoficina=? and date(m.fecha_hora) between ? and ?";
+                where r.idoficina=? and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)";
             $st1 = $conectado->prepare($sql);
             $st1->execute([$idoficina, $desde, $hasta]);
             $filas = $st1->fetchAll(PDO::FETCH_NUM);

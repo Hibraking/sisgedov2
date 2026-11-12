@@ -23,7 +23,7 @@ class Reg_docs
                       inner join remitente on registro_documentos.idremitente=remitente.idremitente
                       inner join tipo_tram on registro_documentos.idtipo_tramite=tipo_tram.idtipo_tram
                       left join oficinas on registro_documentos.idoficina=oficinas.idoficinas
-                      where date(registro_documentos.fecha_registro) between ? and ?
+                      where registro_documentos.fecha_registro >= ? and registro_documentos.fecha_registro < date_add(?, interval 1 day)
                       order by registro_documentos.fecha_registro desc";
             //echo $sql;
             $result = $conectado->prepare($sql);
@@ -155,7 +155,7 @@ class Reg_docs
                       inner join remitente on rd.idremitente=remitente.idremitente
                       inner join tipo_tram on rd.idtipo_tramite=tipo_tram.idtipo_tram
                       left join oficinas o on rd.idoficina=o.idoficinas
-                      where date(rd.fecha_registro) between ? and ?
+                      where rd.fecha_registro >= ? and rd.fecha_registro < date_add(?, interval 1 day)
                          or (coalesce(rd.recepcion_web,0)=1 and rd.idoficina is null and rd.estado_recepcion=0
                              and rd.fecha_registro >= date_sub(now(), interval ? day))
                       order by rd.fecha_registro desc";
@@ -212,7 +212,7 @@ class Reg_docs
         $out = array('hoy' => 0, 'semana' => 0, 'pendientes' => 0, 'anio' => 0);
         try {
             $c = (new Conexion())->conectar();
-            $q = $c->prepare("select count(*) from registro_documentos where date(fecha_registro)=curdate()");
+            $q = $c->prepare("select count(*) from registro_documentos where fecha_registro >= curdate() and fecha_registro < curdate() + interval 1 day");
             $q->execute();
             $out['hoy'] = intval($q->fetchColumn());
             $q = $c->prepare("select count(*) from registro_documentos where fecha_registro>=date_sub(now(),interval 7 day)");
@@ -221,7 +221,7 @@ class Reg_docs
             $q = $c->prepare("select count(*) from registro_documentos where estado_recepcion=0");
             $q->execute();
             $out['pendientes'] = intval($q->fetchColumn());
-            $q = $c->prepare("select count(*) from registro_documentos where year(fecha_registro)=year(now())");
+            $q = $c->prepare("select count(*) from registro_documentos where fecha_registro >= makedate(year(now()),1) and fecha_registro < makedate(year(now())+1,1)");
             $q->execute();
             $out['anio'] = intval($q->fetchColumn());
         } catch (Exception $e) {

@@ -52,7 +52,7 @@ function lista_datos($inicio, $fin){
                       inner join remitente on registro_documentos.idremitente=remitente.idremitente
                       inner join tipo_tram on registro_documentos.idtipo_tramite=tipo_tram.idtipo_tram
                       inner join oficinas on registro_documentos.idoficina=oficinas.idoficinas
-                      where date(registro_documentos.fecha_registro) between ? and ?
+                      where registro_documentos.fecha_registro >= ? and registro_documentos.fecha_registro < date_add(?, interval 1 day)
                       order by registro_documentos.nro_exp asc;";
         $result = $conectado->prepare($sql);
         $result->execute([$inicio, $fin]);

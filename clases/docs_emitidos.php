@@ -21,7 +21,7 @@ class Reg_docs
                 inner join responsables on docs_emitidos.idresponsable=responsables.idresponsables
                 inner join oficinas on docs_emitidos.idoficina_registro=oficinas.idoficinas
                 inner join documentos on docs_emitidos.iddocumento=documentos.iddocumentos
-                where oficinas.idoficinas=? and date(docs_emitidos.fecha) between ? and ?
+                where oficinas.idoficinas=? and docs_emitidos.fecha >= ? and docs_emitidos.fecha < date_add(?, interval 1 day)
                 order by docs_emitidos.fecha desc";
             $result = $conectado->prepare($sql);
             $result->execute([$idoficina, $fecha, $fecha_fin]);
@@ -129,7 +129,7 @@ class Reg_docs
                         de.fecha,de.iddocumento,coalesce(de.idoficina,0)
                       from docs_emitidos de
                       inner join documentos on de.iddocumento=documentos.iddocumentos
-                      where de.idoficina_registro=? and date(de.fecha) between ? and ?
+                      where de.idoficina_registro=? and de.fecha >= ? and de.fecha < date_add(?, interval 1 day)
                       order by de.fecha desc";
             $st = $conectado->prepare($sql);
             $st->execute([$idoficina, $desde, $hasta]);

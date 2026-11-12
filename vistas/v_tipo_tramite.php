@@ -21,8 +21,8 @@ try {
     $st = $pdo->prepare("SELECT idtipo_tram, nombre, COALESCE(descripcion,'') FROM tipo_tram ORDER BY nombre ASC");
     $st->execute();
     $filas = $st->fetchAll(PDO::FETCH_NUM);
-    $tramAnio = intval($pdo->query("SELECT COUNT(*) FROM registro_documentos WHERE year(fecha_registro)=year(now())")->fetchColumn());
-    $tiposEnUso = intval($pdo->query("SELECT COUNT(DISTINCT idtipo_tramite) FROM registro_documentos WHERE year(fecha_registro)=year(now())")->fetchColumn());
+    $tramAnio = intval($pdo->query("SELECT COUNT(*) FROM registro_documentos WHERE fecha_registro >= makedate(year(now()),1) and fecha_registro < makedate(year(now())+1,1)")->fetchColumn());
+    $tiposEnUso = intval($pdo->query("SELECT COUNT(DISTINCT idtipo_tramite) FROM registro_documentos WHERE fecha_registro >= makedate(year(now()),1) and fecha_registro < makedate(year(now())+1,1)")->fetchColumn());
 } catch (Exception $e) {
     error_log($e->getMessage());
 }

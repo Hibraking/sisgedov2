@@ -21,7 +21,7 @@ try {
     $st = $pdo->prepare("SELECT iddocumentos, nombre_documento, COALESCE(descripcion,''), COALESCE(dias_atension,0) FROM documentos ORDER BY nombre_documento ASC");
     $st->execute();
     $filas = $st->fetchAll(PDO::FETCH_NUM);
-    $enUsoAnio = intval($pdo->query("SELECT COUNT(DISTINCT iddocumento) FROM registro_documentos WHERE year(fecha_registro)=year(now())")->fetchColumn());
+    $enUsoAnio = intval($pdo->query("SELECT COUNT(DISTINCT iddocumento) FROM registro_documentos WHERE fecha_registro >= makedate(year(now()),1) and fecha_registro < makedate(year(now())+1,1)")->fetchColumn());
     $conDias = intval($pdo->query("SELECT COUNT(*) FROM documentos WHERE COALESCE(dias_atension,0) > 0")->fetchColumn());
 } catch (Exception $e) {
     error_log($e->getMessage());

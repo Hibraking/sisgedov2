@@ -62,8 +62,17 @@ if (!defined('SISGEDO_ES_LOCAL')) {
 
 class Conexion
 {
+    /** Conexión compartida por toda la petición (ver conectar()). */
+    private static $compartida = null;
+
     public function conectar()
     {
+        // RENDIMIENTO: antes cada consulta abría una conexión nueva a MySQL
+        // (una página podía abrir 10-30). Ahora se abre UNA por petición y se
+        // reutiliza; si la conexión falló, el siguiente intento la reintenta.
+        if (self::$compartida !== null) {
+            return self::$compartida;
+        }
 
         if (SISGEDO_ES_LOCAL) {
             // ---- Configuracion LOCAL (Laragon) ----
@@ -84,7 +93,8 @@ class Conexion
         $conexion = null;
         try {
             $conexion = new PDO('mysql:host=' . $db_host . ';dbname=' . $db_name . ';charset=utf8mb4', $db_user, $db_pass);
-            $conexion->exec("SET NAMES utf8mb4; SET time_zone = '-05:00'");
+            $conexion->exec("SET NAMES utf8mb4, time_zone = '-05:00'");
+            self::$compartida = $conexion;
         } catch (PDOException $e) {
             // Nunca exponer detalles internos al usuario.
             error_log('Error de conexion BD: ' . $e->getMessage());

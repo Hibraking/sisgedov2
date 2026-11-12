@@ -18,19 +18,19 @@
     $emiHoy = 0; $emiMes = 0; $enRango = 0; $vista = array();
     try {
         $pdo = (new Conexion())->conectar();
-        $q = $pdo->prepare("SELECT COUNT(*) FROM docs_emitidos WHERE idoficina_registro=? AND date(fecha)=curdate()");
+        $q = $pdo->prepare("SELECT COUNT(*) FROM docs_emitidos WHERE idoficina_registro=? AND fecha >= curdate() and fecha < curdate() + interval 1 day");
         $q->execute(array($idoficina)); $emiHoy = intval($q->fetchColumn());
-        $q = $pdo->prepare("SELECT COUNT(*) FROM docs_emitidos WHERE idoficina_registro=? AND year(fecha)=year(now()) AND month(fecha)=month(now())");
+        $q = $pdo->prepare("SELECT COUNT(*) FROM docs_emitidos WHERE idoficina_registro=? AND fecha >= date_format(now(),'%Y-%m-01') and fecha < date_format(now(),'%Y-%m-01') + interval 1 month");
         $q->execute(array($idoficina)); $emiMes = intval($q->fetchColumn());
         // Vista previa real del rango seleccionado
-        $q = $pdo->prepare("SELECT COUNT(*) FROM docs_emitidos WHERE idoficina_registro=? AND date(fecha) BETWEEN ? AND ?");
+        $q = $pdo->prepare("SELECT COUNT(*) FROM docs_emitidos WHERE idoficina_registro=? AND fecha >= ? and fecha < date_add(?, interval 1 day)");
         $q->execute(array($idoficina, $desdeSel, $hastaSel)); $enRango = intval($q->fetchColumn());
         $q = $pdo->prepare("SELECT de.iddocs_emitidos, documentos.nombre_documento, de.numero, de.asunto,
                                    COALESCE((SELECT o2.nombre FROM oficinas o2 WHERE o2.idoficinas=de.idoficina),'—'),
                                    date_format(date_add(de.fecha,interval 0 hour),'%d/%m/%Y %h:%i %p'), de.estado
                             FROM docs_emitidos de
                             INNER JOIN documentos ON de.iddocumento=documentos.iddocumentos
-                            WHERE de.idoficina_registro=? AND date(de.fecha) BETWEEN ? AND ?
+                            WHERE de.idoficina_registro=? AND de.fecha >= ? and de.fecha < date_add(?, interval 1 day)
                             ORDER BY de.fecha DESC LIMIT 100");
         $q->execute(array($idoficina, $desdeSel, $hastaSel));
         $vista = $q->fetchAll(PDO::FETCH_NUM);

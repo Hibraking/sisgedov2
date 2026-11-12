@@ -60,7 +60,7 @@ where idMovimientos=anterior )) as origen,
     inner join tipo_tram on registro_documentos.idtipo_tramite=tipo_tram.idtipo_tram
     left join estado_documento on movimientos.idestadodocs=estado_documento.idestado_documento
     inner join documentos on registro_documentos.iddocumento=documentos.iddocumentos
-    where oficinas.idoficinas=? and date(movimientos.fecha_hora) between ? and ?
+    where oficinas.idoficinas=? and movimientos.fecha_hora >= ? and movimientos.fecha_hora < date_add(?, interval 1 day)
     group by idMovimientos)
 
     union
@@ -88,7 +88,7 @@ where idMovimientos=anterior )) as origen,
 		inner join aciones_documento on movimientos.idacciondocs=aciones_documento.idaciones_documento
 		left join estado_documento on movimientos.idestadodocs=estado_documento.idestado_documento
 		inner join documentos on docs_emitidos.iddocumento=documentos.iddocumentos
-		where oficinas.idoficinas=? and date(movimientos.fecha_hora) between ? and ?
+		where oficinas.idoficinas=? and movimientos.fecha_hora >= ? and movimientos.fecha_hora < date_add(?, interval 1 day)
         group by idMovimientos)) as tododa
         order by feh asc;";
                 $result=$conectado->prepare($sql);

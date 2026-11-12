@@ -28,7 +28,7 @@ try {
     }
     $filas = $st->fetchAll(PDO::FETCH_NUM);
     $conResp = intval($pdo->query("SELECT COUNT(DISTINCT idoficina) FROM responsables WHERE estado=1")->fetchColumn());
-    $recibieronMes = intval($pdo->query("SELECT COUNT(DISTINCT idoficina_derivar) FROM movimientos WHERE year(fecha_hora)=year(now()) AND month(fecha_hora)=month(now())")->fetchColumn());
+    $recibieronMes = intval($pdo->query("SELECT COUNT(DISTINCT idoficina_derivar) FROM movimientos WHERE fecha_hora >= date_format(now(),'%Y-%m-01') and fecha_hora < date_format(now(),'%Y-%m-01') + interval 1 month")->fetchColumn());
 } catch (Exception $e) {
     error_log($e->getMessage());
 }

@@ -21,8 +21,8 @@ try {
     $st = $pdo->prepare("SELECT idestado_documento, nombre, COALESCE(descripcion,'') FROM estado_documento ORDER BY idestado_documento ASC");
     $st->execute();
     $filas = $st->fetchAll(PDO::FETCH_NUM);
-    $usosAnio = intval($pdo->query("SELECT COUNT(*) FROM movimientos WHERE idestadodocs IS NOT NULL AND year(fecha_hora)=year(now())")->fetchColumn());
-    $estEnUso = intval($pdo->query("SELECT COUNT(DISTINCT idestadodocs) FROM movimientos WHERE idestadodocs IS NOT NULL AND year(fecha_hora)=year(now())")->fetchColumn());
+    $usosAnio = intval($pdo->query("SELECT COUNT(*) FROM movimientos WHERE idestadodocs IS NOT NULL AND fecha_hora >= makedate(year(now()),1) and fecha_hora < makedate(year(now())+1,1)")->fetchColumn());
+    $estEnUso = intval($pdo->query("SELECT COUNT(DISTINCT idestadodocs) FROM movimientos WHERE idestadodocs IS NOT NULL AND fecha_hora >= makedate(year(now()),1) and fecha_hora < makedate(year(now())+1,1)")->fetchColumn());
 } catch (Exception $e) {
     error_log($e->getMessage());
 }
