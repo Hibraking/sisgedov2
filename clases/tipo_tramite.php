@@ -80,6 +80,27 @@ class Tipo_tramite
             error_log($exc->getMessage());
         }
     }
+    /**
+     * true si ya existe otro tipo con el mismo nombre. La collation
+     * utf8mb4_general_ci ya ignora mayúsculas y tildes ("Atención" = "ATENCION");
+     * además se ignoran espacios repetidos o al inicio/final.
+     */
+    public function nombre_duplicado($nombre, $excluirId = 0)
+    {
+        try {
+            $conexion = new Conexion();
+            $conectado = $conexion->conectar();
+            $sql = "SELECT COUNT(*) FROM tipo_tram
+                     WHERE REGEXP_REPLACE(TRIM(nombre), ' {2,}', ' ') = REGEXP_REPLACE(TRIM(?), ' {2,}', ' ')
+                       AND idtipo_tram <> ?";
+            $result = $conectado->prepare($sql);
+            $result->execute([(string)$nombre, (int)$excluirId]);
+            return ((int)$result->fetchColumn()) > 0;
+        } catch (Exception $exc) {
+            error_log($exc->getMessage());
+            return false;
+        }
+    }
     public function insertar_datos($nombre, $descripcion)
     {
 
@@ -135,6 +156,13 @@ if (isset($_POST["Insertar"]) || isset($_POST["insertar"]) || isset($_POST["Modi
 // Al pulsar Eliminar también llega 'Codigo': este bloque (insertar/modificar)
 // NO debe ejecutarse, o dejaba el registro con nombre vacío si no se podía borrar.
 if (isset($_POST['Codigo']) && !isset($_POST['Emilinar'])) {
+    // No permitir dos tipos de trámite con el mismo nombre (se acumulaban
+    // repetidos: 37 "ATENCION", 27 "RENOVACION DE CONTRATO"...).
+    if (trim((string)($_POST['Nombre'] ?? '')) !== ''
+        && $dml_tipotr->nombre_duplicado($_POST['Nombre'], (int)$_POST['Codigo'])) {
+        echo 'ERROR_VALIDACION: Ya existe un tipo de trámite con ese nombre.';
+        exit;
+    }
     if ($_POST['Codigo'] == '' & $_POST['Nombre'] != '') {
         $dml_tipotr->insertar_datos($_POST['Nombre'], $_POST['Descripcion']);
         header("location: ../vistas/v_tipo_tramite.php");
@@ -148,5 +176,9 @@ if (isset($_POST['Emilinar'])) {
     $dml_tipotr->elimnar_datos($_POST['Codigo']);
 }
 if (isset($_POST['insertar'])) {
+    if ($dml_tipotr->nombre_duplicado($_POST['nombre'])) {
+        echo 'ERROR_VALIDACION: Ya existe un tipo de trámite con ese nombre.';
+        exit;
+    }
     $dml_tipotr->insertar_datos($_POST['nombre'], $_POST['descripcion']);
 }
