@@ -235,9 +235,9 @@ if ($exportFmt === 'csv') {
   header('Content-Disposition: attachment; filename="recepcion_' . $sufijoExport . '_' . date('Ymd_His') . '.csv"');
   echo "\xEF\xBB\xBF"; // BOM para que Excel reconozca UTF-8
   $out = fopen('php://output', 'w');
-  fputcsv($out, array('Expediente', 'Documento', 'Numero', $colOrigen, 'Tramite', 'Asunto', 'Detalles', 'Estado', $colFecha), ';');
+  fputcsv($out, array('Expediente', 'Documento', 'Numero', $colOrigen, 'Tramite', 'Asunto', 'Detalles', 'Estado', $colFecha), ';', '"', '\\');
   foreach ($datosFiltrados as $rcsv) {
-    fputcsv($out, array($rcsv[4], $rcsv[3], $rcsv[5], $rcsv[1], $rcsv[2], $rcsv[6], $rcsv[7], estado_recepcion_label(isset($rcsv[11]) ? $rcsv[11] : ''), $rcsv[9]), ';');
+    fputcsv($out, array($rcsv[4], $rcsv[3], $rcsv[5], $rcsv[1], $rcsv[2], $rcsv[6], $rcsv[7], estado_recepcion_label(isset($rcsv[11]) ? $rcsv[11] : ''), $rcsv[9]), ';', '"', '\\');
   }
   fclose($out);
   exit;
@@ -261,6 +261,10 @@ if ($exportFmt === 'pdf') {
   // que tcpdf_include.php resuelva sus rutas internas de configuración.
   $cwd_prev = getcwd();
   chdir(__DIR__ . '/../tcpdf/examples');
+  // TCPDF es una versión antigua: sus avisos 'Deprecated' (PHP 8.4+) rompían el PDF
+  // y llenaban el log de errores. Se silencian solo para esta exportación.
+  error_reporting(E_ALL & ~E_DEPRECATED);
+  ini_set('display_errors', '0');
   require_once __DIR__ . '/../tcpdf/examples/tcpdf_include.php';
   chdir($cwd_prev);
   $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);

@@ -88,9 +88,9 @@ if ($exportFmt === 'csv') {
   header('Content-Disposition: attachment; filename="emision_' . date('Ymd_His') . '.csv"');
   echo "\xEF\xBB\xBF";
   $out = fopen('php://output', 'w');
-  fputcsv($out, array('Documento', 'Numero', 'Asunto', 'Detalles', 'Destino', 'Estado', 'Fecha'), ';');
+  fputcsv($out, array('Documento', 'Numero', 'Asunto', 'Detalles', 'Destino', 'Estado', 'Fecha'), ';', '"', '\\');
   foreach ($datosFiltrados as $rc) {
-    fputcsv($out, array($rc[1], $rc[2], $rc[3], $rc[4], $rc[5], estado_emision($rc), $rc[8]), ';');
+    fputcsv($out, array($rc[1], $rc[2], $rc[3], $rc[4], $rc[5], estado_emision($rc), $rc[8]), ';', '"', '\\');
   }
   fclose($out);
   exit;
@@ -109,6 +109,10 @@ if ($exportFmt === 'xls') {
 if ($exportFmt === 'pdf') {
   $cwd_prev = getcwd();
   chdir(__DIR__ . '/../tcpdf/examples');
+  // TCPDF es una versión antigua: sus avisos 'Deprecated' (PHP 8.4+) rompían el PDF
+  // y llenaban el log de errores. Se silencian solo para esta exportación.
+  error_reporting(E_ALL & ~E_DEPRECATED);
+  ini_set('display_errors', '0');
   require_once __DIR__ . '/../tcpdf/examples/tcpdf_include.php';
   chdir($cwd_prev);
   $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);

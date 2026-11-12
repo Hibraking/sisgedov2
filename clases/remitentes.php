@@ -243,6 +243,7 @@ class Remitente
             $result->execute([$codigo]);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
+            echo 'ERROR_EN_USO: No se puede eliminar porque está siendo usado en otros registros del sistema.';
             die();
         }
     }
@@ -271,7 +272,9 @@ if (isset($_POST["Insertar"]) || isset($_POST["Modificar"]) || isset($_POST["Cod
     csrf_require();
     exigir_acceso_endpoint();
 }
-if (isset($_POST['Codigo'])) {
+// Al pulsar Eliminar también llega 'Codigo': este bloque (insertar/modificar)
+// NO debe ejecutarse, o dejaba el registro con nombre vacío si no se podía borrar.
+if (isset($_POST['Codigo']) && !isset($_POST['Emilinar'])) {
 
     if ($_POST['Codigo'] == '' & $_POST['Nombres'] != '') {
 

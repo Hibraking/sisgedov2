@@ -139,6 +139,7 @@ FROM oficinas";
             $result->execute([$codigo]);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
+            echo 'ERROR_EN_USO: No se puede eliminar porque está siendo usado en otros registros del sistema.';
         }
     }
 }
@@ -148,7 +149,9 @@ if (isset($_POST["Insertar"]) || isset($_POST["insertar"]) || isset($_POST["Modi
     csrf_require();
     exigir_acceso_endpoint();
 }
-if (isset($_POST['Codigo'])) {
+// Al pulsar Eliminar también llega 'Codigo': este bloque (insertar/modificar)
+// NO debe ejecutarse, o dejaba el registro con nombre vacío si no se podía borrar.
+if (isset($_POST['Codigo']) && !isset($_POST['Emilinar'])) {
     $siglas = isset($_POST['Siglas']) ? trim((string)$_POST['Siglas']) : '';
     $siglas = $siglas === '' ? null : substr($siglas, 0, 60);
     if ($_POST['Codigo'] == '' && $_POST['Nombre'] != '') {

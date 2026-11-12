@@ -90,9 +90,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
   header('Content-Disposition: attachment; filename="estados_atencion_' . date('Ymd_His') . '.csv"');
   echo "\xEF\xBB\xBF";
   $out = fopen('php://output', 'w');
-  fputcsv($out, array('Expediente', 'Documento', 'Tramite', 'Asunto', 'Estado', 'Fecha'), ';');
+  fputcsv($out, array('Expediente', 'Documento', 'Tramite', 'Asunto', 'Estado', 'Fecha'), ';', '"', '\\');
   foreach ($filas as $rc) {
-    fputcsv($out, array($rc[1], $rc[2], $rc[7], $rc[3], $rc[4], $rc[5]), ';');
+    fputcsv($out, array($rc[1], $rc[2], $rc[7], $rc[3], $rc[4], $rc[5]), ';', '"', '\\');
   }
   fclose($out);
   exit;
