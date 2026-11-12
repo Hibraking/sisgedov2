@@ -188,6 +188,26 @@ class Remitente
             error_log($exc->getMessage());
         }
     }
+    /** id del remitente con ese mismo nombre completo (0 si no hay o viene vacío). */
+    public static function remitente_por_nombre($apellidos, $nombre)
+    {
+        $completo = trim(preg_replace('/\s+/u', ' ', trim((string)$apellidos) . ' ' . trim((string)$nombre)));
+        if ($completo === '') return 0;
+        try {
+            $conexion = new Conexion();
+            $conectado = $conexion->conectar();
+            $sql = "SELECT idremitente FROM remitente
+                     WHERE REGEXP_REPLACE(TRIM(CONCAT_WS(' ', TRIM(apellidos), TRIM(nombres))), ' {2,}', ' ') = ?
+                     ORDER BY (TRIM(IFNULL(d_identidad,'')) <> '') DESC, idremitente ASC
+                     LIMIT 1";
+            $result = $conectado->prepare($sql);
+            $result->execute([$completo]);
+            return (int)$result->fetchColumn();
+        } catch (Exception $exc) {
+            error_log($exc->getMessage());
+            return 0;
+        }
+    }
     public function insertar_datos($apellidos, $nombre, $direccion, $email, $telefono)
     {
         $idrem = self::getinforemitente($email);
@@ -196,6 +216,14 @@ class Remitente
                 echo $idrem;
                 return;
             }
+        }
+        // Si ya existe un remitente con los mismos apellidos y nombres (sin
+        // distinguir mayúsculas, tildes ni espacios de más), se reutiliza en
+        // vez de crear otro: así se acumulaban 20 copias del mismo remitente.
+        $idExistente = self::remitente_por_nombre($apellidos, $nombre);
+        if ($idExistente > 0) {
+            echo $idExistente;
+            return;
         }
         try {
             $conexion = new Conexion();

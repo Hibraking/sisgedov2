@@ -79,6 +79,23 @@ class Documento
             error_log($exc->getMessage());
         }
     }
+    /** true si ya existe otro tipo de documento con ese nombre (sin distinguir mayúsculas, tildes ni espacios de más). */
+    public function nombre_duplicado($nombre, $excluirId = 0)
+    {
+        try {
+            $conexion = new Conexion();
+            $conectado = $conexion->conectar();
+            $sql = "SELECT COUNT(*) FROM documentos
+                     WHERE REGEXP_REPLACE(TRIM(nombre_documento), ' {2,}', ' ') = REGEXP_REPLACE(TRIM(?), ' {2,}', ' ')
+                       AND iddocumentos <> ?";
+            $result = $conectado->prepare($sql);
+            $result->execute([(string)$nombre, (int)$excluirId]);
+            return ((int)$result->fetchColumn()) > 0;
+        } catch (Exception $exc) {
+            error_log($exc->getMessage());
+            return false;
+        }
+    }
     public function insertar_datos($nombre, $descripcion, $dias)
     {
 
@@ -135,6 +152,11 @@ if (isset($_POST["Insertar"]) || isset($_POST["insertar"]) || isset($_POST["Modi
 // Al pulsar Eliminar también llega 'Codigo': este bloque (insertar/modificar)
 // NO debe ejecutarse, o dejaba el registro con nombre vacío si no se podía borrar.
 if (isset($_POST['Codigo']) && !isset($_POST['Emilinar'])) {
+    if (trim((string)($_POST['Nombre'] ?? '')) !== ''
+        && $dml_documento->nombre_duplicado($_POST['Nombre'], (int)$_POST['Codigo'])) {
+        echo 'ERROR_VALIDACION: Ya existe un tipo de documento con ese nombre.';
+        exit;
+    }
     if ($_POST['Codigo'] == '' & $_POST['Nombre'] != '') {
         $dml_documento->insertar_datos($_POST['Nombre'], $_POST['Descripcion'], $_POST['Dias']);
         header("location: ../vistas/v_documentos.php");
@@ -148,5 +170,9 @@ if (isset($_POST['Emilinar'])) {
     $dml_documento->elimnar_datos($_POST['Codigo']);
 }
 if (isset($_POST['insertar'])) {
+    if ($dml_documento->nombre_duplicado($_POST['nombre'])) {
+        echo 'ERROR_VALIDACION: Ya existe un tipo de documento con ese nombre.';
+        exit;
+    }
     $dml_documento->insertar_datos($_POST['nombre'], $_POST['descripcion'], $_POST['dias']);
 }
