@@ -255,7 +255,7 @@ $firstF = $first ? mpv_fila($first) : null;
                       <div class="muted" style="font-size:11px">No subsanó a tiempo</div>
                     <?php } else { ?>
                       <span class="cell-txt"><?= h($r[15]) ?></span>
-                      <div class="muted" style="font-size:11px"><?= intval($r[16]) === 1 ? 'Recibido por la oficina' : 'Pendiente en la oficina' ?></div>
+                      <div class="muted" style="font-size:11px"><?= intval($r[16]) === 1 ? 'Recibido en destino' : 'Por recibir en destino' ?></div>
                     <?php } ?>
                   <?php } ?>
                 </div>

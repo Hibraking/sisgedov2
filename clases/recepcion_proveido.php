@@ -31,9 +31,13 @@ if (!function_exists('sisgedo_contexto_usuario_actual')) {
                     from personal
                     inner join responsables on personal.idpersonal = responsables.idpersonal
                     where personal.idpersonal = ?
+                    -- Varios cargos: el de la sesión, luego el ACTIVO, luego el más antiguo
+                    -- (antes se tomaba cualquiera, incluso uno inactivo de otra oficina).
+                    order by (responsables.idresponsables = ?) desc, (responsables.estado = 1) desc,
+                             responsables.idresponsables asc
                     limit 1";
             $stmt = $conectado->prepare($sql);
-            $stmt->execute([$contexto['idpersonal']]);
+            $stmt->execute([$contexto['idpersonal'], $contexto['idresponsable']]);
             $fila = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($fila) {
@@ -994,25 +998,71 @@ order by idMovimientos desc;";
             echo $exc->getMessage();
         }
     }
+    /** Motivo del último fallo de una acción de escritura (para mostrarlo al usuario). */
+    public $ultimo_error = '';
+
+    /**
+     * RECEPCIÓN INICIAL de un documento externo (registro) o emitido.
+     * Antes no se comprobaba si ya estaba recepcionado: un doble clic, dos
+     * personas a la vez o un documento que "reaparecía" en la bandeja creaban
+     * recepciones duplicadas. Ahora se bloquea el documento (FOR UPDATE) y solo
+     * se recepciona si aún no tiene su movimiento inicial.
+     * Devuelve el id del movimiento creado (lo usa "recepcionar y derivar") o 0.
+     */
     public function insertar_datos($idregdocs, $iddocs_emitidos, $idaccion, $idoficina, $idresponsable, $num_exp, $detalles, $folio)
     {
+        $this->ultimo_error = '';
         if (intval($idregdocs) > 0) {
+            $idregdocs = intval($idregdocs);
             $iddocs_emitidos = null;
         } else {
             $idregdocs = null;
+            $iddocs_emitidos = intval($iddocs_emitidos) > 0 ? intval($iddocs_emitidos) : null;
+        }
+        if ($idregdocs === null && $iddocs_emitidos === null) {
+            $this->ultimo_error = 'No se identificó el documento. Actualice la página.';
+            return 0;
         }
 
+        $conectado = null;
         try {
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
+            $conectado->beginTransaction();
+            if ($idregdocs !== null) {
+                $lock = $conectado->prepare("SELECT idregistro_documentos FROM registro_documentos WHERE idregistro_documentos = ? FOR UPDATE");
+                $lock->execute([$idregdocs]);
+                $ya = $conectado->prepare("SELECT COUNT(*) FROM movimientos WHERE idregdocs = ? AND idmovimientoant IS NULL");
+                $ya->execute([$idregdocs]);
+            } else {
+                $lock = $conectado->prepare("SELECT iddocs_emitidos FROM docs_emitidos WHERE iddocs_emitidos = ? FOR UPDATE");
+                $lock->execute([$iddocs_emitidos]);
+                $ya = $conectado->prepare("SELECT COUNT(*) FROM movimientos WHERE iddocs_emitidos = ? AND idmovimientoant IS NULL");
+                $ya->execute([$iddocs_emitidos]);
+            }
+            if ($lock->fetchColumn() === false) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'El documento ya no existe. Actualice la página.';
+                return 0;
+            }
+            if ((int)$ya->fetchColumn() > 0) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'Este documento ya fue recepcionado. Actualice la página.';
+                return 0;
+            }
             $sql = "INSERT INTO movimientos(idregdocs,iddocs_emitidos,idacciondocs,idoficina_derivar,idresponsable,num_exp,detalles,folio)
                     VALUES(?,?,?,?,?,?,?,?);";
             $result = $conectado->prepare($sql);
             $result->execute([$idregdocs, $iddocs_emitidos, $idaccion, $idoficina, $idresponsable, $num_exp, $detalles, $folio]);
-            // Devuelve el id del movimiento creado (lo usa "recepcionar y derivar")
-            return intval($conectado->lastInsertId());
+            $id = intval($conectado->lastInsertId());
+            $conectado->commit();
+            return $id;
         } catch (Exception $exc) {
-            error_log($exc->getMessage());
+            if ($conectado && $conectado->inTransaction()) {
+                $conectado->rollBack();
+            }
+            error_log('recepcion insertar_datos: ' . $exc->getMessage());
+            $this->ultimo_error = 'No se pudo recepcionar el documento. Intente nuevamente.';
             return 0;
         }
     }
@@ -1073,10 +1123,26 @@ order by idMovimientos desc;";
             $iddocrespuesta = intval($iddocrespuesta);
         }
 
+        $this->ultimo_error = '';
+        $conectado = null;
         try {
-
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
+            // Las dos operaciones van JUNTAS (transacción): antes, si fallaba la
+            // segunda, quedaba el documento derivado y a la vez pendiente en origen.
+            $conectado->beginTransaction();
+            $lock = $conectado->prepare("SELECT idMovimientos FROM movimientos WHERE idMovimientos = ? FOR UPDATE");
+            $lock->execute([intval($codigo)]);
+            if ($lock->fetchColumn() === false) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'No se encontró el movimiento del documento. Actualice la página.';
+                return false;
+            }
+            if ($this->derivacion_pendiente($codigo, $idoficina_derivar, $conectado)) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'Este documento ya fue enviado a esa oficina y aún no lo recibe. Actualice la página.';
+                return false;
+            }
             $sql = "INSERT INTO movimientos(idregdocs,iddocs_emitidos,idacciondocs,idestadodocs,idoficina_derivar,detalle_derivado,idmovimientoant)
                     VALUES(?,?,?,?,?,?,?);";
             $result = $conectado->prepare($sql);
@@ -1086,8 +1152,34 @@ order by idMovimientos desc;";
                         where idMovimientos=? ;";
             $resultt = $conectado->prepare($sqll);
             $resultt->execute([$nuevo_estado, $iddocrespuesta, $codigo]);
+            $conectado->commit();
+            return true;
         } catch (Exception $exc) {
-            error_log($exc->getMessage());
+            if ($conectado && $conectado->inTransaction()) {
+                $conectado->rollBack();
+            }
+            error_log('insert_deriv_resp_dev: ' . $exc->getMessage());
+            $this->ultimo_error = 'No se pudo completar la derivación. Intente nuevamente.';
+            return false;
+        }
+    }
+
+    /**
+     * ¿Ya hay un envío PENDIENTE (aún no recibido) de este movimiento a esa oficina?
+     * Evita derivaciones duplicadas por doble clic o por dos personas a la vez.
+     * Volver a enviarlo a la misma oficina sí se permite una vez que la recibió.
+     */
+    public function derivacion_pendiente($codigo, $idoficina_derivar, $conectado = null)
+    {
+        try {
+            $conectado = $conectado ?: (new Conexion())->conectar();
+            $q = $conectado->prepare("SELECT COUNT(*) FROM movimientos
+                                       WHERE idmovimientoant = ? AND idoficina_derivar = ? AND estado = 0");
+            $q->execute([intval($codigo), intval($idoficina_derivar)]);
+            return ((int)$q->fetchColumn()) > 0;
+        } catch (Exception $exc) {
+            error_log('derivacion_pendiente: ' . $exc->getMessage());
+            return false;
         }
     }
     public function update_status($valor, $codigo)
@@ -1161,16 +1253,25 @@ on data_anterior.idMovimientos=data_nueva.movant);";
             //                    header("location: ../login.php");
             //                   return;
             //               }
+            $this->ultimo_error = '';
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
+            // Solo si sigue PENDIENTE (estado=0): antes, recibirlo de nuevo (doble
+            // clic, dos personas) sobrescribía quién y cuándo lo recibió.
             $sql = "update movimientos
                     set idestadodocs=1,idresponsable=?,num_exp=?,detalles=?,fecha_hora=now(),estado=1,folio=?
-                    where idMovimientos=?";
+                    where idMovimientos=? and estado=0";
             $result = $conectado->prepare($sql);
             $result->execute([$idresponsable, $numexp, $detalles, $folio, $idmovimiento]);
+            if ($result->rowCount() === 0) {
+                $this->ultimo_error = 'Este documento ya fue recepcionado (o ya no está pendiente). Actualice la página.';
+                return false;
+            }
+            return true;
         } catch (Exception $exc) {
-            echo json_encode($exc->getMessage());
-            die;
+            error_log('recibir_derivado: ' . $exc->getMessage());
+            $this->ultimo_error = 'No se pudo recepcionar el documento. Intente nuevamente.';
+            return false;
         }
     }
     public function obtener_docs_emitidos($idoficina)
@@ -1213,11 +1314,33 @@ from docs_emitidos
             echo json_encode(array());
         }
     }
+    /**
+     * Archiva un documento tramitado. Antes no se comprobaba si ya estaba
+     * archivado (había documentos archivados dos veces) y las dos operaciones
+     * no iban juntas. Devuelve true/false (motivo en $this->ultimo_error).
+     */
     public function insert_archivar($idarchivador, $idmovimiento, $detalles, $idestadodoc)
     {
+        $this->ultimo_error = '';
+        $conectado = null;
         try {
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
+            $conectado->beginTransaction();
+            $lock = $conectado->prepare("SELECT idMovimientos FROM movimientos WHERE idMovimientos = ? FOR UPDATE");
+            $lock->execute([intval($idmovimiento)]);
+            if ($lock->fetchColumn() === false) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'No se encontró el documento. Actualice la página.';
+                return false;
+            }
+            $ya = $conectado->prepare("SELECT COUNT(*) FROM docs_archivados WHERE idmovimientos = ?");
+            $ya->execute([intval($idmovimiento)]);
+            if ((int)$ya->fetchColumn() > 0) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'Este documento ya está archivado.';
+                return false;
+            }
             $sql = "INSERT INTO docs_archivados(iddocs_archivados,idarchivador,idmovimientos,detalles)
            VALUES(null,?,?,?);";
             $result = $conectado->prepare($sql);
@@ -1227,9 +1350,15 @@ from docs_emitidos
            where idMovimientos=?;";
             $resultt = $conectado->prepare($sqll);
             $resultt->execute([$idestadodoc, $idmovimiento]);
+            $conectado->commit();
+            return true;
         } catch (Exception $exc) {
-            error_log($exc->getMessage());
-            echo json_encode(array());
+            if ($conectado && $conectado->inTransaction()) {
+                $conectado->rollBack();
+            }
+            error_log('insert_archivar: ' . $exc->getMessage());
+            $this->ultimo_error = 'No se pudo archivar el documento. Intente nuevamente.';
+            return false;
         }
     }
 }
@@ -1279,8 +1408,8 @@ if (isset($_POST['insertar'])) {
         echo 'ERROR_VALIDACION: Seleccione una acción a realizar.';
         exit;
     }
-    $idregdocs = $_POST['idregdocs'];
-    $iddocs_emitidos = $_POST['iddocs_emitidos'];
+    $idregdocs = isset($_POST['idregdocs']) ? $_POST['idregdocs'] : null;
+    $iddocs_emitidos = isset($_POST['iddocs_emitidos']) ? $_POST['iddocs_emitidos'] : null;
     // (Seguridad) El actor y su oficina salen de la SESIÓN, no del POST:
     // así nadie puede recepcionar a nombre de otro responsable u otra oficina.
     $contexto = sisgedo_contexto_usuario_actual();
@@ -1289,18 +1418,29 @@ if (isset($_POST['insertar'])) {
     $detalles = $_POST['detalles'];
     $num_exp = $dml_recep_docs->gen_num_exp($idoficina);
     $nuevo_mov = $dml_recep_docs->insertar_datos($idregdocs, $iddocs_emitidos, $idaccion, $idoficina, $idresponsable, $num_exp, $detalles, $folio);
-    // Devuelve el id del movimiento creado; los llamadores antiguos ignoran la respuesta.
-    echo intval($nuevo_mov);
+    // Devuelve el id del movimiento creado. Antes, si fallaba, respondía "0" y la
+    // pantalla lo tomaba como éxito sin avisar: ahora explica el motivo.
+    if (intval($nuevo_mov) > 0) {
+        echo intval($nuevo_mov);
+    } else {
+        echo 'ERROR_VALIDACION: ' . $dml_recep_docs->ultimo_error;
+    }
 }
-if (isset($_POST['Eliminar'])) {
-    $dml_recep_docs->elimnar_datos($_POST['Codigo']);
-}
+// 'Eliminar' (borrar un movimiento) y 'update_status' se quitaron: ninguna pantalla
+// los usa (solo la vista antigua vistas/v_reg_docs_reporte.php, ya retirada) y
+// borrar movimientos dejaba documentos ya recibidos de nuevo "por recepcionar".
 if (isset($_POST['Obtener'])) {
     $dml_recep_docs->obtener_datos_insertar($_POST['Codigo']);
 }
 if (isset($_POST['insert_deriv_resp_dev'])) {
     //cargando los archivos que vien completamente por formappend
 
+    // Envío duplicado (doble clic / dos personas): se rechaza ANTES de crear el
+    // documento de respuesta o subir archivos, para no dejar nada a medias.
+    if ($dml_recep_docs->derivacion_pendiente(isset($_POST['Codigo']) ? $_POST['Codigo'] : 0, isset($_POST['idoficina_derivar']) ? $_POST['idoficina_derivar'] : 0)) {
+        echo 'ERROR_VALIDACION: Este documento ya fue enviado a esa oficina y aún no lo recibe. Actualice la página.';
+        exit;
+    }
     $iddocumento = isset($_POST["Documento"]) ? intval($_POST["Documento"]) : 0;
     // (Seguridad) El responsable que deriva/responde sale de la SESIÓN, no del POST.
     $idresponsable = !empty($_SESSION['idresponsable']) ? intval($_SESSION['idresponsable']) : 0;
@@ -1349,10 +1489,9 @@ if (isset($_POST['insert_deriv_resp_dev'])) {
         }
     }
     //insertamos el movimiento
-    $dml_recep_docs->insert_deriv_resp_dev($_POST['idregdocs'], $_POST['iddocs_emitidos'], $_POST['idacciondocs'], $_POST['idestadodocs'], $_POST['idoficina_derivar'], $_POST['detalles'], $_POST['Codigo'], $_POST['NuevoEstado'], $iddocrespuesta);
-}
-if (isset($_POST['update_status'])) {
-    $dml_recep_docs->update_status($_POST['codigo'], $_POST['id']);
+    if (!$dml_recep_docs->insert_deriv_resp_dev((isset($_POST['idregdocs']) ? $_POST['idregdocs'] : null), (isset($_POST['iddocs_emitidos']) ? $_POST['iddocs_emitidos'] : null), (isset($_POST['idacciondocs']) ? $_POST['idacciondocs'] : null), (isset($_POST['idestadodocs']) ? $_POST['idestadodocs'] : null), (isset($_POST['idoficina_derivar']) ? $_POST['idoficina_derivar'] : null), (isset($_POST['detalles']) ? $_POST['detalles'] : null), (isset($_POST['Codigo']) ? $_POST['Codigo'] : null), (isset($_POST['NuevoEstado']) ? $_POST['NuevoEstado'] : null), $iddocrespuesta)) {
+        echo 'ERROR_VALIDACION: ' . $dml_recep_docs->ultimo_error;
+    }
 }
 if (isset($_POST['recibir_derivado'])) {
     // Validación de servidor (no confiar solo en el JavaScript del modal)
@@ -1366,7 +1505,9 @@ if (isset($_POST['recibir_derivado'])) {
     $idresponsable_rd = !empty($contexto['idresponsable']) ? intval($contexto['idresponsable']) : null;
     $idoficina_rd     = !empty($contexto['idoficina']) ? intval($contexto['idoficina']) : 0;
     $num_exp = $dml_recep_docs->gen_num_exp($idoficina_rd);
-    $dml_recep_docs->recibir_derivado($idresponsable_rd, $num_exp, $_POST['detalles'], intval($folio_rd), $_POST['codigo']);
+    if (!$dml_recep_docs->recibir_derivado($idresponsable_rd, $num_exp, $_POST['detalles'], intval($folio_rd), intval($_POST['codigo']))) {
+        echo 'ERROR_VALIDACION: ' . $dml_recep_docs->ultimo_error;
+    }
 }
 if (isset($_POST['carga_respuestas'])) {
     $dml_recep_docs->obtener_docs_emitidos($_POST['idoficina']);
@@ -1378,5 +1519,7 @@ if (isset($_POST['get_archivadores'])) {
     $dml_recep_docs->recuperar_archivadores($_POST['idoficina']);
 }
 if (isset($_POST['insert_archivar'])) {
-    $dml_recep_docs->insert_archivar($_POST['idarchivador'], $_POST['idmovimiento'], $_POST['detalles'], $_POST['idestadodoc']);
+    if (!$dml_recep_docs->insert_archivar($_POST['idarchivador'], $_POST['idmovimiento'], $_POST['detalles'], $_POST['idestadodoc'])) {
+        echo 'ERROR_VALIDACION: ' . $dml_recep_docs->ultimo_error;
+    }
 }

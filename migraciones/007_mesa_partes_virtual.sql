@@ -25,6 +25,11 @@
 -- =====================================================================
 SET NAMES utf8mb4;
 
+-- ¿Primera ejecución? (si la columna aún no existe). El paso 2 solo se hace la
+-- primera vez: repetirlo ocultaría documentos virtuales pendientes reales.
+SET @mpv_primera = (SELECT COUNT(*) = 0 FROM information_schema.columns
+  WHERE table_schema=DATABASE() AND table_name='registro_documentos' AND column_name='mpv_recepcion');
+
 -- 1) Columnas nuevas
 SET @s=(SELECT IF(COUNT(*)=0,
   'ALTER TABLE `registro_documentos` ADD COLUMN `mpv_recepcion` DATETIME NULL DEFAULT NULL COMMENT ''Mesa de Partes Virtual: fecha en que mesa de partes lo recepcionó (NULL = pendiente)''',
@@ -48,7 +53,8 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 --    registro y sin "quién", para distinguirlos de los recepcionados en el módulo)
 UPDATE registro_documentos rd
    SET rd.mpv_recepcion = rd.fecha_registro
- WHERE COALESCE(rd.recepcion_web, 0) = 1
+ WHERE @mpv_primera = 1
+   AND COALESCE(rd.recepcion_web, 0) = 1
    AND rd.mpv_recepcion IS NULL
    AND (   rd.idoficina IS NOT NULL
         OR rd.estado_recepcion <> 0

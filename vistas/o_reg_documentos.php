@@ -229,8 +229,8 @@ $tok = csrf_token();
             <div class="fld"><label>Estado</label>
               <div class="inp" style="padding:0"><select id="estado" style="width:100%;height:100%;border:0;outline:0;background:none;padding:0 10px;color:#475569;font-size:12px">
                   <option value="Todos" <?= $estadoFiltro === 'Todos' ? 'selected' : '' ?>>Todos</option>
-                  <option value="Pendiente" <?= $estadoFiltro === 'Pendiente' ? 'selected' : '' ?>>Pendiente</option>
-                  <option value="Recepcionado" <?= $estadoFiltro === 'Recepcionado' ? 'selected' : '' ?>>Recepcionado</option>
+                  <option value="Pendiente" <?= $estadoFiltro === 'Pendiente' ? 'selected' : '' ?>>Por recibir en destino</option>
+                  <option value="Recepcionado" <?= $estadoFiltro === 'Recepcionado' ? 'selected' : '' ?>>Recibido en destino</option>
                 </select><i class="fa fa-angle-down" style="padding-right:10px"></i></div>
             </div>
             <div class="field-actions">
@@ -273,6 +273,7 @@ $tok = csrf_token();
             foreach ($datosPagina as $i => $r) {
               $est = intval($r[13]) === 1 ? 'Recepcionado' : 'Pendiente';
               $dotE = $est === 'Recepcionado' ? 'd-green' : 'd-orange';
+              $estTxt = $est === 'Recepcionado' ? 'Recibido en destino' : 'Por recibir en destino';
               $editable = intval($r[13]) === 0;
               $adj = $r[14];
               $esWeb = isset($r[20]) && intval($r[20]) === 1;
@@ -283,7 +284,7 @@ $tok = csrf_token();
               $esNuevo = $esWeb && $sinDestino && $editable
                 && strtotime((string)$r[12]) >= strtotime('-' . intval(SISGEDO_DIAS_NUEVO) . ' days');
             ?>
-              <div class="row rowg <?= $i === 0 ? 'sel' : '' ?><?= $esNuevo ? ' row-nuevo' : '' ?>" data-id="<?= h($r[0]) ?>" data-exp="<?= h($r[5]) ?>" data-doc="<?= h($r[1] . ' ' . $r[6]) ?>" data-iddoc="<?= h($r[15]) ?>" data-num="<?= h($r[6]) ?>" data-remit="<?= h($r[2]) ?>" data-idremit="<?= h($r[16]) ?>" data-tram="<?= h($r[3]) ?>" data-idtram="<?= h($r[17]) ?>" data-destino="<?= h($r[4]) ?>" data-idofi="<?= h($r[18]) ?>" data-asunto="<?= h($r[7]) ?>" data-parasu="<?= h($r[8]) ?>" data-obs="<?= h($r[9]) ?>" data-folios="<?= h($r[10]) ?>" data-proc="<?= h($r[19]) ?>" data-estado="<?= h($est) ?>" data-fecha="<?= h($r[11]) ?>" data-adj="<?= h($adj) ?>" data-editable="<?= $editable ? '1' : '0' ?>" data-origen="<?= h($origenReg) ?>" data-web="<?= $esWeb ? '1' : '0' ?>">
+              <div class="row rowg <?= $i === 0 ? 'sel' : '' ?><?= $esNuevo ? ' row-nuevo' : '' ?>" data-id="<?= h($r[0]) ?>" data-exp="<?= h($r[5]) ?>" data-doc="<?= h($r[1] . ' ' . $r[6]) ?>" data-iddoc="<?= h($r[15]) ?>" data-num="<?= h($r[6]) ?>" data-remit="<?= h($r[2]) ?>" data-idremit="<?= h($r[16]) ?>" data-tram="<?= h($r[3]) ?>" data-idtram="<?= h($r[17]) ?>" data-destino="<?= h($r[4]) ?>" data-idofi="<?= h($r[18]) ?>" data-asunto="<?= h($r[7]) ?>" data-parasu="<?= h($r[8]) ?>" data-obs="<?= h($r[9]) ?>" data-folios="<?= h($r[10]) ?>" data-proc="<?= h($r[19]) ?>" data-estado="<?= h($estTxt) ?>" data-fecha="<?= h($r[11]) ?>" data-adj="<?= h($adj) ?>" data-editable="<?= $editable ? '1' : '0' ?>" data-origen="<?= h($origenReg) ?>" data-web="<?= $esWeb ? '1' : '0' ?>">
                 <span class="exp"><?= h($r[5]) ?></span>
                 <div class="dcell">
                   <div style="display:flex;gap:8px"><i class="fa <?= $esWeb ? 'fa-globe' : 'fa-file-text-o' ?>" style="color:<?= $esWeb ? '#a855f7' : '#3b82f6' ?>;margin-top:2px"></i><span class="nm"><?= h($r[1]) ?> <?= h($r[6]) ?></span></div><span class="badge b-blue"><?= h(strtoupper($r[3])) ?></span><?php if ($esWeb) { ?> <span class="badge b-purple">VIRTUAL</span><?php } ?><?php if ($esNuevo) { ?> <span class="badge b-new" title="Documento nuevo de Mesa de Partes Virtual, pendiente de revisar y derivar"><i class="fa fa-star"></i> NEW</span><?php } ?>
@@ -293,7 +294,7 @@ $tok = csrf_token();
                   <p class="asun"><?= h($r[7]) ?></p>
                 </div>
                 <div class="dcell"><?php if ($r[4] !== '') { ?><span class="cell-txt"><?= h($r[4]) ?></span><?php } else { ?><span class="badge" style="background:#fffbeb;color:#b45309">SIN DESTINO</span><?php } ?></div>
-                <div><span class="st"><span class="dot <?= $dotE ?>"></span> <?= h($est) ?></span></div>
+                <div><span class="st"><span class="dot <?= $dotE ?>"></span> <?= h($estTxt) ?></span></div>
                 <div class="muted"><?= h($r[11]) ?></div>
                 <div class="act">
                   <?php if ($esWeb) {
@@ -397,7 +398,7 @@ $tok = csrf_token();
                 </div>
                 <div>
                   <dt>Estado</dt>
-                  <dd id="d-estado"><?= intval($first[13]) === 1 ? 'Recepcionado' : 'Pendiente' ?></dd>
+                  <dd id="d-estado"><?= intval($first[13]) === 1 ? 'Recibido en destino' : 'Por recibir en destino' ?></dd>
                 </div>
                 <div>
                   <dt>Fecha</dt>

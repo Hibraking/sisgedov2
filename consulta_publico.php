@@ -109,7 +109,7 @@ $mpvEstadosTexto = array(
   'recepcionado' => 'Recepcionado por mesa de partes',
   'no_presentado' => 'No presentado',
 );
-if (count($eventos) === 0 && isset($mpvEstadosTexto[$mpvEstado])) {
+if (count($eventos) === 0 && $mpvEstado !== null && isset($mpvEstadosTexto[$mpvEstado])) {
   $estadoActual = $mpvEstadosTexto[$mpvEstado];
 }
 if (count($eventos) > 0) {

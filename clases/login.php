@@ -98,6 +98,10 @@ try {
             from personal
             left join responsables on personal.idpersonal = responsables.idpersonal
             where personal.usuario = ?
+            -- Si la persona tiene varios cargos (responsables), usar el ACTIVO.
+            -- Antes se tomaba cualquiera y algunos usuarios entraban con un cargo
+            -- inactivo de otra oficina. Entre varios activos, el más antiguo (igual que antes).
+            order by (responsables.estado = 1) desc, responsables.idresponsables asc
             limit 1";
     $result = $conectado->prepare($sql);
     $result->execute([$usuario]);

@@ -218,15 +218,46 @@ class Archivar_docs
       if (intval($idmovimiento) == 0) {
          $idmovimiento = null;
       }
+      if ($iddocsemitidos === null && $idmovimiento === null) {
+         return 'No se identificó el documento. Actualice la página.';
+      }
+      $conectado = null;
       try {
          $conexion = new Conexion();
          $conectado = $conexion->conectar();
+         // No archivar dos veces el mismo documento (doble clic / dos personas)
+         $conectado->beginTransaction();
+         if ($iddocsemitidos !== null) {
+            $lock = $conectado->prepare("SELECT iddocs_emitidos FROM docs_emitidos WHERE iddocs_emitidos = ? FOR UPDATE");
+            $lock->execute([intval($iddocsemitidos)]);
+            $ya = $conectado->prepare("SELECT COUNT(*) FROM docs_archivados WHERE iddocs_emitidos = ?");
+            $ya->execute([intval($iddocsemitidos)]);
+         } else {
+            $lock = $conectado->prepare("SELECT idMovimientos FROM movimientos WHERE idMovimientos = ? FOR UPDATE");
+            $lock->execute([intval($idmovimiento)]);
+            $ya = $conectado->prepare("SELECT COUNT(*) FROM docs_archivados WHERE idmovimientos = ?");
+            $ya->execute([intval($idmovimiento)]);
+         }
+         if ($lock->fetchColumn() === false) {
+            $conectado->rollBack();
+            return 'El documento ya no existe. Actualice la página.';
+         }
+         if ((int)$ya->fetchColumn() > 0) {
+            $conectado->rollBack();
+            return 'Este documento ya está archivado.';
+         }
          $sql = "INSERT INTO docs_archivados(idarchivador,iddocs_emitidos,idmovimientos,detalles)
                       VALUES(?,?,?,?);";
          $result = $conectado->prepare($sql);
          $result->execute([$idarchivador, $iddocsemitidos, $idmovimiento, $detalles]);
+         $conectado->commit();
+         return true;
       } catch (Exception $exc) {
-         error_log($exc->getMessage());
+         if ($conectado && $conectado->inTransaction()) {
+            $conectado->rollBack();
+         }
+         error_log('archivar insert_data: ' . $exc->getMessage());
+         return 'No se pudo archivar el documento. Intente nuevamente.';
       }
    }
 }
@@ -245,5 +276,8 @@ if (isset($_POST['carga_archivador'])) {
    $dml_archivar_docs->lista_archivadores($_POST['idoficina']);
 }
 if (isset($_POST['insertar'])) {
-   $dml_archivar_docs->insert_data($_POST['idarchivador'], $_POST['iddocs_emitidos'], $_POST['idmovimientos'], $_POST['detalles']);
+   $resArch = $dml_archivar_docs->insert_data($_POST['idarchivador'], $_POST['iddocs_emitidos'], $_POST['idmovimientos'], $_POST['detalles']);
+   if ($resArch !== true) {
+      echo 'ERROR_VALIDACION: ' . $resArch;
+   }
 }

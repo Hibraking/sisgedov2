@@ -157,10 +157,12 @@ class Reg_docs
                       left join oficinas o on rd.idoficina=o.idoficinas ";
             require_once __DIR__ . '/mpv_util.php';
             if (sgd_mpv_ok($conectado)) {
-                // Con el módulo "Mesa de Partes Virtual" (migración 007): los documentos
-                // virtuales aún sin derivar se atienden allá; aquí entran al derivarlos.
+                // Con el módulo "Mesa de Partes Virtual" (migraciones 007/008), Registro es
+                // solo la mesa de partes PRESENCIAL. Los documentos virtuales se atienden
+                // (recepcionar, observar, derivar) y consultan (Historial) en su módulo;
+                // aquí podían volver a derivarse, editarse o eliminarse por error.
                 $sql .= " where rd.fecha_registro >= ? and rd.fecha_registro < date_add(?, interval 1 day)
-                            and not (coalesce(rd.recepcion_web,0)=1 and rd.idoficina is null)
+                            and coalesce(rd.recepcion_web,0)=0
                           order by rd.fecha_registro desc";
                 $params = [$desde, $hasta];
             } else {
@@ -223,16 +225,19 @@ class Reg_docs
         $out = array('hoy' => 0, 'semana' => 0, 'pendientes' => 0, 'anio' => 0);
         try {
             $c = (new Conexion())->conectar();
-            $q = $c->prepare("select count(*) from registro_documentos where fecha_registro >= curdate() and fecha_registro < curdate() + interval 1 day");
+            // Con el módulo Mesa de Partes Virtual, Registro cuenta solo lo presencial
+            require_once __DIR__ . '/mpv_util.php';
+            $pres = sgd_mpv_ok($c) ? " and coalesce(recepcion_web,0)=0" : "";
+            $q = $c->prepare("select count(*) from registro_documentos where fecha_registro >= curdate() and fecha_registro < curdate() + interval 1 day" . $pres);
             $q->execute();
             $out['hoy'] = intval($q->fetchColumn());
-            $q = $c->prepare("select count(*) from registro_documentos where fecha_registro>=date_sub(now(),interval 7 day)");
+            $q = $c->prepare("select count(*) from registro_documentos where fecha_registro>=date_sub(now(),interval 7 day)" . $pres);
             $q->execute();
             $out['semana'] = intval($q->fetchColumn());
-            $q = $c->prepare("select count(*) from registro_documentos where estado_recepcion=0");
+            $q = $c->prepare("select count(*) from registro_documentos where estado_recepcion=0" . $pres);
             $q->execute();
             $out['pendientes'] = intval($q->fetchColumn());
-            $q = $c->prepare("select count(*) from registro_documentos where fecha_registro >= makedate(year(now()),1) and fecha_registro < makedate(year(now())+1,1)");
+            $q = $c->prepare("select count(*) from registro_documentos where fecha_registro >= makedate(year(now()),1) and fecha_registro < makedate(year(now())+1,1)" . $pres);
             $q->execute();
             $out['anio'] = intval($q->fetchColumn());
         } catch (Exception $e) {
