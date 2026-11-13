@@ -59,5 +59,14 @@ Cada recepción, derivación o respuesta es una fila en `movimientos`
 ## 7. Archivo — *Operaciones > Archivo*
 `vistas/v_archivar_docs.php` → `clases/archivar_docs.php` (emitidos propios) y `recepcion_proveido.php` (tramitados).
 
+## 8. Supervisión del administrador
+`vistas/v_supervision.php` + selector del menú lateral → `clases/vista_oficina.php`
+- **Supervisión** (solo usuario 1): pendientes por oficina, más de 30 días, el más antiguo, recibidos hoy, derivados del mes.
+- **Entrar / "Trabajar en nombre de"**: cambia `idoficina`/`idresponsable` de la sesión; todas las bandejas
+  (Inicio, Recepción, Archivo, Emisión, Derivados) muestran esa oficina. Aviso naranja mientras dure.
+- Trazabilidad: actúa con un cargo propio "Administrador en nombre de X" (`responsables`: idpersonal 1,
+  oficina X, estado 0), así el historial muestra la oficina X y que fue el Administrador.
+- *Mi oficina* restaura su cargo real. Al iniciar sesión siempre vuelve a su oficina.
+
 ## Base de datos
 Ejecutar `migraciones/ACTUALIZAR_BD_COMPLETO.sql` (000 a 009, se puede repetir sin riesgo).

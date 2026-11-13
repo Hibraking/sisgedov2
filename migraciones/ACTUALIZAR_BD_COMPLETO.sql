@@ -900,6 +900,13 @@ SET @s=(SELECT IF(COUNT(*)=0,
   WHERE table_schema=DATABASE() AND table_name='movimientos' AND index_name='idx_mv_ant_ofi_estado');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 
+-- 5) Índice para el panel de Supervisión del administrador (pendientes por oficina)
+SET @s=(SELECT IF(COUNT(*)=0,
+  'ALTER TABLE `movimientos` ADD INDEX `idx_mv_estado_ofi` (`estado`, `idoficina_derivar`, `fecha_hora`, `idmovimientoant`)',
+  'DO 0') FROM information_schema.statistics
+  WHERE table_schema=DATABASE() AND table_name='movimientos' AND index_name='idx_mv_estado_ofi');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+
 -- Verificación: las tres primeras columnas deben salir en 0
 SELECT
   (SELECT COUNT(*) FROM registro_documentos rd WHERE rd.estado_recepcion = 0

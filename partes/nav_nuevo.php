@@ -132,10 +132,40 @@ $NAV_FOTO = '';
 if ($_SESSION['foto_perfil'] !== '' && is_file(__DIR__ . '/../images/perfiles/' . $_SESSION['foto_perfil'])) {
   $NAV_FOTO = $NAV_PREFIJO . 'images/perfiles/' . rawurlencode($_SESSION['foto_perfil']);
 }
+// ---- Administrador: elegir la oficina en la que trabaja (supervisión) ----
+require_once __DIR__ . '/../clases/vista_oficina.php';
+$NAV_ADMIN = sgd_es_admin();
+$NAV_VISTA = $NAV_ADMIN ? sgd_vista_actual() : null;
+$NAV_VOLVER = 'index.php';
+if (isset($_SERVER['SCRIPT_NAME']) && preg_match('~/(vistas|reportes)/([a-z_0-9]+\.php)$~i', $_SERVER['SCRIPT_NAME'], $nav_m)) {
+  $NAV_VOLVER = $nav_m[1] . '/' . $nav_m[2];
+}
 ?>
 <div class="side" data-foto="<?= h($NAV_FOTO) ?>">
+  <?php if ($NAV_ADMIN) { ?>
+    <form class="nav-admin <?= $NAV_VISTA['en_otra'] ? 'nav-admin-otra' : '' ?>" method="post" action="<?= $NAV_PREFIJO ?>clases/vista_oficina.php">
+      <input type="hidden" name="_csrf" value="<?= h(csrf_token()) ?>" />
+      <input type="hidden" name="volver" value="<?= h($NAV_VOLVER) ?>" />
+      <label><i class="fa fa-eye"></i> <?= $NAV_VISTA['en_otra'] ? 'Trabajando en nombre de:' : 'Oficina de trabajo:' ?></label>
+      <select name="ver_oficina" onchange="this.form.submit()" title="Como administrador puede ver y trabajar en la bandeja de cualquier oficina">
+        <option value="propia" <?= !$NAV_VISTA['en_otra'] ? 'selected' : '' ?>>Mi oficina (<?= h($NAV_VISTA['propia_nombre'] !== '' ? $NAV_VISTA['propia_nombre'] : 'sin oficina') ?>)</option>
+        <option value="todas">▸ Todas las oficinas (supervisión)</option>
+        <optgroup label="Trabajar en nombre de...">
+          <?php foreach (sgd_lista_oficinas() as $nav_o) { ?>
+            <option value="<?= h($nav_o[0]) ?>" <?= $NAV_VISTA['en_otra'] && (int)$nav_o[0] === $NAV_VISTA['idoficina'] ? 'selected' : '' ?>><?= h($nav_o[1]) ?></option>
+          <?php } ?>
+        </optgroup>
+      </select>
+      <?php if ($NAV_VISTA['en_otra']) { ?>
+        <div class="nav-admin-nota">Lo que haga quedará registrado como <b>Administrador</b> en nombre de esta oficina.</div>
+      <?php } ?>
+    </form>
+  <?php } ?>
   <nav>
     <a href="<?= $NAV_PREFIJO ?>index.php"><i class="fa fa-home"></i> Inicio</a>
+    <?php if ($NAV_ADMIN) { ?>
+      <a href="<?= $NAV_PREFIJO ?>vistas/v_supervision.php" <?= $NAV_ACTIVO === 'vistas/v_supervision.php' ? ' class="active"' : '' ?>><i class="fa fa-th-list"></i> Supervisión</a>
+    <?php } ?>
     <?php $nav_g = 0;
     foreach ($SISGEDO_MENU as $nav_grupo) {
       $nav_g++;

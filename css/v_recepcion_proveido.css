@@ -1632,3 +1632,38 @@ h1.t {
   min-width: 18px;
   text-align: center;
 }
+
+/* ---- Administrador: selector de oficina de trabajo (partes/nav_nuevo.php) ---- */
+.nav-admin {
+  margin: 12px 12px 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  font-size: 11.5px;
+  color: #3730a3;
+}
+.nav-admin label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.nav-admin select {
+  width: 100%;
+  font-size: 12px;
+  padding: 5px 6px;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  background: #fff;
+  color: #1e293b;
+}
+.nav-admin.nav-admin-otra {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #9a3412;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15);
+}
+.nav-admin-nota {
+  margin-top: 6px;
+  line-height: 1.4;
+}
