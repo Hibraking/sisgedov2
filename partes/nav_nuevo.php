@@ -107,14 +107,18 @@ try {
   if ($nav_pdo3) {
     $NAV_MPV_MODULO = sgd_mpv_ok($nav_pdo3);
     if ($NAV_MPV_MODULO && nav_puede('vistas/v_mesa_partes_virtual.php')) {
-      // por recepcionar (incluye subsanados) + por derivar + observados con plazo vencido
-      $nav_stn = $nav_pdo3->query("SELECT COUNT(*) FROM registro_documentos WHERE COALESCE(recepcion_web,0)=1
-                                     AND (   (mpv_recepcion IS NULL AND COALESCE(mpv_estado,'') IN ('','SUBSANADO'))
-                                          OR (mpv_recepcion IS NULL AND mpv_estado='OBSERVADO' AND mpv_plazo < CURDATE())
-                                          OR (mpv_idpersonal IS NOT NULL AND idoficina IS NULL AND COALESCE(estado_recepcion,0)=0))");
+      // por recepcionar (incluye subsanados) + observados con plazo vencido + por derivar.
+      // RENDIMIENTO: se ejecuta en TODAS las páginas. Dos conteos separados que
+      // usan los índices idx_rd_mpv e idx_rd_mpv_derivar (~0,3 ms); con un solo
+      // WHERE ... OR ... MySQL recorría la tabla (~35 ms por página).
+      $nav_stn = $nav_pdo3->query("SELECT
+            (SELECT COUNT(*) FROM registro_documentos WHERE recepcion_web = 1 AND mpv_recepcion IS NULL
+               AND (mpv_estado IS NULL OR mpv_estado = 'SUBSANADO' OR (mpv_estado = 'OBSERVADO' AND mpv_plazo < CURDATE())))
+          + (SELECT COUNT(*) FROM registro_documentos WHERE recepcion_web = 1 AND idoficina IS NULL AND mpv_idpersonal IS NOT NULL
+               AND mpv_recepcion IS NOT NULL AND COALESCE(estado_recepcion,0) = 0)");
       $NAV_NUEVOS_VIRTUAL = $nav_stn ? intval($nav_stn->fetchColumn()) : 0;
     } elseif (!$NAV_MPV_MODULO && nav_puede('vistas/o_reg_documentos.php')) {
-      $nav_stn = $nav_pdo3->prepare("SELECT COUNT(*) FROM registro_documentos WHERE COALESCE(recepcion_web,0)=1 AND idoficina IS NULL AND estado_recepcion=0 AND fecha_registro >= DATE_SUB(NOW(), INTERVAL ? DAY)");
+      $nav_stn = $nav_pdo3->prepare("SELECT COUNT(*) FROM registro_documentos WHERE recepcion_web = 1 AND idoficina IS NULL AND estado_recepcion=0 AND fecha_registro >= DATE_SUB(NOW(), INTERVAL ? DAY)");
       if ($nav_stn !== false && $nav_stn->execute(array(intval(SISGEDO_DIAS_NUEVO)))) {
         $NAV_NUEVOS_VIRTUAL = intval($nav_stn->fetchColumn());
       }

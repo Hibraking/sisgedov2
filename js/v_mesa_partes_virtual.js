@@ -9,6 +9,18 @@ function esc(s) {
   return $("<div>").text(s == null ? "" : String(s)).html();
 }
 
+/**
+ * Fila del documento a partir del elemento pulsado. Los botones de cada fila
+ * pasan el BOTÓN (this); el panel derecho pasa la fila. Antes se usaba el botón
+ * tal cual: la ventana salía vacía ("Exp. —", "no registró correo") y el
+ * servidor recibía id vacío ("ya fue atendido por otra persona").
+ */
+function filaDe(el) {
+  if (!el) return null;
+  var row = el.closest ? el.closest("#tbody .row") : null;
+  return row && row.dataset && row.dataset.id ? row : null;
+}
+
 /* ---------- Filtros ---------- */
 function irFiltros() {
   var p = new URLSearchParams(window.location.search);
@@ -176,6 +188,7 @@ function accion(btn, datos, alTerminar) {
 
 /* ---------- Recepcionar ---------- */
 function abrirRecepcionar(row) {
+  row = filaDe(row);
   if (!row) return;
   filaActual = row;
   document.getElementById("rc_info").innerHTML = resumen(row.dataset);
@@ -188,6 +201,7 @@ $("#rc_ok").on("click", function () {
 
 /* ---------- Observar ---------- */
 function abrirObservar(row) {
+  row = filaDe(row);
   if (!row) return;
   filaActual = row;
   document.getElementById("ob_info").innerHTML = resumen(row.dataset);
@@ -221,6 +235,7 @@ $("#ob_ok").on("click", function () {
 
 /* ---------- No presentado ---------- */
 function abrirNoPresentado(row) {
+  row = filaDe(row);
   if (!row) return;
   filaActual = row;
   document.getElementById("np_info").innerHTML = resumen(row.dataset) + (row.dataset.motivo ? "<br>Observación: " + esc(row.dataset.motivo) : "");
@@ -233,6 +248,7 @@ $("#np_ok").on("click", function () {
 
 /* ---------- Derivar ---------- */
 function abrirDerivar(row) {
+  row = filaDe(row);
   if (!row) return;
   filaActual = row;
   document.getElementById("dv_info").innerHTML = resumen(row.dataset);

@@ -42,6 +42,13 @@ SET @s=(SELECT IF(COUNT(*)=0,
   WHERE table_schema=DATABASE() AND table_name='registro_documentos' AND index_name='uq_rd_mpv_token');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 
+-- Índice para la bandeja "Por derivar" y el contador del menú (se consulta en cada página)
+SET @s=(SELECT IF(COUNT(*)=0,
+  'ALTER TABLE `registro_documentos` ADD INDEX `idx_rd_mpv_derivar` (`recepcion_web`, `idoficina`, `mpv_idpersonal`)',
+  'DO 0') FROM information_schema.statistics
+  WHERE table_schema=DATABASE() AND table_name='registro_documentos' AND index_name='idx_rd_mpv_derivar');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+
 CREATE TABLE IF NOT EXISTS `sgd_mpv_evento` (
   `idevento`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `idregistro_documentos` INT NOT NULL,

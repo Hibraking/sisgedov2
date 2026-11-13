@@ -55,7 +55,7 @@ class MesaPartesVirtual
                   LEFT JOIN tipo_tram t  ON t.idtipo_tram = rd.idtipo_tramite
                   LEFT JOIN personal p   ON p.idpersonal = rd.mpv_idpersonal
                   LEFT JOIN oficinas o   ON o.idoficinas = rd.idoficina
-                 WHERE COALESCE(rd.recepcion_web,0) = 1 ";
+                 WHERE rd.recepcion_web = 1 ";
     }
 
     /** Condición SQL de cada bandeja. */
@@ -63,7 +63,7 @@ class MesaPartesVirtual
     {
         switch ($bandeja) {
             case 'pendientes':
-                return " AND rd.mpv_recepcion IS NULL AND COALESCE(rd.mpv_estado,'') IN ('','SUBSANADO')";
+                return " AND rd.mpv_recepcion IS NULL AND (rd.mpv_estado IS NULL OR rd.mpv_estado = 'SUBSANADO')";
             case 'observados':
                 return " AND rd.mpv_recepcion IS NULL AND rd.mpv_estado = 'OBSERVADO'";
             case 'por_derivar':
@@ -123,7 +123,7 @@ class MesaPartesVirtual
         }
         try {
             $c = (new Conexion())->conectar();
-            $base = "SELECT COUNT(*) FROM registro_documentos rd WHERE COALESCE(rd.recepcion_web,0)=1 ";
+            $base = "SELECT COUNT(*) FROM registro_documentos rd WHERE rd.recepcion_web = 1 ";
             $out['pendientes'] = (int)$c->query($base . self::condicion('pendientes'))->fetchColumn();
             $out['observados'] = (int)$c->query($base . self::condicion('observados'))->fetchColumn();
             $out['vencidos'] = (int)$c->query($base . self::condicion('observados') . " AND rd.mpv_plazo < CURDATE()")->fetchColumn();
@@ -168,6 +168,42 @@ class MesaPartesVirtual
         }
     }
 
+    /** Explica por qué no se pudo recepcionar/observar (en vez de un mensaje genérico). */
+    private function motivo_no_disponible($id)
+    {
+        if ((int)$id <= 0) {
+            return 'No se identificó el documento. Actualice la página (F5) e intente de nuevo.';
+        }
+        try {
+            $st = (new Conexion())->conectar()->prepare(
+                "SELECT rd.recepcion_web, rd.mpv_recepcion, rd.mpv_estado,
+                        TRIM(CONCAT(COALESCE(p.nombres,''),' ',COALESCE(p.apellidos,'')))
+                   FROM registro_documentos rd LEFT JOIN personal p ON p.idpersonal = rd.mpv_idpersonal
+                  WHERE rd.idregistro_documentos = ?");
+            $st->execute(array((int)$id));
+            $x = $st->fetch(PDO::FETCH_NUM);
+        } catch (Exception $e) {
+            $x = null;
+        }
+        if (!$x) {
+            return 'El documento ya no existe. Actualice la página.';
+        }
+        if ((int)$x[0] !== 1) {
+            return 'Este documento no llegó por la Mesa de Partes Virtual.';
+        }
+        if ($x[1] !== null) {
+            return 'Este documento ya fue recepcionado el ' . date('d/m/Y h:i a', strtotime($x[1]))
+                . ($x[3] !== '' ? ' por ' . $x[3] : '') . '. Actualice la página.';
+        }
+        if ($x[2] === 'OBSERVADO') {
+            return 'Este documento está observado: espera que el ciudadano lo subsane. Actualice la página.';
+        }
+        if ($x[2] === 'NO_PRESENTADO') {
+            return 'Este documento se marcó como no presentado. Actualice la página.';
+        }
+        return 'No se pudo completar la acción. Actualice la página e intente de nuevo.';
+    }
+
     private function falta_migracion()
     {
         return array('ok' => false, 'msg' => 'Faltan las migraciones 007 y 008 (módulo Mesa de Partes Virtual).');
@@ -185,11 +221,11 @@ class MesaPartesVirtual
         $c = (new Conexion())->conectar();
         $st = $c->prepare("UPDATE registro_documentos
                               SET mpv_recepcion = NOW(), mpv_idpersonal = ?, mpv_estado = NULL, mpv_token = NULL
-                            WHERE idregistro_documentos = ? AND COALESCE(recepcion_web,0) = 1 AND mpv_recepcion IS NULL
-                              AND COALESCE(mpv_estado,'') IN ('','SUBSANADO')");
+                            WHERE idregistro_documentos = ? AND recepcion_web = 1 AND mpv_recepcion IS NULL
+                              AND (mpv_estado IS NULL OR mpv_estado = 'SUBSANADO')");
         $st->execute(array((int)$idpersonal, (int)$id));
         if ($st->rowCount() === 0) {
-            return array('ok' => false, 'msg' => 'El documento ya fue atendido por otra persona (recepcionado u observado). Actualice la página.');
+            return array('ok' => false, 'msg' => $this->motivo_no_disponible($id));
         }
         sgd_mpv_evento($c, $id, 'RECEPCIONADO', null, null, null, (int)$idpersonal);
         return array('ok' => true, 'msg' => 'Recepcionado.', 'correo' => $this->correo_recepcionado((int)$id));
@@ -211,11 +247,11 @@ class MesaPartesVirtual
         $c = (new Conexion())->conectar();
         $st = $c->prepare("UPDATE registro_documentos
                               SET mpv_estado = 'OBSERVADO', mpv_plazo = ?, mpv_token = ?
-                            WHERE idregistro_documentos = ? AND COALESCE(recepcion_web,0) = 1 AND mpv_recepcion IS NULL
-                              AND COALESCE(mpv_estado,'') IN ('','SUBSANADO')");
+                            WHERE idregistro_documentos = ? AND recepcion_web = 1 AND mpv_recepcion IS NULL
+                              AND (mpv_estado IS NULL OR mpv_estado = 'SUBSANADO')");
         $st->execute(array($plazo, $token, (int)$id));
         if ($st->rowCount() === 0) {
-            return array('ok' => false, 'msg' => 'El documento ya fue atendido por otra persona (recepcionado u observado). Actualice la página.');
+            return array('ok' => false, 'msg' => $this->motivo_no_disponible($id));
         }
         $adj = $c->prepare("SELECT adjunto FROM registro_documentos WHERE idregistro_documentos = ?");
         $adj->execute(array((int)$id));
@@ -230,7 +266,7 @@ class MesaPartesVirtual
             return $this->falta_migracion();
         }
         $c = (new Conexion())->conectar();
-        $q = $c->prepare("SELECT mpv_estado, mpv_plazo FROM registro_documentos WHERE idregistro_documentos = ? AND COALESCE(recepcion_web,0) = 1");
+        $q = $c->prepare("SELECT mpv_estado, mpv_plazo FROM registro_documentos WHERE idregistro_documentos = ? AND recepcion_web = 1");
         $q->execute(array((int)$id));
         $x = $q->fetch(PDO::FETCH_NUM);
         if (!$x || $x[0] !== 'OBSERVADO') {
@@ -264,7 +300,7 @@ class MesaPartesVirtual
         }
         $st = $c->prepare("UPDATE registro_documentos
                               SET idoficina = ?, idpersonal = ?
-                            WHERE idregistro_documentos = ? AND COALESCE(recepcion_web,0) = 1
+                            WHERE idregistro_documentos = ? AND recepcion_web = 1
                               AND mpv_recepcion IS NOT NULL AND idoficina IS NULL AND COALESCE(estado_recepcion,0) = 0");
         $st->execute(array((int)$idoficina, (int)$idpersonal, (int)$id));
         if ($st->rowCount() === 0) {
