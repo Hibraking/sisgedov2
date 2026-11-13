@@ -93,3 +93,14 @@ if (!defined('SGD_CORREO_IMAP_PUERTO'))      define('SGD_CORREO_IMAP_PUERTO', 99
 if (!defined('SGD_CORREO_IMAP_SEGURIDAD'))   define('SGD_CORREO_IMAP_SEGURIDAD', 'ssl'); // 993 = 'ssl'
 // Nombre de la carpeta en el servidor (Roundcube la muestra en la URL: _mbox=INBOX.Sent)
 if (!defined('SGD_CORREO_CARPETA_ENVIADOS')) define('SGD_CORREO_CARPETA_ENVIADOS', 'INBOX.Sent');
+
+/* ---------------------------------------------------------------------
+   AVISO A LA MESA DE PARTES
+   Cada documento que llega por la Mesa de Partes Virtual genera además un
+   correo a esta dirección (aparece en su bandeja de Entrada) con los datos
+   del expediente y el documento adjunto. "Responder" contesta al ciudadano.
+   '' = desactivado.
+   --------------------------------------------------------------------- */
+if (!defined('SGD_CORREO_AVISO_MPV'))          define('SGD_CORREO_AVISO_MPV', SISGEDO_MUNI_EMAIL);
+// Adjuntos más grandes no se envían por correo (se ven en el sistema por el enlace)
+if (!defined('SGD_CORREO_AVISO_ADJUNTO_MAX_MB')) define('SGD_CORREO_AVISO_ADJUNTO_MAX_MB', 15);

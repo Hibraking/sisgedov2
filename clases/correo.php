@@ -253,7 +253,9 @@ function sgd_correo_guardar_en_enviados($mime, &$error = '')
 
 /**
  * Envía un correo HTML. Devuelve true si el servidor SMTP lo aceptó.
- * $opc: tipo, referencia, texto (versión texto plano), responder_a
+ * $opc: tipo, referencia, texto (versión texto plano), responder_a,
+ *       adjuntos (array de array('ruta'=>, 'nombre'=>)),
+ *       copia_enviados (false = no guardar copia en la carpeta Enviados)
  */
 function sgd_correo_enviar($destino, $asunto, $html, array $opc = array())
 {
@@ -342,6 +344,14 @@ function sgd_correo_enviar($destino, $asunto, $html, array $opc = array())
         if (is_file($logo)) {
             $mail->addEmbeddedImage($logo, 'logo', basename($logo));
         }
+        // Adjuntos opcionales: array(array('ruta' => ..., 'nombre' => ...), ...)
+        if (!empty($opc['adjuntos']) && is_array($opc['adjuntos'])) {
+            foreach ($opc['adjuntos'] as $adj) {
+                if (!empty($adj['ruta']) && is_file($adj['ruta'])) {
+                    $mail->addAttachment($adj['ruta'], !empty($adj['nombre']) ? $adj['nombre'] : basename($adj['ruta']));
+                }
+            }
+        }
 
         $mail->isHTML(true);
         $mail->Subject = $asunto;
@@ -353,7 +363,8 @@ function sgd_correo_enviar($destino, $asunto, $html, array $opc = array())
         sgd_correo_registrar($tipo, $referencia, $destino, $asunto, 'ENVIADO', null, $mail->getLastMessageID());
         // Copia en la carpeta "Enviados" del webmail. Si falla, el correo ya salió:
         // no se reporta error al ciudadano, solo se anota en el log del servidor.
-        if (defined('SGD_CORREO_GUARDAR_ENVIADOS') && SGD_CORREO_GUARDAR_ENVIADOS) {
+        $copiaEnviados = !isset($opc['copia_enviados']) || $opc['copia_enviados'];
+        if ($copiaEnviados && defined('SGD_CORREO_GUARDAR_ENVIADOS') && SGD_CORREO_GUARDAR_ENVIADOS) {
             if (!sgd_correo_guardar_en_enviados($mail->getSentMIMEMessage(), $errImap)) {
                 error_log('SISGEDO correo: no se guardó copia en Enviados (' . $referencia . '): ' . $errImap);
             }

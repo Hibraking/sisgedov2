@@ -138,6 +138,104 @@ class mpvirtual
             array('tipo' => 'MPV_RECEPCION', 'referencia' => $numexp)
         );
     }
+    /**
+     * Aviso a la Mesa de Partes (bandeja de Entrada de SGD_CORREO_AVISO_MPV):
+     * datos del expediente recién registrado por la MPV + el documento adjunto.
+     * "Responder" en el webmail contesta directamente al ciudadano.
+     */
+    public function aviso_mesa_partes($numexp)
+    {
+        require_once __DIR__ . '/correo.php';
+        $destino = defined('SGD_CORREO_AVISO_MPV') ? trim((string)SGD_CORREO_AVISO_MPV) : '';
+        if ($destino === '') {
+            return false;
+        }
+        try {
+            $conectado = (new Conexion())->conectar();
+            $st = $conectado->prepare(
+                "SELECT rd.nro_exp, rd.numero_docu, rd.asunto, rd.folios, rd.adjunto, rd.fecha_registro,
+                        d.nombre_documento, t.nombre AS tramite,
+                        r.d_identidad, r.apellidos, r.nombres, r.email, r.telefono, r.direccion,
+                        (SELECT a.nombre_original FROM sgd_archivo a
+                          WHERE a.origen = 'REGISTRO' AND a.nombre_almacenado = rd.adjunto LIMIT 1) AS nombre_original
+                   FROM registro_documentos rd
+                   LEFT JOIN documentos d ON d.iddocumentos = rd.iddocumento
+                   LEFT JOIN tipo_tram t  ON t.idtipo_tram = rd.idtipo_tramite
+                   LEFT JOIN remitente r  ON r.idremitente = rd.idremitente
+                  WHERE rd.nro_exp = ? ORDER BY rd.idregistro_documentos DESC LIMIT 1");
+            $st->execute(array((string)$numexp));
+            $x = $st->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $exc) {
+            error_log($exc->getMessage());
+            return false;
+        }
+        if (!$x) {
+            return false;
+        }
+
+        $e = function ($s) {
+            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+        };
+        $fila = function ($etq, $val, $negrita = false) use ($e) {
+            if (trim((string)$val) === '') return '';
+            return '<tr><td style="padding:6px 8px;color:#52606d;width:38%;border-bottom:1px solid #eef1f5">' . $e($etq) . '</td>'
+                 . '<td style="padding:6px 8px;border-bottom:1px solid #eef1f5">' . ($negrita ? '<strong>' . $e($val) . '</strong>' : $e($val)) . '</td></tr>';
+        };
+        $ciudadano = trim($x['apellidos'] . ' ' . $x['nombres']);
+
+        // Adjunto: el documento presentado (si no supera el límite)
+        $adjuntos = array();
+        $notaAdjunto = 'El ciudadano no adjuntó archivo.';
+        if (!empty($x['adjunto'])) {
+            $ruta = __DIR__ . '/../docs adjs reg_doc/' . $x['adjunto'];
+            $maxBytes = (defined('SGD_CORREO_AVISO_ADJUNTO_MAX_MB') ? (int)SGD_CORREO_AVISO_ADJUNTO_MAX_MB : 15) * 1024 * 1024;
+            if (is_file($ruta) && filesize($ruta) <= $maxBytes) {
+                $nombre = trim((string)$x['nombre_original']) !== '' ? $x['nombre_original'] : $x['adjunto'];
+                $adjuntos[] = array('ruta' => $ruta, 'nombre' => $nombre);
+                $notaAdjunto = 'Se adjunta el documento presentado (' . $nombre . ').';
+            } elseif (is_file($ruta)) {
+                $notaAdjunto = 'El documento pesa más de ' . (int)($maxBytes / 1048576) . ' MB: ábralo desde el sistema.';
+            }
+        }
+
+        $url = sisgedo_base_url('consulta_publico.php?num_exp=' . rawurlencode((string)$x['nro_exp']));
+        $cuerpo = '<p style="font-size:15px;line-height:1.5">Ingresó un nuevo documento por la <strong>Mesa de Partes Virtual</strong>.</p>'
+            . '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;margin:12px 0;width:100%;border-collapse:collapse">'
+            . $fila('Expediente N°', $x['nro_exp'], true)
+            . $fila('Fecha y hora', $x['fecha_registro'] ? date('d/m/Y H:i', strtotime($x['fecha_registro'])) : date('d/m/Y H:i'))
+            . $fila('Tipo de documento', trim($x['nombre_documento'] . ' ' . $x['numero_docu']))
+            . $fila('Tipo de trámite', $x['tramite'])
+            . $fila('Asunto', $x['asunto'], true)
+            . $fila('Folios', $x['folios'])
+            . $fila('Remitente', $ciudadano)
+            . $fila('DNI / RUC', $x['d_identidad'])
+            . $fila('Correo', $x['email'])
+            . $fila('Teléfono', $x['telefono'])
+            . $fila('Dirección', $x['direccion'])
+            . '</table>'
+            . '<p style="font-size:13px;color:#52606d">' . $e($notaAdjunto) . ' Para responder al ciudadano use "Responder": la respuesta irá a su correo.</p>'
+            . '<p style="text-align:center;margin:20px 0"><a href="' . $e($url) . '" style="background:#1f5bbf;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:bold;display:inline-block">Ver el expediente</a></p>'
+            . '<p style="font-size:12px;color:#7b8794">Para recepcionarlo ingrese al SISGEDO &gt; Recepción &gt; Por recepcionar.</p>';
+
+        $asuntoCorreo = 'MPV - Exp. N° ' . $x['nro_exp'] . ' - ' . ($ciudadano !== '' ? $ciudadano . ': ' : '') . $x['asunto'];
+        if (function_exists('mb_strimwidth')) {
+            $asuntoCorreo = mb_strimwidth($asuntoCorreo, 0, 150, '…', 'UTF-8');
+        }
+        $responder = filter_var(trim((string)$x['email']), FILTER_VALIDATE_EMAIL) ? trim($x['email']) : '';
+
+        return sgd_correo_enviar(
+            $destino,
+            $asuntoCorreo,
+            sgd_correo_plantilla('Nuevo documento por Mesa de Partes Virtual', $cuerpo),
+            array(
+                'tipo' => 'MPV_AVISO_INTERNO',
+                'referencia' => $x['nro_exp'],
+                'responder_a' => $responder,
+                'adjuntos' => $adjuntos,
+                'copia_enviados' => false,   // va al propio buzón: no duplicar en Enviados
+            )
+        );
+    }
     public function get_correo($idremitente)
     {
         try {
@@ -234,6 +332,16 @@ if (isset($_POST['Insertar'])) {
         }
         // Respuesta para js/mpvirtual.js: el número va primero, luego el estado del correo
         echo $mpvirtual->envio_correo($email, $numexp, $g('asunto')) ? ' CORREO_OK' : ' CORREO_FALLO';
+
+        // Aviso interno a la Mesa de Partes (con el documento adjunto). Se envía
+        // DESPUÉS de entregar la respuesta al ciudadano para no hacerlo esperar.
+        ignore_user_abort(true);
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        } elseif (function_exists('litespeed_finish_request')) {
+            litespeed_finish_request();
+        }
+        $mpvirtual->aviso_mesa_partes($numexp);
     } else {
         echo "no se registro";
     }
