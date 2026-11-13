@@ -14,6 +14,10 @@ $busco = ($numExp !== '');
 
 $cab = null;
 $eventos = array();
+$mpvEstado = null;      // Mesa de Partes Virtual: 'pendiente' | 'observado' | 'recepcionado' | 'derivado' | 'no_presentado'
+$mpvEventos = array();  // historial MPV (observado, subsanado, recepcionado...)
+$mpvObs = null;         // array(motivo, plazo) si está observado
+$mpvOficial = null;     // fecha en que se considera presentado (si se envió fuera de horario)
 if ($busco) {
   try {
     $pdo = (new Conexion())->conectar();
@@ -34,6 +38,38 @@ if ($busco) {
 
     if (count($regs) > 0) {
       $cab = $regs[0];
+      // Mesa de Partes Virtual: ¿ya lo recepcionó la mesa de partes? ¿ya se derivó?
+      require_once __DIR__ . '/clases/mpv_util.php';
+      if (intval($cab[7]) === 1 && sgd_mpv_ok($pdo)) {
+        require_once __DIR__ . '/clases/calendario.php';
+        $stm = $pdo->prepare("select rd.mpv_recepcion, rd.idoficina, rd.mpv_estado, rd.mpv_plazo, rd.fecha_registro
+                                from registro_documentos rd where rd.idregistro_documentos=?");
+        $stm->execute(array(intval($cab[6])));
+        $mpvInfo = $stm->fetch(PDO::FETCH_NUM);
+        if ($mpvInfo) {
+          if ($mpvInfo[2] === 'NO_PRESENTADO') {
+            $mpvEstado = 'no_presentado';
+          } elseif ($mpvInfo[2] === 'OBSERVADO') {
+            $mpvEstado = 'observado';
+          } else {
+            $mpvEstado = $mpvInfo[0] === null ? 'pendiente' : ($mpvInfo[1] === null ? 'recepcionado' : 'derivado');
+          }
+          if (sgd_cal_fuera_de_horario($mpvInfo[4])) {
+            $mpvOficial = sgd_cal_fecha_presentacion($mpvInfo[4]);
+          }
+          $ste = $pdo->prepare("select tipo, coalesce(detalle,''), plazo, fecha from sgd_mpv_evento
+                                 where idregistro_documentos=? order by fecha asc, idevento asc");
+          $ste->execute(array(intval($cab[6])));
+          $mpvEventos = $ste->fetchAll(PDO::FETCH_NUM);
+          if ($mpvEstado === 'observado') {
+            $motivo = '';
+            foreach ($mpvEventos as $ev) {
+              if ($ev[0] === 'OBSERVADO') $motivo = $ev[1];
+            }
+            $mpvObs = array($motivo, $mpvInfo[3]);
+          }
+        }
+      }
       $ids = array();
       foreach ($regs as $rg) {
         $ids[] = intval($rg[6]);
@@ -67,6 +103,15 @@ if ($busco) {
 $estadoActual = 'En mesa de partes';
 $oficinaActual = 'Mesa de Partes';
 $enTramite = true;
+$mpvEstadosTexto = array(
+  'pendiente' => 'En revisión de mesa de partes',
+  'observado' => 'Observado: debe subsanar',
+  'recepcionado' => 'Recepcionado por mesa de partes',
+  'no_presentado' => 'No presentado',
+);
+if (count($eventos) === 0 && isset($mpvEstadosTexto[$mpvEstado])) {
+  $estadoActual = $mpvEstadosTexto[$mpvEstado];
+}
 if (count($eventos) > 0) {
   $ult = $eventos[count($eventos) - 1];
   $estadoActual = $ult[4] !== '--' ? $ult[4] : 'En trámite';
@@ -175,8 +220,34 @@ if (count($eventos) > 0) {
               <span class="efecha"><i class="fa fa-calendar"></i> <?= hpub($cab[5]) ?></span>
             </div>
             <div class="edet"><span><i class="fa fa-flag-o"></i>Documento
-                <?= intval($cab[7]) === 1 ? 'presentado por internet' : 'registrado en ventanilla' ?></span></div>
+                <?= intval($cab[7]) === 1 ? 'presentado por internet' : 'registrado en ventanilla' ?></span>
+              <?php if ($mpvOficial) { ?><span><i class="fa fa-moon-o"></i>Enviado fuera del horario de atención: se considera presentado el <?= hpub(sgd_cal_texto($mpvOficial)) ?></span><?php } ?>
+            </div>
           </div>
+          <?php
+          // Historial de la Mesa de Partes Virtual (observaciones, subsanación, recepción...)
+          $mpvTitulos = array(
+            'RECEPCIONADO' => array('Recepcionado por mesa de partes', 'fa-check'),
+            'OBSERVADO' => array('Observado por mesa de partes', 'fa-exclamation-circle'),
+            'SUBSANADO' => array('Documento corregido enviado', 'fa-refresh'),
+            'NO_PRESENTADO' => array('Documento no presentado', 'fa-ban'),
+            'DERIVADO' => array('Derivado', 'fa-share'),
+          );
+          $mpvUltimo = count($mpvEventos) - 1;
+          foreach ($mpvEventos as $j => $me) {
+            $tt = isset($mpvTitulos[$me[0]]) ? $mpvTitulos[$me[0]] : array($me[0], 'fa-circle');
+            $esActualMpv = count($eventos) === 0 && $j === $mpvUltimo && in_array($mpvEstado, array('observado', 'no_presentado'), true); ?>
+            <div class="evt <?= $esActualMpv ? 'actual' : '' ?>">
+              <div class="ehead">
+                <span class="eofi"><?= $me[0] === 'SUBSANADO' ? 'Ciudadano' : 'Mesa de Partes' ?></span>
+                <span class="efecha"><i class="fa fa-calendar"></i> <?= hpub(date('d/m/Y · h:i A', strtotime($me[3]))) ?></span>
+              </div>
+              <div class="edet">
+                <span><i class="fa <?= $tt[1] ?>"></i><?= hpub($tt[0]) ?><?= $me[0] === 'DERIVADO' && $me[1] !== '' ? ' a ' . hpub($me[1]) : '' ?></span>
+                <?php if ($me[0] === 'OBSERVADO' && $me[1] !== '') { ?><span>Motivo: <?= hpub($me[1]) ?></span><?php } ?>
+              </div>
+            </div>
+          <?php } ?>
           <?php foreach ($eventos as $i => $ev) {
             $esUltimo = ($i === count($eventos) - 1); ?>
             <div class="evt <?= $esUltimo ? 'actual' : '' ?>">
@@ -191,11 +262,34 @@ if (count($eventos) > 0) {
               </div>
             </div>
           <?php } ?>
-          <?php if (count($eventos) === 0) { ?>
+          <?php if (count($eventos) === 0 && $mpvEstado === 'observado' && $mpvObs) { ?>
             <div class="evt actual">
-              <div class="ehead"><span class="eofi">En espera de recepción</span></div>
-              <div class="edet"><span><i class="fa fa-clock-o"></i>Tu documento fue registrado y está pendiente de ser
-                  recepcionado por la oficina destino.</span></div>
+              <div class="ehead"><span class="eofi">Debes subsanar tu documento</span></div>
+              <div class="edet"><span><i class="fa fa-envelope-o"></i>Te enviamos un correo con la observación y un enlace para enviar el documento
+                  corregido. Plazo: hasta el <b><?= hpub(sgd_cal_texto(sgd_cal_cierre($mpvObs[1]))) ?></b>. Si no lo subsanas a tiempo,
+                  se considerará no presentado.</span></div>
+            </div>
+          <?php } elseif (count($eventos) === 0 && $mpvEstado === 'no_presentado') { ?>
+            <div class="evt actual">
+              <div class="ehead"><span class="eofi">Trámite concluido: no presentado</span></div>
+              <div class="edet"><span><i class="fa fa-info-circle"></i>La observación no se subsanó dentro del plazo. Si aún deseas realizar el trámite,
+                  preséntalo nuevamente en la <a href="mpvirtual.php">Mesa de Partes Virtual</a>.</span></div>
+            </div>
+          <?php } elseif (count($eventos) === 0) { ?>
+            <div class="evt actual">
+              <?php if ($mpvEstado === 'pendiente') { ?>
+                <div class="ehead"><span class="eofi">En revisión de mesa de partes</span></div>
+                <div class="edet"><span><i class="fa fa-clock-o"></i>Tu documento llegó correctamente. Mesa de partes lo revisará,
+                    lo recepcionará y lo derivará al área competente. Te avisaremos por correo.</span></div>
+              <?php } elseif ($mpvEstado === 'recepcionado') { ?>
+                <div class="ehead"><span class="eofi">Por derivar al área competente</span></div>
+                <div class="edet"><span><i class="fa fa-clock-o"></i>Mesa de partes recepcionó tu documento y lo derivará
+                    al área que debe atenderlo.</span></div>
+              <?php } else { ?>
+                <div class="ehead"><span class="eofi">En espera de recepción</span></div>
+                <div class="edet"><span><i class="fa fa-clock-o"></i>Tu documento fue registrado y está pendiente de ser
+                    recepcionado por la oficina destino.</span></div>
+              <?php } ?>
             </div>
           <?php } ?>
         </div>

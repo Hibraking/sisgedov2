@@ -291,7 +291,11 @@ function sgd_mime_real($ruta)
         $f = finfo_open(FILEINFO_MIME_TYPE);
         if ($f) {
             $m = finfo_file($f, $ruta);
-            finfo_close($f);
+            // finfo_close() está obsoleta desde PHP 8.5 (el objeto se libera solo)
+            // y su aviso se colaba en la respuesta de la Mesa de Partes Virtual.
+            if (PHP_VERSION_ID < 80500) {
+                finfo_close($f);
+            }
             if ($m) return $m;
         }
     }

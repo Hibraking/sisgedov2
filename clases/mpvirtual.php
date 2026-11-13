@@ -16,8 +16,10 @@ class mpvirtual
             $lastId = $stmt->fetchColumn();
             return $lastId;
         } catch (Exception $exc) {
-            error_log($exc->getMessage());
-            return 1;
+            // Antes devolvía 1 y el documento quedaba a nombre del remitente N° 1
+            // (otra persona) sin avisar. Ahora 0 = error: el registro se detiene.
+            error_log('MPV insertar_datos_remitente: ' . $exc->getMessage());
+            return 0;
         }
     }
     public function insertar_datos_reg_docs($iddocumento, $idremitente, $idtipo_tramite, $numero_docu, $asunto, $folios, $adjunto)
@@ -118,13 +120,26 @@ class mpvirtual
                  . '<a href="' . $e($urlv) . '" style="font-size:12px;color:#1f5bbf">Verificar autenticidad</a></td></tr>';
         }
 
+        // Horario de atención: lo enviado fuera de horario cuenta desde el siguiente día hábil
+        require_once __DIR__ . '/calendario.php';
+        $ahora = date('Y-m-d H:i:s');
+        $oficial = sgd_cal_fecha_presentacion($ahora);
+        $fueraHorario = strtotime($oficial) !== strtotime($ahora);
+
         $cuerpo = '<p style="font-size:15px;line-height:1.5">Su documento fue <strong>recibido correctamente</strong> en la Mesa de Partes Virtual de la '
-            . $e(SISGEDO_ENTIDAD) . '. Guarde este correo como constancia de presentación.</p>'
+            . $e(SISGEDO_ENTIDAD) . '. Guarde este correo como constancia de presentación. '
+            . 'Le enviaremos otro correo cuando mesa de partes lo recepcione.</p>'
+            . ($fueraHorario
+                ? '<p style="font-size:14px;line-height:1.5;background:#f5f3ff;border-left:4px solid #7c3aed;padding:10px 14px;color:#4c1d95">'
+                  . 'Lo envió <strong>fuera del horario de atención</strong> (' . $e(SISGEDO_HORARIO_TEXTO) . '). '
+                  . 'Para el cómputo de plazos se considera presentado el <strong>' . $e(sgd_cal_texto($oficial)) . '</strong>.</p>'
+                : '')
             . '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;margin:16px 0;width:100%">'
             . '<tr><td style="padding:6px 0;color:#52606d;width:45%">Número de expediente</td>'
             . '<td style="padding:6px 0;font-size:18px"><strong>' . $e($numexp) . '</strong></td></tr>'
             . ($asunto_doc !== '' ? '<tr><td style="padding:6px 0;color:#52606d">Asunto</td><td style="padding:6px 0">' . $e($asunto_doc) . '</td></tr>' : '')
-            . '<tr><td style="padding:6px 0;color:#52606d">Fecha y hora de recepción</td><td style="padding:6px 0">' . $e(date('d/m/Y H:i')) . '</td></tr>'
+            . '<tr><td style="padding:6px 0;color:#52606d">Fecha y hora de envío</td><td style="padding:6px 0">' . $e(date('d/m/Y H:i', strtotime($ahora))) . '</td></tr>'
+            . ($fueraHorario ? '<tr><td style="padding:6px 0;color:#52606d">Se considera presentado</td><td style="padding:6px 0"><strong>' . $e(sgd_cal_texto($oficial)) . '</strong></td></tr>' : '')
             . $cvd
             . '</table>'
             . '<p style="text-align:center;margin:24px 0">'
@@ -146,6 +161,7 @@ class mpvirtual
     public function aviso_mesa_partes($numexp)
     {
         require_once __DIR__ . '/correo.php';
+        require_once __DIR__ . '/calendario.php';
         $destino = defined('SGD_CORREO_AVISO_MPV') ? trim((string)SGD_CORREO_AVISO_MPV) : '';
         if ($destino === '') {
             return false;
@@ -203,6 +219,8 @@ class mpvirtual
             . '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;margin:12px 0;width:100%;border-collapse:collapse">'
             . $fila('Expediente N°', $x['nro_exp'], true)
             . $fila('Fecha y hora', $x['fecha_registro'] ? date('d/m/Y H:i', strtotime($x['fecha_registro'])) : date('d/m/Y H:i'))
+            . ($x['fecha_registro'] && sgd_cal_fuera_de_horario($x['fecha_registro'])
+                ? $fila('Fuera de horario: se considera presentado', sgd_cal_texto(sgd_cal_fecha_presentacion($x['fecha_registro'])), true) : '')
             . $fila('Tipo de documento', trim($x['nombre_documento'] . ' ' . $x['numero_docu']))
             . $fila('Tipo de trámite', $x['tramite'])
             . $fila('Asunto', $x['asunto'], true)
@@ -215,7 +233,7 @@ class mpvirtual
             . '</table>'
             . '<p style="font-size:13px;color:#52606d">' . $e($notaAdjunto) . ' Para responder al ciudadano use "Responder": la respuesta irá a su correo.</p>'
             . '<p style="text-align:center;margin:20px 0"><a href="' . $e($url) . '" style="background:#1f5bbf;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:bold;display:inline-block">Ver el expediente</a></p>'
-            . '<p style="font-size:12px;color:#7b8794">Para recepcionarlo ingrese al SISGEDO &gt; Recepción &gt; Por recepcionar.</p>';
+            . '<p style="font-size:12px;color:#7b8794">Para recepcionarlo y derivarlo ingrese al SISGEDO &gt; Operaciones &gt; Mesa de Partes Virtual.</p>';
 
         $asuntoCorreo = 'MPV - Exp. N° ' . $x['nro_exp'] . ' - ' . ($ciudadano !== '' ? $ciudadano . ': ' : '') . $x['asunto'];
         if (function_exists('mb_strimwidth')) {
@@ -322,7 +340,11 @@ if (isset($_POST['Insertar'])) {
         $numexp = $mpvirtual->insertar_datos_reg_docs($_POST['iddocumento'], $_POST['idremitente'], $_POST['idtipo_tramite'], $_POST['numero_docu'], $_POST['asunto'], $_POST['folios'], $nombre_fichero);
     } else {
         $idremit = $mpvirtual->insertar_datos_remitente($_POST['d_identidad'], $_POST['apellidos'], $_POST['nombres'], $_POST['direccion'], $_POST['email'], $_POST['telefono']);
-        $numexp = $mpvirtual->insertar_datos_reg_docs($_POST['iddocumento'], $idremit, $_POST['idtipo_tramite'], $_POST['numero_docu'], $_POST['asunto'], $_POST['folios'], $nombre_fichero);
+        if ((int)$idremit <= 0) {
+            echo 'ERROR_VALIDACION: No se pudieron guardar sus datos. Revise que no haya caracteres especiales e intente nuevamente.';
+            return;
+        }
+        $numexp =$mpvirtual->insertar_datos_reg_docs($_POST['iddocumento'], $idremit, $_POST['idtipo_tramite'], $_POST['numero_docu'], $_POST['asunto'], $_POST['folios'], $nombre_fichero);
     }
     echo $numexp;
     if ($numexp !== "-1") {

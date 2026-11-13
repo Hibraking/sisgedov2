@@ -43,6 +43,45 @@ if (!defined('SISGEDO_PDF_LOGO'))     define('SISGEDO_PDF_LOGO', 'logo huaytara.
 // últimos N días (evita marcar registros antiguos que nunca se derivaron).
 if (!defined('SISGEDO_DIAS_NUEVO'))   define('SISGEDO_DIAS_NUEVO', 30);
 
+/* ---- Horario de atención de la Mesa de Partes ---- */
+// Lo que llega por la Mesa de Partes Virtual FUERA de este horario (o en fin de
+// semana / feriado) se considera presentado el siguiente día hábil a la hora de
+// inicio. Formato: día de la semana (1 = lunes ... 7 = domingo) => [inicio, fin].
+// Los días que no figuran aquí no son hábiles.
+if (!defined('SISGEDO_HORARIO')) define('SISGEDO_HORARIO', array(
+    1 => array('08:00', '18:00'),   // lunes
+    2 => array('08:00', '18:00'),   // martes
+    3 => array('08:00', '18:00'),   // miércoles
+    4 => array('08:00', '18:00'),   // jueves
+    5 => array('08:00', '17:30'),   // viernes
+));
+// Texto del horario para mostrar al ciudadano
+if (!defined('SISGEDO_HORARIO_TEXTO')) define('SISGEDO_HORARIO_TEXTO', 'lunes a jueves de 8:00 a. m. a 6:00 p. m. y viernes de 8:00 a. m. a 5:30 p. m.');
+
+// Feriados nacionales de fecha fija (mes-día). Jueves y Viernes Santo se
+// calculan solos cada año. Días no laborables o feriados locales (aniversario,
+// días declarados por el Gobierno): agréguelos en la tabla sgd_dia_no_laborable.
+if (!defined('SISGEDO_FERIADOS_FIJOS')) define('SISGEDO_FERIADOS_FIJOS', array(
+    '01-01' => 'Año Nuevo',
+    '05-01' => 'Día del Trabajo',
+    '06-07' => 'Batalla de Arica y Día de la Bandera',
+    '06-29' => 'San Pedro y San Pablo',
+    '07-23' => 'Día de la Fuerza Aérea del Perú',
+    '07-28' => 'Fiestas Patrias',
+    '07-29' => 'Fiestas Patrias',
+    '08-06' => 'Batalla de Junín',
+    '08-30' => 'Santa Rosa de Lima',
+    '10-08' => 'Combate de Angamos',
+    '11-01' => 'Día de Todos los Santos',
+    '12-08' => 'Inmaculada Concepción',
+    '12-09' => 'Batalla de Ayacucho',
+    '12-25' => 'Navidad',
+));
+
+// Plazo (días hábiles) que tiene el ciudadano para subsanar un documento
+// observado por la Mesa de Partes (Ley 27444, art. 136).
+if (!defined('SISGEDO_PLAZO_SUBSANAR')) define('SISGEDO_PLAZO_SUBSANAR', 2);
+
 /* ---- Derivados automáticos (NO editar) ---- */
 if (!defined('SISGEDO_ENTIDAD')) {
     define('SISGEDO_ENTIDAD', 'Municipalidad ' . SISGEDO_MUNI_TIPO . ' de ' . SISGEDO_MUNI_LUGAR);

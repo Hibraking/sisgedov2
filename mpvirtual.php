@@ -33,6 +33,19 @@ require_once './conexion/conexion.php';
       <p>Presenta tus documentos a la municipalidad sin salir de casa. Al finalizar recibirás tu número de expediente para hacer seguimiento.</p>
     </div>
 
+    <?php
+    // Fuera del horario de atención: avisar desde qué fecha se considerará presentado
+    require_once './clases/calendario.php';
+    $mpvAhora = date('Y-m-d H:i:s');
+    $mpvOficial = sgd_cal_fecha_presentacion($mpvAhora);
+    if (strtotime($mpvOficial) !== strtotime($mpvAhora)) { ?>
+      <div style="max-width:760px;margin:0 auto 16px;background:#f5f3ff;border:1px solid #ddd6fe;color:#4c1d95;border-radius:10px;padding:12px 16px;font-size:14px;line-height:1.5">
+        <i class="fa fa-moon-o"></i> En este momento estamos <b>fuera del horario de atención</b>
+        (<?= htmlspecialchars(SISGEDO_HORARIO_TEXTO, ENT_QUOTES, 'UTF-8') ?>). Puede enviar su documento igual:
+        se considerará presentado el <b><?= htmlspecialchars(sgd_cal_texto($mpvOficial), ENT_QUOTES, 'UTF-8') ?></b>.
+      </div>
+    <?php } ?>
+
     <!-- PASOS -->
     <div class="pasos">
       <div class="paso activo" id="ind1"><span class="pnum">1</span><span class="ptxt">Datos personales</span></div>
@@ -104,7 +117,7 @@ require_once './conexion/conexion.php';
     </div>
 
     <div class="pub-footer" style="padding-top:6px">
-      <i class="fa fa-clock-o"></i> Los documentos presentados fuera del horario de atención se procesan el siguiente día hábil.
+      <i class="fa fa-clock-o"></i> Horario de atención: <?= htmlspecialchars(SISGEDO_HORARIO_TEXTO, ENT_QUOTES, 'UTF-8') ?>. Los documentos presentados fuera de ese horario, en fines de semana o feriados se consideran presentados el siguiente día hábil.
     </div>
   </div>
 

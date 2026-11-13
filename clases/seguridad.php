@@ -175,6 +175,7 @@ if (!function_exists('exigir_acceso_endpoint')) {
             'archivador.php'        => 'vistas/v_archivador.php',
             'responsables.php'      => 'vistas/v_responsables.php',
             'remitentes.php'        => 'vistas/v_remitentes.php',
+            'mesa_partes_virtual.php' => 'vistas/v_mesa_partes_virtual.php',
         );
         $base = basename(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '');
         if (!isset($mapa[$base])) {

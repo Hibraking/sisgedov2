@@ -1,0 +1,282 @@
+/* Módulo Mesa de Partes Virtual (sobre v_recepcion_proveido.css) */
+
+/* 6 columnas: Expediente | Documento | Remitente | Asunto | Fecha/Destino | Acciones */
+.rowg {
+  grid-template-columns: 92px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr) 190px;
+}
+.act {
+  gap: 6px;
+  align-items: center;
+}
+
+/* Pasos del proceso (ayuda breve) */
+.mpv-pasos {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin: 4px 0 16px;
+}
+.mpv-pasos .paso {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.45;
+}
+.mpv-pasos .paso strong {
+  color: #1e293b;
+}
+.mpv-pasos .n {
+  flex: 0 0 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #6d28d9;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mpv-pasos .flecha {
+  align-self: center;
+  color: #cbd5e1;
+  font-size: 18px;
+}
+
+/* Pestañas */
+.mpv-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.mpv-tab {
+  padding: 9px 14px;
+  font-size: 13px;
+  color: #64748b;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mpv-tab:hover {
+  color: #1e293b;
+}
+.mpv-tab.on {
+  color: #6d28d9;
+  border-bottom-color: #6d28d9;
+  font-weight: 600;
+}
+.mpv-tab .cnt {
+  background: #f1f5f9;
+  color: #64748b;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.mpv-tab .cnt-on {
+  background: #f97316;
+  color: #fff;
+}
+
+/* Documento esperando más de 1 día */
+.row.row-espera {
+  box-shadow: inset 3px 0 0 #f97316;
+}
+.espera {
+  color: #c2410c;
+  font-weight: 600;
+}
+
+.mpv-vacio {
+  padding: 56px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+.mpv-vacio .fa {
+  font-size: 28px;
+  color: #86efac;
+  margin-bottom: 8px;
+}
+
+.mpv-aviso {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.mpv-aviso-err {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* Modales */
+.mpv-resumen {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.55;
+}
+.mpv-nota {
+  font-size: 12.5px;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.mpv-nota.ok {
+  background: #f0fdf4;
+  color: #166534;
+}
+.mpv-nota.warn {
+  background: #fffbeb;
+  color: #92400e;
+}
+.mpv-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #475569;
+  font-weight: normal;
+}
+
+@media (max-width: 900px) {
+  .mpv-pasos {
+    flex-direction: column;
+  }
+  .mpv-pasos .flecha {
+    display: none;
+  }
+}
+
+/* ---- Observar / subsanar / no presentado ---- */
+.rowg {
+  grid-template-columns: 92px minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1.05fr) 250px;
+}
+.btn-obs {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+.btn-obs:hover {
+  background: #ffedd5;
+}
+.btn-nopres {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+.btn-nopres:hover {
+  background: #fee2e2;
+}
+.b-subsanado {
+  background: #ecfdf5;
+  color: #047857;
+  gap: 3px;
+}
+.b-nopres {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.row.row-vencido {
+  box-shadow: inset 3px 0 0 #dc2626;
+}
+.vencido {
+  color: #b91c1c;
+  font-weight: 600;
+}
+.fuera {
+  font-size: 11px;
+  color: #6d28d9;
+}
+.motivo {
+  font-size: 11.5px;
+  color: #9a3412;
+  background: #fff7ed;
+  border-radius: 6px;
+  padding: 3px 7px;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mpv-tab .cnt-rojo {
+  background: #dc2626;
+  color: #fff;
+}
+.mpv-sugerencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 11.5px;
+}
+.chip {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  border-radius: 14px;
+  padding: 3px 10px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.chip:hover {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+}
+#ob_motivo {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+/* Historial en el panel derecho */
+.mpv-hist {
+  margin-top: 8px;
+  font-size: 12.5px;
+}
+.mpv-hist .ev {
+  position: relative;
+  padding: 0 0 12px 18px;
+  border-left: 2px solid #e2e8f0;
+  margin-left: 5px;
+}
+.mpv-hist .ev:last-child {
+  border-left-color: transparent;
+}
+.mpv-hist .ev::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c, #94a3b8);
+}
+.mpv-hist .tt {
+  font-weight: 600;
+  color: #1e293b;
+}
+.mpv-hist .ff {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.mpv-hist .dd {
+  color: #475569;
+  margin-top: 2px;
+  line-height: 1.45;
+}

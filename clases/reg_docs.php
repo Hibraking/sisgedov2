@@ -154,13 +154,24 @@ class Reg_docs
                       inner join documentos on rd.iddocumento=documentos.iddocumentos
                       inner join remitente on rd.idremitente=remitente.idremitente
                       inner join tipo_tram on rd.idtipo_tramite=tipo_tram.idtipo_tram
-                      left join oficinas o on rd.idoficina=o.idoficinas
-                      where rd.fecha_registro >= ? and rd.fecha_registro < date_add(?, interval 1 day)
-                         or (coalesce(rd.recepcion_web,0)=1 and rd.idoficina is null and rd.estado_recepcion=0
-                             and rd.fecha_registro >= date_sub(now(), interval ? day))
-                      order by rd.fecha_registro desc";
+                      left join oficinas o on rd.idoficina=o.idoficinas ";
+            require_once __DIR__ . '/mpv_util.php';
+            if (sgd_mpv_ok($conectado)) {
+                // Con el módulo "Mesa de Partes Virtual" (migración 007): los documentos
+                // virtuales aún sin derivar se atienden allá; aquí entran al derivarlos.
+                $sql .= " where rd.fecha_registro >= ? and rd.fecha_registro < date_add(?, interval 1 day)
+                            and not (coalesce(rd.recepcion_web,0)=1 and rd.idoficina is null)
+                          order by rd.fecha_registro desc";
+                $params = [$desde, $hasta];
+            } else {
+                $sql .= " where rd.fecha_registro >= ? and rd.fecha_registro < date_add(?, interval 1 day)
+                             or (coalesce(rd.recepcion_web,0)=1 and rd.idoficina is null and rd.estado_recepcion=0
+                                 and rd.fecha_registro >= date_sub(now(), interval ? day))
+                          order by rd.fecha_registro desc";
+                $params = [$desde, $hasta, intval(SISGEDO_DIAS_NUEVO)];
+            }
             $st = $conectado->prepare($sql);
-            $st->execute([$desde, $hasta, intval(SISGEDO_DIAS_NUEVO)]);
+            $st->execute($params);
             return $st->fetchAll(PDO::FETCH_NUM);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
