@@ -147,15 +147,16 @@ class Reg_docs
         try {
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
-            $q = $conectado->prepare("select count(*) from docs_emitidos where idoficina_registro=? and idoficina is not null and estado=0");
+            // Un solo recorrido (antes eran tres consultas sobre las mismas filas)
+            $q = $conectado->prepare("select coalesce(sum(idoficina is not null and estado=0),0),
+                                             coalesce(sum(estado=1),0),
+                                             coalesce(sum(idoficina is null),0)
+                                        from docs_emitidos where idoficina_registro=?");
             $q->execute([$idoficina]);
-            $out['por_recepcionar'] = intval($q->fetchColumn());
-            $q = $conectado->prepare("select count(*) from docs_emitidos where idoficina_registro=? and estado=1");
-            $q->execute([$idoficina]);
-            $out['recepcionados'] = intval($q->fetchColumn());
-            $q = $conectado->prepare("select count(*) from docs_emitidos where idoficina_registro=? and idoficina is null");
-            $q->execute([$idoficina]);
-            $out['sin_destino'] = intval($q->fetchColumn());
+            $f = $q->fetch(PDO::FETCH_NUM);
+            $out['por_recepcionar'] = intval($f[0]);
+            $out['recepcionados'] = intval($f[1]);
+            $out['sin_destino'] = intval($f[2]);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
         }

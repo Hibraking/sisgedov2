@@ -123,9 +123,9 @@ if (array_key_exists('ultimo_acceso_anterior', $_SESSION)) {
   <title>Perfil de Usuario — SISGEDO</title>
   <link rel="icon" type="image/png" href="../<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="../assets/font-awesome/4.5.0/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="../css/sisgedo-theme.css" />
-  <link rel="stylesheet" href="../css/v_recepcion_proveido.css" />
-  <link rel="stylesheet" href="../css/v_vistas.css" />
+  <link rel="stylesheet" href="../css/sisgedo-theme.css?v=<?= @filemtime(__DIR__ . '/../css/sisgedo-theme.css') ?>" />
+  <link rel="stylesheet" href="../css/v_recepcion_proveido.css?v=<?= @filemtime(__DIR__ . '/../css/v_recepcion_proveido.css') ?>" />
+  <link rel="stylesheet" href="../css/v_vistas.css?v=<?= @filemtime(__DIR__ . '/../css/v_vistas.css') ?>" />
   <script src="../assets/js/jquery-2.1.4.min.js"></script>
 </head>
 
@@ -315,7 +315,7 @@ if (array_key_exists('ultimo_acceso_anterior', $_SESSION)) {
     </div>
   </div>
 
-  <script src="../js/v_profile.js"></script>
+  <script src="../js/v_profile.js?v=<?= @filemtime(__DIR__ . '/../js/v_profile.js') ?>"></script>
 </body>
 
 </html>

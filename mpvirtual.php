@@ -12,7 +12,7 @@ require_once './conexion/conexion.php';
   <title>Mesa de Partes Virtual — <?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?></title>
   <link rel="icon" type="image/png" href="<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="assets/font-awesome/4.5.0/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="css/publico.css" />
+  <link rel="stylesheet" href="css/publico.css?v=<?= @filemtime(__DIR__ . '/css/publico.css') ?>" />
   <script src="assets/js/jquery-2.1.4.min.js"></script>
 </head>
 

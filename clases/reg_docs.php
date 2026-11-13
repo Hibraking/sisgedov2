@@ -227,7 +227,7 @@ class Reg_docs
             $c = (new Conexion())->conectar();
             // Con el módulo Mesa de Partes Virtual, Registro cuenta solo lo presencial
             require_once __DIR__ . '/mpv_util.php';
-            $pres = sgd_mpv_ok($c) ? " and coalesce(recepcion_web,0)=0" : "";
+            $pres = sgd_mpv_ok($c) ? " and recepcion_web=0" : "";  // forma directa: usa idx_rd_web_estado
             $q = $c->prepare("select count(*) from registro_documentos where fecha_registro >= curdate() and fecha_registro < curdate() + interval 1 day" . $pres);
             $q->execute();
             $out['hoy'] = intval($q->fetchColumn());

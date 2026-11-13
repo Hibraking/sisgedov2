@@ -127,9 +127,9 @@ if (!$busco) {
   <title>Consulta Interna — SISGEDO</title>
   <link rel="icon" type="image/png" href="../<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="../assets/font-awesome/4.5.0/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="../css/sisgedo-theme.css" />
-  <link rel="stylesheet" href="../css/v_recepcion_proveido.css" />
-  <link rel="stylesheet" href="../css/consulta_interna.css" />
+  <link rel="stylesheet" href="../css/sisgedo-theme.css?v=<?= @filemtime(__DIR__ . '/../css/sisgedo-theme.css') ?>" />
+  <link rel="stylesheet" href="../css/v_recepcion_proveido.css?v=<?= @filemtime(__DIR__ . '/../css/v_recepcion_proveido.css') ?>" />
+  <link rel="stylesheet" href="../css/consulta_interna.css?v=<?= @filemtime(__DIR__ . '/../css/consulta_interna.css') ?>" />
   <script src="../assets/js/jquery-2.1.4.min.js"></script>
 </head>
 
@@ -277,7 +277,7 @@ if (!$busco) {
     </div>
   </div>
 
-  <script src="../js/consulta_interna.js"></script>
+  <script src="../js/consulta_interna.js?v=<?= @filemtime(__DIR__ . '/../js/consulta_interna.js') ?>"></script>
 </body>
 
 </html>

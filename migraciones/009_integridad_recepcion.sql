@@ -84,6 +84,13 @@ SET @s=(SELECT IF(COUNT(*)=0,
   WHERE table_schema=DATABASE() AND table_name='movimientos' AND index_name='idx_mv_estado_ofi');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 
+-- 6) Índice para los contadores de Registro (presencial / pendientes)
+SET @s=(SELECT IF(COUNT(*)=0,
+  'ALTER TABLE `registro_documentos` ADD INDEX `idx_rd_web_estado` (`recepcion_web`, `estado_recepcion`)',
+  'DO 0') FROM information_schema.statistics
+  WHERE table_schema=DATABASE() AND table_name='registro_documentos' AND index_name='idx_rd_web_estado');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+
 -- Verificación: las tres primeras columnas deben salir en 0
 SELECT
   (SELECT COUNT(*) FROM registro_documentos rd WHERE rd.estado_recepcion = 0

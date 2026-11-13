@@ -454,23 +454,25 @@ order by idMovimientos desc;";
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
             $sql = "(select movimientos.idMovimientos as codigo,
-                (select oficinas.nombre from movimientos inner join oficinas on movimientos.idoficina_derivar=oficinas.idoficinas where movimientos.idMovimientos=(select idmovimientoant from movimientos where idMovimientos=codigo)) as oficina,
+                oant.nombre as oficina,
                 'INTERNO' as tramite,documentos.nombre_documento,docs_emitidos.iddocs_emitidos as nro_exp,docs_emitidos.numero,docs_emitidos.asunto,
                 movimientos.detalle_derivado as detalles,'--' as Respuesta,
                 date_format( date_add( movimientos.fecha_hora,interval 0 hour),'%d/%m/%Y %h:%i %p')as fecha,if(adjunto is null,'#', concat('../docs adjs docs_emitidos/',adjunto)) as adjunto,'3' as tipo,
                 movimientos.fecha_hora as fecha_horaa
                 from movimientos inner join docs_emitidos on movimientos.iddocs_emitidos=docs_emitidos.iddocs_emitidos inner join documentos on docs_emitidos.iddocumento=documentos.iddocumentos
+                left join movimientos mant on mant.idMovimientos=movimientos.idmovimientoant left join oficinas oant on oant.idoficinas=mant.idoficina_derivar
                 where movimientos.idoficina_derivar=? and movimientos.idmovimientoant is not null and movimientos.estado=0)
-                union
+                union all
                 (select movimientos.idMovimientos as codigo,
-                (select oficinas.nombre from movimientos inner join oficinas on movimientos.idoficina_derivar=oficinas.idoficinas where movimientos.idMovimientos=(select idmovimientoant from movimientos where idMovimientos=codigo)) as oficina,
+                oant.nombre as oficina,
                 tipo_tram.nombre as tramite,documentos.nombre_documento,registro_documentos.nro_exp,registro_documentos.numero_docu as numero,
                 registro_documentos.asunto,movimientos.detalle_derivado as detalles,'--' as Respuesta,
                 date_format( date_add( movimientos.fecha_hora,interval 0 hour),'%d/%m/%Y %h:%i %p')as fecha,if(adjunto is null,'#', concat('../docs adjs reg_doc/',adjunto)) as adjunto,'3' as tipo,
                 movimientos.fecha_hora as fecha_horaa
                 from movimientos inner join registro_documentos on movimientos.idregdocs= registro_documentos.idregistro_documentos inner join documentos on registro_documentos.iddocumento=documentos.iddocumentos inner join tipo_tram on registro_documentos.idtipo_tramite= tipo_tram.idtipo_tram
+                left join movimientos mant on mant.idMovimientos=movimientos.idmovimientoant left join oficinas oant on oant.idoficinas=mant.idoficina_derivar
                 where movimientos.idoficina_derivar=? and movimientos.idmovimientoant is not null and movimientos.estado=0)
-                union
+                union all
                 (select registro_documentos.idregistro_documentos as codigo,
                 if(coalesce(registro_documentos.recepcion_web,0)=1,'MESA DE PARTES VIRTUAL',
                    coalesce((select o9.nombre from responsables rr9 inner join oficinas o9 on rr9.idoficina=o9.idoficinas where rr9.idpersonal=registro_documentos.idpersonal limit 1),'MESA DE PARTES')) AS oficina,
@@ -480,7 +482,7 @@ order by idMovimientos desc;";
                 registro_documentos.fecha_registro as fecha_horaa
                 from registro_documentos inner join documentos on registro_documentos.iddocumento=documentos.iddocumentos inner join tipo_tram on registro_documentos.idtipo_tramite= tipo_tram.idtipo_tram
                 where registro_documentos.estado_recepcion=0 and idoficina=?)
-                union
+                union all
                 (select docs_emitidos.iddocs_emitidos as codigo,oficinas.nombre as oficina,'INTERNO' AS tramite,documentos.nombre_documento,
                 docs_emitidos.iddocs_emitidos as nro_exp,docs_emitidos.numero,docs_emitidos.asunto,docs_emitidos.detalles,'--' as Respuesta,
                 date_format( date_add( docs_emitidos.fecha,interval 0 hour),'%d/%m/%Y %h:%i %p')as fecha,if(adjunto is null,'#', concat('../docs adjs docs_emitidos/',adjunto)) as adjunto,'2' as tipo,

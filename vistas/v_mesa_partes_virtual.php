@@ -87,8 +87,8 @@ $firstF = $first ? mpv_fila($first) : null;
   <title>Mesa de Partes Virtual — SISGEDO</title>
   <link rel="icon" type="image/png" href="../<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="../assets/font-awesome/4.5.0/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="../css/sisgedo-theme.css" />
-  <link rel="stylesheet" href="../css/v_recepcion_proveido.css" />
+  <link rel="stylesheet" href="../css/sisgedo-theme.css?v=<?= @filemtime(__DIR__ . '/../css/sisgedo-theme.css') ?>" />
+  <link rel="stylesheet" href="../css/v_recepcion_proveido.css?v=<?= @filemtime(__DIR__ . '/../css/v_recepcion_proveido.css') ?>" />
   <link rel="stylesheet" href="../css/v_mesa_partes_virtual.css?v=<?= @filemtime(__DIR__ . '/../css/v_mesa_partes_virtual.css') ?>" />
   <script src="../assets/js/jquery-2.1.4.min.js"></script>
 </head>

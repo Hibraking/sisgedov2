@@ -30,9 +30,11 @@ if (!defined('SISGEDO_MUNI_GESTION')) define('SISGEDO_MUNI_GESTION', 'Gestión E
 
 /* ---- Imágenes institucionales (rutas desde la raíz del proyecto) ---- */
 // Logo principal (cabecera de páginas públicas y correo al ciudadano)
-if (!defined('SISGEDO_IMG_LOGO'))     define('SISGEDO_IMG_LOGO', 'images/LOGO.png');
-// Ilustración del edificio en la portada del login
-if (!defined('SISGEDO_IMG_EDIFICIO')) define('SISGEDO_IMG_EDIFICIO', 'images/edificio_svg_trans.svg');
+if (!defined('SISGEDO_IMG_LOGO'))     define('SISGEDO_IMG_LOGO', 'images/logo_web.png'); // versión web (120 px de alto) del original images/LOGO.png
+// Ilustración del edificio en la portada del login.
+// Versión ligera (PNG 1200x800); si existe un .webp con el mismo nombre, el login
+// lo usa primero (137 KB frente a los 5,8 MB del SVG original edificio_svg_trans.svg).
+if (!defined('SISGEDO_IMG_EDIFICIO')) define('SISGEDO_IMG_EDIFICIO', 'images/edificio_login.png');
 // Ícono de pestaña del navegador (favicon) en todas las vistas
 if (!defined('SISGEDO_IMG_FAVICON'))  define('SISGEDO_IMG_FAVICON', 'images/icono sistema.jpg');
 // Logo de la cabecera de los PDF (archivo DENTRO de tcpdf/examples/images/)

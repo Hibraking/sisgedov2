@@ -127,7 +127,7 @@ if (count($eventos) > 0) {
   <title>Consulta tu Expediente — <?= hpub(SISGEDO_ENTIDAD) ?></title>
   <link rel="icon" type="image/png" href="<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="assets/font-awesome/4.5.0/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="css/publico.css" />
+  <link rel="stylesheet" href="css/publico.css?v=<?= @filemtime(__DIR__ . '/css/publico.css') ?>" />
 </head>
 
 <body>

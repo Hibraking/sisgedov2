@@ -33,9 +33,9 @@ $CAT_first = $CAT_total > 0 ? $CAT['datos'][0] : null;
   <title><?= h($CAT['titulo']) ?> — SISGEDO</title>
   <link rel="icon" type="image/png" href="../<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="../assets/font-awesome/4.5.0/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="../css/sisgedo-theme.css" />
-  <link rel="stylesheet" href="../css/v_recepcion_proveido.css" />
-  <link rel="stylesheet" href="../css/plantilla_catalogo.css" />
+  <link rel="stylesheet" href="../css/sisgedo-theme.css?v=<?= @filemtime(__DIR__ . '/../css/sisgedo-theme.css') ?>" />
+  <link rel="stylesheet" href="../css/v_recepcion_proveido.css?v=<?= @filemtime(__DIR__ . '/../css/v_recepcion_proveido.css') ?>" />
+  <link rel="stylesheet" href="../css/plantilla_catalogo.css?v=<?= @filemtime(__DIR__ . '/../css/plantilla_catalogo.css') ?>" />
   <style>.rowg { grid-template-columns: <?= $CAT_grid ?> }</style>
   <script src="../assets/js/jquery-2.1.4.min.js"></script>
 </head>
@@ -204,7 +204,7 @@ $CAT_first = $CAT_total > 0 ? $CAT['datos'][0] : null;
     </div>
   </div>
 
-  <script src="../js/plantilla_catalogo.js"></script>
+  <script src="../js/plantilla_catalogo.js?v=<?= @filemtime(__DIR__ . '/../js/plantilla_catalogo.js') ?>"></script>
 </body>
 
 </html>

@@ -43,9 +43,9 @@ $first = count($filas) > 0 ? $filas[0] : null;
   <title>Personal — SISGEDO</title>
   <link rel="icon" type="image/png" href="../<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="../assets/font-awesome/4.5.0/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="../css/sisgedo-theme.css" />
-  <link rel="stylesheet" href="../css/v_recepcion_proveido.css" />
-  <link rel="stylesheet" href="../css/v_vistas.css" />
+  <link rel="stylesheet" href="../css/sisgedo-theme.css?v=<?= @filemtime(__DIR__ . '/../css/sisgedo-theme.css') ?>" />
+  <link rel="stylesheet" href="../css/v_recepcion_proveido.css?v=<?= @filemtime(__DIR__ . '/../css/v_recepcion_proveido.css') ?>" />
+  <link rel="stylesheet" href="../css/v_vistas.css?v=<?= @filemtime(__DIR__ . '/../css/v_vistas.css') ?>" />
   <script src="../assets/js/jquery-2.1.4.min.js"></script>
 </head>
 
@@ -219,7 +219,7 @@ $first = count($filas) > 0 ? $filas[0] : null;
     </div>
   </div>
 
-  <script src="../js/v_personal.js"></script>
+  <script src="../js/v_personal.js?v=<?= @filemtime(__DIR__ . '/../js/v_personal.js') ?>"></script>
 </body>
 
 </html>

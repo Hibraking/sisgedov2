@@ -35,10 +35,17 @@ ServerSignature Off
     AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/x-javascript application/json image/svg+xml
 </IfModule>
 
-# Caché del navegador para archivos que casi nunca cambian (imágenes y fuentes).
-# CSS y JS no se cachean a largo plazo para que las actualizaciones se vean al instante.
+# Caché del navegador (30 días) para imágenes, fuentes, CSS y JS.
+# Los CSS/JS propios se piden con "?v=<fecha de modificación>" (ver las vistas):
+# cuando un archivo cambia, cambia su dirección y el navegador descarga el nuevo
+# al instante. Así no se vuelven a pedir en cada pantalla (antes: ~8 viajes al
+# servidor por página).
 <IfModule mod_expires.c>
     ExpiresActive On
+    ExpiresByType text/css "access plus 30 days"
+    ExpiresByType text/javascript "access plus 30 days"
+    ExpiresByType application/javascript "access plus 30 days"
+    ExpiresByType application/x-javascript "access plus 30 days"
     ExpiresByType image/png "access plus 30 days"
     ExpiresByType image/jpeg "access plus 30 days"
     ExpiresByType image/gif "access plus 30 days"

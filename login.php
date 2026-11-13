@@ -22,9 +22,9 @@ $loginError = isset($_GET['e']) ? (int) $_GET['e'] : 0;
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="<?= SISGEDO_IMG_FAVICON ?>" />
   <title>SISGEDO — Ingresar al sistema</title>
-  <link rel="stylesheet" href="css/sisgedo-theme.css" />
-  <link rel="stylesheet" href="css/login.css" />
-  <script src="js/login.js" defer></script>
+  <link rel="stylesheet" href="css/sisgedo-theme.css?v=<?= @filemtime(__DIR__ . '/css/sisgedo-theme.css') ?>" />
+  <link rel="stylesheet" href="css/login.css?v=<?= @filemtime(__DIR__ . '/css/login.css') ?>" />
+  <script src="js/login.js?v=<?= @filemtime(__DIR__ . '/js/login.js') ?>" defer></script>
 </head>
 
 <body data-login-error="<?php echo $loginError; ?>">
@@ -47,7 +47,11 @@ $loginError = isset($_GET['e']) ? (int) $_GET['e'] : 0;
         <p class="desc">Plataforma digital para la gestión, recepción, derivación y seguimiento de documentos de manera eficiente y segura.</p>
 
         <div class="building-wrap">
-          <img class="building" src="<?= SISGEDO_IMG_EDIFICIO ?>" alt="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>" />
+          <?php $edifWebp = preg_replace('/\.(png|jpe?g)$/i', '.webp', SISGEDO_IMG_EDIFICIO); ?>
+          <picture style="display:contents">
+            <?php if ($edifWebp !== SISGEDO_IMG_EDIFICIO && is_file(__DIR__ . '/' . $edifWebp)) { ?><source srcset="<?= $edifWebp ?>" type="image/webp" /><?php } ?>
+            <img class="building" src="<?= SISGEDO_IMG_EDIFICIO ?>" width="1200" height="800" alt="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>" />
+          </picture>
         </div>
         <svg class="building-fallback" viewBox="0 0 1780 880" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>">
           <circle cx="986" cy="104" r="5" />

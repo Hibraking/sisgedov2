@@ -204,4 +204,4 @@ if (isset($_SERVER['SCRIPT_NAME']) && preg_match('~/(vistas|reportes)/([a-z_0-9]
     <i class="fa fa-angle-right" style="color:#cbd5e1"></i>
   </div>
 </div>
-<script src="<?= $NAV_PREFIJO ?>js/nav_nuevo.js"></script>
+<script src="<?= $NAV_PREFIJO ?>js/nav_nuevo.js?v=<?= @filemtime(__DIR__ . '/../js/nav_nuevo.js') ?>"></script>

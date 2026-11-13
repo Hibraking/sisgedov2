@@ -101,7 +101,7 @@ if ($busco && strlen($cvd) === 8) {
   <title>Verificación de documentos — <?= hv(SISGEDO_ENTIDAD) ?></title>
   <link rel="icon" type="image/png" href="<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="assets/font-awesome/4.5.0/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="css/publico.css" />
+  <link rel="stylesheet" href="css/publico.css?v=<?= @filemtime(__DIR__ . '/css/publico.css') ?>" />
   <style>
     .cvd-in{text-transform:uppercase;letter-spacing:2px;font-family:Consolas,"Courier New",monospace;font-weight:700}
     .ok-box{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:10px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:13px;line-height:1.5}
