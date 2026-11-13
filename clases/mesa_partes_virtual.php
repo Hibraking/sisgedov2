@@ -78,25 +78,28 @@ class MesaPartesVirtual
      * Documentos de una bandeja: 'pendientes' | 'observados' | 'por_derivar' | 'derivados'.
      * $q filtra por expediente, remitente, DNI o asunto. $desde/$hasta solo
      * aplican al historial (por defecto, últimos 30 días).
+     * $orden: 'recientes' (por defecto, lo último que llegó arriba) | 'antiguos'.
+     * "Observados" siempre se ordena por plazo (el que vence primero arriba).
      */
-    public function lista($bandeja, $q = '', $desde = '', $hasta = '')
+    public function lista($bandeja, $q = '', $desde = '', $hasta = '', $orden = 'recientes')
     {
         if (!sgd_mpv_ok()) {
             return array();
         }
         $sql = $this->sqlBase() . self::condicion($bandeja);
         $p = array();
+        $dir = $orden === 'antiguos' ? 'ASC' : 'DESC';
         if ($bandeja === 'pendientes') {
-            $orden = " ORDER BY rd.fecha_registro ASC";          // primero el más antiguo
+            $orden = " ORDER BY rd.fecha_registro $dir";
         } elseif ($bandeja === 'observados') {
             $orden = " ORDER BY rd.mpv_plazo ASC, rd.fecha_registro ASC";
         } elseif ($bandeja === 'por_derivar') {
-            $orden = " ORDER BY rd.mpv_recepcion ASC";
+            $orden = " ORDER BY rd.mpv_recepcion $dir";
         } else {
             $sql .= " AND rd.fecha_registro >= ? AND rd.fecha_registro < DATE_ADD(?, INTERVAL 1 DAY)";
             $p[] = $desde !== '' ? $desde : date('Y-m-d', strtotime('-30 days'));
             $p[] = $hasta !== '' ? $hasta : date('Y-m-d');
-            $orden = " ORDER BY rd.fecha_registro DESC";
+            $orden = " ORDER BY rd.fecha_registro $dir";
         }
         $q = trim((string)$q);
         if ($q !== '') {

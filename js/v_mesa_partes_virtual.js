@@ -31,6 +31,8 @@ function irFiltros() {
     if (!el) return;
     el.value ? p.set(id, el.value) : p.delete(id);
   });
+  var ord = document.getElementById("orden");
+  if (ord) ord.value === "antiguos" ? p.set("orden", "antiguos") : p.delete("orden");
   var qs = p.toString();
   window.location = qs ? "?" + qs : window.location.pathname;
 }
@@ -40,7 +42,7 @@ document.getElementById("buscador").addEventListener("keydown", function (e) {
     irFiltros();
   }
 });
-["desde", "hasta"].forEach(function (id) {
+["desde", "hasta", "orden"].forEach(function (id) {
   var el = document.getElementById(id);
   if (el) el.addEventListener("change", irFiltros);
 });

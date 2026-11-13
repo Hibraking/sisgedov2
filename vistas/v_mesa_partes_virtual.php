@@ -23,11 +23,12 @@ $bandeja = isset($_GET['b']) && isset($bandejas[$_GET['b']]) ? $_GET['b'] : 'pen
 $qFiltro = isset($_GET['q']) ? trim($_GET['q']) : '';
 $desdeFiltro = isset($_GET['desde']) ? trim($_GET['desde']) : '';
 $hastaFiltro = isset($_GET['hasta']) ? trim($_GET['hasta']) : '';
+$ordenFiltro = (isset($_GET['orden']) && $_GET['orden'] === 'antiguos') ? 'antiguos' : 'recientes';
 $hoy = date('Y-m-d');
 
 $mpv = new MesaPartesVirtual();
 $migracionOk = sgd_mpv_ok();
-$datos = $mpv->lista($bandeja, $qFiltro, $desdeFiltro, $hastaFiltro);
+$datos = $mpv->lista($bandeja, $qFiltro, $desdeFiltro, $hastaFiltro, $ordenFiltro);
 $cont = $mpv->contadores();
 $catOficinas = $mpv->oficinas();
 $tok = csrf_token();
@@ -181,6 +182,14 @@ $firstF = $first ? mpv_fila($first) : null;
               </div>
               <div class="fld"><label>Hasta</label>
                 <div class="inp"><input id="hasta" type="date" max="<?= h($hoy) ?>" value="<?= h($hastaFiltro) ?>" /></div>
+              </div>
+            <?php } ?>
+            <?php if ($bandeja !== 'observados') { ?>
+              <div class="fld"><label>Ordenar</label>
+                <div class="inp" style="padding:0"><select id="orden" style="width:100%;height:100%;border:0;outline:0;background:none;padding:0 10px;color:#475569;font-size:12px">
+                    <option value="recientes" <?= $ordenFiltro === 'recientes' ? 'selected' : '' ?>>Más recientes primero</option>
+                    <option value="antiguos" <?= $ordenFiltro === 'antiguos' ? 'selected' : '' ?>>Más antiguos primero</option>
+                  </select><i class="fa fa-angle-down" style="padding-right:10px"></i></div>
               </div>
             <?php } ?>
             <div class="field-actions">
@@ -391,7 +400,7 @@ $firstF = $first ? mpv_fila($first) : null;
         <div><label>Oficina destino <span class="req">*</span></label><select id="dv_oficina">
             <option value="">Seleccione la oficina...</option><?php foreach ($catOficinas as $o) { ?><option value="<?= h($o[0]) ?>"><?= h($o[1]) ?></option><?php } ?>
           </select></div>
-        <label class="mpv-check"><input type="checkbox" id="dv_cargo" checked> Abrir el cargo para imprimir</label>
+        <label class="mpv-check"><input type="checkbox" id="dv_cargo"> Abrir el cargo para imprimir <span class="muted">(normalmente no hace falta: el ciudadano ya recibió su constancia por correo)</span></label>
         <div class="muted" style="font-size:11.5px"><i class="fa fa-info-circle"></i> El documento aparecerá en la bandeja <strong>Recepción &gt; Por recepcionar</strong> de la oficina elegida.</div>
       </div>
       <div class="mf"><button class="btn" onclick="cerrarModales()">Cancelar</button><button class="btn btn-p" id="dv_ok"><i class="fa fa-share"></i> Derivar</button></div>
