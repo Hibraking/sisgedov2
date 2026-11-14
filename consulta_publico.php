@@ -329,7 +329,7 @@ if (count($eventos) > 0) {
     <b><?= hpub(SISGEDO_MUNI_SIGLAS) ?> — <?= hpub(SISGEDO_ENTIDAD) ?></b> · Consulta de Trámite Documentario © <?= date('Y') ?>
   </div>
 
-  <!-- AVISO: CAMBIO DE SISTEMA (se muestra una vez por sesión del navegador) -->
+  <!-- AVISO: CAMBIO DE SISTEMA (cada vez que se entra o se recarga la página) -->
   <div class="modal-anterior" id="avisoAnterior" role="dialog" aria-modal="true" aria-labelledby="avisoAnteriorTit" hidden>
     <div class="caja">
       <div class="ico"><i class="fa fa-bullhorn"></i></div>
@@ -346,15 +346,24 @@ if (count($eventos) > 0) {
   </div>
   <script>
     (function () {
+      // Se muestra SIEMPRE al entrar a la página y al recargarla (F5).
+      // Única excepción: el resultado de una búsqueda hecha desde esta misma
+      // página (botón Consultar), para no tapar el resultado en cada consulta.
       var m = document.getElementById('avisoAnterior');
-      var visto = false;
-      try { visto = sessionStorage.getItem('sgdAvisoAnterior') === '1'; } catch (e) {}
-      if (visto) return;
+      var tipo = '';
+      try {
+        var nav = performance.getEntriesByType('navigation');
+        tipo = nav.length ? nav[0].type : (performance.navigation && performance.navigation.type === 1 ? 'reload' : 'navigate');
+      } catch (e) {}
+      var desdeEstaPagina = false;
+      try {
+        var ref = document.referrer ? new URL(document.referrer) : null;
+        desdeEstaPagina = !!ref && ref.origin === location.origin && ref.pathname === location.pathname;
+      } catch (e) {}
+      var esBusqueda = tipo === 'navigate' && desdeEstaPagina && location.search.indexOf('num_exp=') !== -1;
+      if (esBusqueda) return;
       m.hidden = false;
-      function cerrar() {
-        m.hidden = true;
-        try { sessionStorage.setItem('sgdAvisoAnterior', '1'); } catch (e) {}
-      }
+      function cerrar() { m.hidden = true; }
       document.getElementById('avisoAnteriorCerrar').onclick = cerrar;
       m.addEventListener('click', function (e) { if (e.target === m) cerrar(); });
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !m.hidden) cerrar(); });
