@@ -169,6 +169,12 @@ if (count($eventos) > 0) {
           No encontramos ningún expediente con el número <b><?= hpub($numExp) ?></b>.<br />
           Verifica el número en tu constancia. Si el problema continúa, acércate a mesa de partes o llama a la
           municipalidad.
+          <div class="aviso-anterior">
+            <i class="fa fa-history"></i>
+            Si presentaste tu documento <b>hasta el <?= hpub(SISGEDO_ANTERIOR_HASTA) ?></b>, búscalo en el sistema anterior:
+            <a class="btn btn-p" href="<?= hpub(SISGEDO_ANTERIOR_URL) ?>" target="_blank" rel="noopener">
+              <i class="fa fa-external-link"></i> Ir al SISGEDO anterior</a>
+          </div>
         </div>
       </div>
     <?php } ?>
@@ -322,6 +328,38 @@ if (count($eventos) > 0) {
   <div class="pub-footer">
     <b><?= hpub(SISGEDO_MUNI_SIGLAS) ?> — <?= hpub(SISGEDO_ENTIDAD) ?></b> · Consulta de Trámite Documentario © <?= date('Y') ?>
   </div>
+
+  <!-- AVISO: CAMBIO DE SISTEMA (se muestra una vez por sesión del navegador) -->
+  <div class="modal-anterior" id="avisoAnterior" role="dialog" aria-modal="true" aria-labelledby="avisoAnteriorTit" hidden>
+    <div class="caja">
+      <div class="ico"><i class="fa fa-bullhorn"></i></div>
+      <h2 id="avisoAnteriorTit">Nuevo sistema de trámite documentario</h2>
+      <p>Desde el <b><?= hpub(SISGEDO_VIGENTE_DESDE) ?></b> la municipalidad usa este nuevo sistema.</p>
+      <p>Si presentaste tu documento <b>hasta el <?= hpub(SISGEDO_ANTERIOR_HASTA) ?></b>, consúltalo en el
+        <b>SISGEDO anterior</b> con el mismo número de expediente.</p>
+      <div class="acc">
+        <a class="btn btn-p" href="<?= hpub(SISGEDO_ANTERIOR_URL) ?>" target="_blank" rel="noopener">
+          <i class="fa fa-external-link"></i> Ir al SISGEDO anterior</a>
+        <button type="button" class="btn" id="avisoAnteriorCerrar">Entendido, continuar aquí</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var m = document.getElementById('avisoAnterior');
+      var visto = false;
+      try { visto = sessionStorage.getItem('sgdAvisoAnterior') === '1'; } catch (e) {}
+      if (visto) return;
+      m.hidden = false;
+      function cerrar() {
+        m.hidden = true;
+        try { sessionStorage.setItem('sgdAvisoAnterior', '1'); } catch (e) {}
+      }
+      document.getElementById('avisoAnteriorCerrar').onclick = cerrar;
+      m.addEventListener('click', function (e) { if (e.target === m) cerrar(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !m.hidden) cerrar(); });
+    })();
+  </script>
 </body>
 
 </html>

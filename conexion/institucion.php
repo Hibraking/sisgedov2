@@ -84,6 +84,12 @@ if (!defined('SISGEDO_FERIADOS_FIJOS')) define('SISGEDO_FERIADOS_FIJOS', array(
 // observado por la Mesa de Partes (Ley 27444, art. 136).
 if (!defined('SISGEDO_PLAZO_SUBSANAR')) define('SISGEDO_PLAZO_SUBSANAR', 2);
 
+// Cambio de sistema: SISGEDO v2 empezó desde cero. Los documentos presentados
+// hasta el último día del sistema anterior se consultan en el SISGEDO anterior.
+if (!defined('SISGEDO_ANTERIOR_HASTA')) define('SISGEDO_ANTERIOR_HASTA', '13/11/2026');
+if (!defined('SISGEDO_VIGENTE_DESDE')) define('SISGEDO_VIGENTE_DESDE', '16/11/2026');
+if (!defined('SISGEDO_ANTERIOR_URL'))   define('SISGEDO_ANTERIOR_URL', 'https://munihuaytara.gob.pe/sisgedo/consulta_publico.php');
+
 /* ---- Derivados automáticos (NO editar) ---- */
 if (!defined('SISGEDO_ENTIDAD')) {
     define('SISGEDO_ENTIDAD', 'Municipalidad ' . SISGEDO_MUNI_TIPO . ' de ' . SISGEDO_MUNI_LUGAR);

@@ -89,4 +89,4 @@ Cada recepción, derivación o respuesta es una fila en `movimientos`
 - *Mi oficina* restaura su cargo real. Al iniciar sesión siempre vuelve a su oficina.
 
 ## Base de datos
-Ejecutar `migraciones/ACTUALIZAR_BD_COMPLETO.sql` (000 a 009, se puede repetir sin riesgo).
+Ejecutar `migraciones/ACTUALIZAR_BD_COMPLETO.sql` (000 a 010, se puede repetir sin riesgo). La 011 (arranque desde cero) se ejecuta una sola vez, aparte.
