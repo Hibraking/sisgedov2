@@ -163,58 +163,27 @@ select { appearance: none; -webkit-appearance: none; background-image: linear-gr
 
 /* ============================================================
    Mesa de Partes Virtual (body.mpv)
-   - Celular: una columna, se desplaza normalmente.
-   - Tablet / laptop / PC: una columna centrada (mismo estilo que la
-     Consulta), compacta para que entre en la pantalla sin desplazarse.
+   Mismo estilo que la Consulta (cabecera, títulos, tarjetas, campos).
+   Solo en pantallas MUY bajas se reducen un poco los espacios.
    ============================================================ */
+/* Aviso fuera de horario: tarjeta con ícono, como las de la Consulta */
 .mpv-horario {
-  background: #f8fafc; border: 1px solid #e2e8f0; color: #475569;
-  border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.5;
+  display: flex; gap: 14px; align-items: flex-start;
+  background: #f5f3ff; border: 1px solid #e9e5ff; border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  padding: 14px 20px; margin-bottom: 18px; color: #4c1d95; font-size: 13px; line-height: 1.55;
 }
-.mpv-horario .h-tit { font-weight: 700; color: #123a7a; margin-bottom: 2px; }
-.mpv-horario .h-hor { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 12.5px; }
-.mpv-horario.fuera { background: #f5f3ff; border-color: #ddd6fe; color: #4c1d95; }
-.mpv-horario.fuera .h-tit { color: #5b21b6; }
-.mpv-horario.fuera .h-hor { border-top-color: #ddd6fe; }
-.mpv-info { margin-bottom: 16px; }
+.mpv-horario .h-ico {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; background: #ede9fe; color: #6d28d9;
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.mpv-horario .h-tit { font-size: 14px; font-weight: 700; color: #5b21b6; margin-bottom: 2px; }
+.mpv-horario .h-hor { margin-top: 4px; font-size: 12.5px; color: #6d28d9; }
+.mpv .pub-card { margin-bottom: 0; }
 .mpv .exito .acciones { flex-wrap: wrap; }
-
-@media (min-width: 561px) {
-  .mpv .pub-main { padding: 18px 16px 10px; }
-  .mpv .pub-hero { margin-bottom: 12px; }
-  .mpv .pub-hero h1 { font-size: 22px; }
-  .mpv .pasos { margin-bottom: 14px; }
-  .mpv .pub-card { padding: 18px 22px; margin-bottom: 0; }
-  .mpv .fgrid { gap: 10px 14px; }
-  .mpv label { margin-bottom: 4px; }
-  .mpv input, .mpv select, .mpv textarea { padding: 8px 11px; }
-  .mpv textarea { height: 62px; resize: vertical; }
-  .mpv .acciones { margin-top: 16px; }
-  .mpv .pub-footer { padding: 10px 16px; }
-}
-
-
-/* Pantallas bajas (laptops de 768 px o con zoom): aún más compacto */
-@media (min-width: 561px) and (max-height: 760px) {
-  .mpv .pub-hdr { padding: 6px 20px; }
-  .mpv .pub-hdr img { height: 38px; }
-  .mpv .pub-main { padding-top: 12px; }
-  .mpv .pub-card { padding: 14px 20px; }
-  .mpv .fgrid { gap: 8px 14px; }
-  .mpv .hint { margin-top: 2px; }
-  .mpv .pasos { margin-bottom: 10px; }
-  .mpv .paso .pnum { width: 26px; height: 26px; }
-  .mpv .acciones { margin-top: 12px; }
-  .mpv .exito .ic { width: 52px; height: 52px; font-size: 24px; margin-bottom: 8px; }
-  .mpv .exito .expnum { margin: 8px 0; font-size: 26px; }
-  .mpv .pub-footer { padding: 6px 16px; }
-  .mpv .pub-hero { margin-bottom: 8px; }
-  .mpv .pub-hero h1 { font-size: 20px; }
-  .mpv .mpv-info { margin-bottom: 10px; }
-  .mpv .mpv-horario { padding: 8px 12px; }
-  .mpv .mpv-horario .h-hor { margin-top: 4px; padding-top: 4px; }
-  .mpv textarea { height: 52px; }
-}
+.mpv textarea { resize: vertical; }
+.mpv-tit { font-size: 14px; font-weight: 700; color: #123a7a; margin-bottom: 14px; }
+.mpv-tit i { margin-right: 8px; }
 
 /* Paso 2: el archivo ocupa todo el ancho; desde 700 px, 3 columnas
    (tipo de documento · tipo de trámite · N° / folios · archivo / asunto) */
@@ -222,4 +191,44 @@ select { appearance: none; -webkit-appearance: none; background-image: linear-gr
 @media (min-width: 700px) {
   .mpv .fgrid-doc { grid-template-columns: 1fr 1fr 1fr; }
   .mpv .fgrid-doc .c-archivo { grid-column: span 2; }
+}
+
+/* Pantallas de menor alto: mismos colores y cabecera, menos espacios */
+@media (min-width: 561px) and (max-height: 860px) {
+  .mpv .pub-main { padding: 16px 16px 8px; }
+  .mpv .pub-hero { margin-bottom: 12px; }
+  .mpv .pub-hero h1 { font-size: 22px; }
+  .mpv .mpv-horario { padding: 10px 16px; margin-bottom: 12px; gap: 12px; }
+  .mpv .mpv-horario .h-ico { width: 32px; height: 32px; font-size: 15px; }
+  .mpv .pasos { margin-bottom: 12px; }
+  .mpv .pub-card { padding: 18px 22px; }
+  .mpv .mpv-tit { margin-bottom: 10px; }
+  .mpv .fgrid { gap: 10px 14px; }
+  .mpv label { margin-bottom: 4px; }
+  .mpv input, .mpv select, .mpv textarea { padding: 8px 12px; }
+  .mpv textarea { height: 56px; }
+  .mpv .acciones { margin-top: 14px; }
+  .mpv .pub-footer { padding: 8px 16px; }
+}
+/* Pantallas muy bajas (laptop 1366x768 con barras del navegador o zoom) */
+@media (min-width: 561px) and (max-height: 720px) {
+  .mpv .pub-main { padding-top: 10px; }
+  .mpv .pub-hero { margin-bottom: 8px; }
+  .mpv .pub-hero h1 { font-size: 20px; }
+  .mpv .pub-hero p { margin-top: 2px; }
+  .mpv .mpv-horario { padding: 8px 14px; margin-bottom: 8px; line-height: 1.45; }
+  .mpv .mpv-horario .h-hor { margin-top: 1px; }
+  .mpv .pasos { margin-bottom: 8px; }
+  .mpv .paso .pnum { width: 26px; height: 26px; }
+  .mpv .pub-card { padding: 12px 20px; }
+  .mpv .mpv-tit { margin-bottom: 8px; }
+  .mpv .fgrid { gap: 8px 14px; }
+  .mpv input, .mpv select, .mpv textarea { padding: 7px 11px; }
+  .mpv .hint { margin-top: 2px; }
+  .mpv textarea { height: 42px; }
+  .mpv .acciones { margin-top: 10px; }
+  .mpv .btn { padding: 8px 16px; }
+  .mpv .exito .ic { width: 52px; height: 52px; font-size: 24px; margin-bottom: 8px; }
+  .mpv .exito .expnum { margin: 8px 0; font-size: 26px; }
+  .mpv .pub-footer { padding: 6px 16px; }
 }

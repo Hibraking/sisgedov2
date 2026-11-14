@@ -22,7 +22,7 @@ require_once './conexion/conexion.php';
     <img src="<?= SISGEDO_IMG_LOGO ?>" alt="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>" />
     <div class="th">
       <div class="t1"><?= htmlspecialchars(SISGEDO_ENTIDAD_MAYUS, ENT_QUOTES, 'UTF-8') ?></div>
-      <div class="t2">Sistema de Gestión Documentario — SISGEDO</div>
+      <div class="t2">Mesa de Partes Virtual</div>
     </div>
     <a class="enl" href="consulta_publico.php"><i class="fa fa-search"></i> Consultar expediente</a>
   </div>
@@ -35,23 +35,23 @@ require_once './conexion/conexion.php';
         <p>Presenta tus documentos a la municipalidad sin salir de casa y haz el seguimiento con tu número de expediente.</p>
       </div>
       <?php
-      // Horario de atención (único lugar donde se muestra). Fuera de horario
-      // se indica desde qué fecha se considerará presentado el documento.
+      // Aviso SOLO fuera del horario de atención (noches, fines de semana y
+      // feriados): indica desde qué fecha se considerará presentado el documento.
       require_once './clases/calendario.php';
       $mpvAhora = date('Y-m-d H:i:s');
       $mpvOficial = sgd_cal_fecha_presentacion($mpvAhora);
       $mpvFuera = strtotime($mpvOficial) !== strtotime($mpvAhora); ?>
-      <div class="mpv-horario <?= $mpvFuera ? 'fuera' : '' ?>">
-        <?php if ($mpvFuera) { ?>
-          <div class="h-tit"><i class="fa fa-moon-o"></i> Fuera del horario de atención</div>
-          <div>Puedes enviar tu documento igual: se considerará presentado el
-            <b><?= htmlspecialchars(sgd_cal_texto($mpvOficial), ENT_QUOTES, 'UTF-8') ?></b></div>
-        <?php } else { ?>
-          <div class="h-tit"><i class="fa fa-clock-o"></i> Estamos en horario de atención</div>
-          <div>Lo que se presente fuera de horario, fines de semana o feriados se considera presentado el siguiente día hábil.</div>
-        <?php } ?>
-        <div class="h-hor"><b>Horario:</b> <?= htmlspecialchars(SISGEDO_HORARIO_TEXTO, ENT_QUOTES, 'UTF-8') ?></div>
-      </div>
+      <?php if ($mpvFuera) { ?>
+        <div class="mpv-horario">
+          <span class="h-ico"><i class="fa fa-moon-o"></i></span>
+          <div>
+            <div class="h-tit">Fuera del horario de atención</div>
+            <div>Puedes enviar tu documento igual: se considerará presentado el
+              <b><?= htmlspecialchars(sgd_cal_texto($mpvOficial), ENT_QUOTES, 'UTF-8') ?></b></div>
+            <div class="h-hor"><b>Horario:</b> <?= htmlspecialchars(SISGEDO_HORARIO_TEXTO, ENT_QUOTES, 'UTF-8') ?></div>
+          </div>
+        </div>
+      <?php } ?>
     </aside>
 
     <!-- COLUMNA DEL FORMULARIO -->
@@ -69,7 +69,7 @@ require_once './conexion/conexion.php';
 
     <!-- PASO 1: DATOS PERSONALES -->
     <div class="pub-card" id="paso1">
-      <div style="font-size:14px;font-weight:700;color:#123a7a;margin-bottom:14px"><i class="fa fa-user" style="margin-right:8px"></i>Datos del remitente</div>
+      <div class="mpv-tit"><i class="fa fa-user"></i>Datos del remitente</div>
       <div class="fgrid">
         <div><label>Correo electrónico <span class="req">*</span></label><input id="f_email" type="email" placeholder="ejemplo@correo.com" autocomplete="email" />
           <div class="hint">Aquí te llegará la constancia de tu trámite.</div>
@@ -88,7 +88,7 @@ require_once './conexion/conexion.php';
 
     <!-- PASO 2: DOCUMENTO -->
     <div class="pub-card" id="paso2" style="display:none">
-      <div style="font-size:14px;font-weight:700;color:#123a7a;margin-bottom:14px"><i class="fa fa-file-text-o" style="margin-right:8px"></i>Datos del documento</div>
+      <div class="mpv-tit"><i class="fa fa-file-text-o"></i>Datos del documento</div>
       <div class="fgrid fgrid-doc">
         <div><label>Tipo de documento <span class="req">*</span></label><select id="f_tipodoc">
             <option value="">Seleccione...</option><?php $mpvirtual->lista_documentos(); ?>
