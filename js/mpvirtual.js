@@ -28,7 +28,6 @@ function ver(id1, id2, id3) {
   document.getElementById('paso1').style.display = id1 ? '' : 'none';
   document.getElementById('paso2').style.display = id2 ? '' : 'none';
   document.getElementById('paso3').style.display = id3 ? '' : 'none';
-  if (window.mpvAjustarEscala) window.mpvAjustarEscala();
 }
 
 function irPaso1() {
@@ -199,46 +198,3 @@ function copiarExp() {
     window.prompt('Copia tu número de expediente:', t);
   }
 }
-
-/* ------------------------------------------------------------------
-   Escala automática según la pantalla (tablet, laptop, PC).
-   Mide el contenido a tamaño normal (el paso que se está viendo,
-   con espacio para un mensaje de error) y lo agranda o achica para que ocupe la
-   pantalla sin necesidad de desplazarse. En celular no se aplica:
-   ahí la página se desplaza normalmente.
-   ------------------------------------------------------------------ */
-(function () {
-  var MIN_ANCHO = 768, ESC_MIN = 0.8, ESC_MAX = 1.6;
-  var piezas = ['.pub-hdr', '.mpv-main', 'body > .pub-footer'].map(function (s) { return document.querySelector(s); });
-  if (piezas.some(function (p) { return !p; }) || !('zoom' in document.body.style)) return;
-
-  function poner(z) { piezas.forEach(function (p) { p.style.zoom = z === 1 ? '' : String(z); }); }
-
-  function altoNatural() {
-    var err = document.getElementById('msgError'), errVis = err.classList.contains('visible'), errTxt = err.textContent;
-    if (!errVis) { err.textContent = 'Revise los datos ingresados.'; err.classList.add('visible'); }
-    var main = piezas[1], body = document.body;
-    body.style.minHeight = '0'; body.style.height = 'auto'; main.style.flex = 'none';
-    var max = body.offsetHeight;                      // solo el paso que se está viendo
-    if (!errVis) { err.classList.remove('visible'); err.textContent = errTxt; }
-    body.style.minHeight = ''; body.style.height = ''; main.style.flex = '';
-    return max;
-  }
-
-  function ajustar() {
-    poner(1);
-    var w = window.innerWidth, h = window.innerHeight;
-    if (w < MIN_ANCHO) return;
-    var anchoBase = w >= 980 ? 1100 : 820;            // ancho cómodo del diseño a escala 1
-    var z = Math.min(w / anchoBase, (h - 8) / altoNatural());
-    z = Math.max(ESC_MIN, Math.min(ESC_MAX, z));
-    z = Math.floor(z * 100) / 100;
-    if (Math.abs(z - 1) >= 0.03) poner(z);
-  }
-
-  var t = null;
-  window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(ajustar, 120); });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustar);
-  window.mpvAjustarEscala = ajustar;               // se llama al cambiar de paso
-  ajustar();
-})();
