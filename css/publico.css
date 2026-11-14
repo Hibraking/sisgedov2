@@ -222,3 +222,11 @@ select { appearance: none; -webkit-appearance: none; background-image: linear-gr
   .mpv .exito .expnum { margin: 8px 0; font-size: 26px; }
   .mpv .pub-footer { padding: 6px 16px; }
 }
+
+/* Paso 2: el archivo ocupa todo el ancho; en pantallas anchas, 3 columnas
+   (tipo de documento · tipo de trámite · N° / folios · archivo / asunto) */
+.fgrid .c-archivo { grid-column: 1 / -1; }
+@media (min-width: 980px) {
+  .mpv .fgrid-doc { grid-template-columns: 1fr 1fr 1fr; }
+  .mpv .fgrid-doc .c-archivo { grid-column: span 2; }
+}

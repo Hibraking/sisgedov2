@@ -89,7 +89,7 @@ require_once './conexion/conexion.php';
     <!-- PASO 2: DOCUMENTO -->
     <div class="pub-card" id="paso2" style="display:none">
       <div style="font-size:14px;font-weight:700;color:#123a7a;margin-bottom:14px"><i class="fa fa-file-text-o" style="margin-right:8px"></i>Datos del documento</div>
-      <div class="fgrid">
+      <div class="fgrid fgrid-doc">
         <div><label>Tipo de documento <span class="req">*</span></label><select id="f_tipodoc">
             <option value="">Seleccione...</option><?php $mpvirtual->lista_documentos(); ?>
           </select></div>
@@ -98,10 +98,10 @@ require_once './conexion/conexion.php';
           </select></div>
         <div><label>N° del documento <span class="req">*</span></label><input id="f_numero" type="text" placeholder="Ej. 0123-2026 (o S/N si no tiene)" /></div>
         <div><label>Folios (páginas) <span class="req">*</span></label><input id="f_folios" type="number" min="1" placeholder="Cantidad de hojas" inputmode="numeric" /></div>
-        <div class="full"><label>Asunto <span class="req">*</span></label><textarea id="f_asunto" rows="3" placeholder="Describe brevemente qué solicitas"></textarea></div>
-        <div class="full"><label>Archivo adjunto</label><input id="f_fichero" type="file" />
+        <div class="c-archivo"><label>Archivo adjunto</label><input id="f_fichero" type="file" />
           <div class="hint">Opcional. PDF, Word, Excel o imagen — máximo 15 MB.</div>
         </div>
+        <div class="full"><label>Asunto <span class="req">*</span></label><textarea id="f_asunto" rows="3" placeholder="Describe brevemente qué solicitas"></textarea></div>
       </div>
       <div class="acciones">
         <button class="btn" onclick="irPaso1()"><i class="fa fa-arrow-left"></i> Atrás</button>
