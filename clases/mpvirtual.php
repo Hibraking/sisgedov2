@@ -62,7 +62,7 @@ class mpvirtual
             $result = $conectado->prepare($sql);
             $result->execute();
             foreach ($result as $filas) {
-                echo '<option value="' . $filas[0] . '">' . $filas[1] . '</option>';
+                echo '<option value="' . (int)$filas[0] . '">' . htmlspecialchars(trim((string)$filas[1]), ENT_QUOTES, 'UTF-8') . '</option>';
             }
         } catch (Exception $exc) {
             error_log($exc->getMessage());
@@ -80,7 +80,7 @@ class mpvirtual
             $result = $conectado->prepare($sql);
             $result->execute();
             foreach ($result as $filas) {
-                echo '<option value="' . $filas[0] . '">' . $filas[1] . '</option>';
+                echo '<option value="' . (int)$filas[0] . '">' . htmlspecialchars(trim((string)$filas[1]), ENT_QUOTES, 'UTF-8') . '</option>';
             }
         } catch (Exception $exc) {
             error_log($exc->getMessage());

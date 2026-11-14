@@ -131,7 +131,12 @@ require_once './conexion/conexion.php';
     <b><?= htmlspecialchars(SISGEDO_MUNI_SIGLAS, ENT_QUOTES, 'UTF-8') ?> — <?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?></b> · Mesa de Partes Virtual © <?= date('Y') ?>
   </div>
 
+  <script src="./js/selector_buscable.js?v=<?php echo @filemtime(__DIR__ . '/js/selector_buscable.js'); ?>"></script>
   <script src="./js/mpvirtual.js?v=<?php echo @filemtime(__DIR__ . '/js/mpvirtual.js'); ?>"></script>
+  <script>
+    SelectorBuscable.crear(document.getElementById('f_tipodoc'), { placeholder: 'Buscar tipo de documento...' });
+    SelectorBuscable.crear(document.getElementById('f_tramite'), { placeholder: 'Buscar tipo de trámite...' });
+  </script>
 </body>
 
 </html>
