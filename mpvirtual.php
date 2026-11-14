@@ -16,7 +16,7 @@ require_once './conexion/conexion.php';
   <script src="assets/js/jquery-2.1.4.min.js"></script>
 </head>
 
-<body>
+<body class="mpv">
   <!-- CABECERA MUNICIPAL -->
   <div class="pub-hdr">
     <img src="<?= SISGEDO_IMG_LOGO ?>" alt="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>" />
@@ -27,25 +27,35 @@ require_once './conexion/conexion.php';
     <a class="enl" href="consulta_publico.php"><i class="fa fa-search"></i> Consultar expediente</a>
   </div>
 
-  <div class="pub-main">
-    <div class="pub-hero">
-      <h1>Mesa de Partes Virtual</h1>
-      <p>Presenta tus documentos a la municipalidad sin salir de casa. Al finalizar recibirás tu número de expediente para hacer seguimiento.</p>
-    </div>
-
-    <?php
-    // Fuera del horario de atención: avisar desde qué fecha se considerará presentado
-    require_once './clases/calendario.php';
-    $mpvAhora = date('Y-m-d H:i:s');
-    $mpvOficial = sgd_cal_fecha_presentacion($mpvAhora);
-    if (strtotime($mpvOficial) !== strtotime($mpvAhora)) { ?>
-      <div style="max-width:760px;margin:0 auto 16px;background:#f5f3ff;border:1px solid #ddd6fe;color:#4c1d95;border-radius:10px;padding:12px 16px;font-size:14px;line-height:1.5">
-        <i class="fa fa-moon-o"></i> En este momento estamos <b>fuera del horario de atención</b>
-        (<?= htmlspecialchars(SISGEDO_HORARIO_TEXTO, ENT_QUOTES, 'UTF-8') ?>). Puede enviar su documento igual:
-        se considerará presentado el <b><?= htmlspecialchars(sgd_cal_texto($mpvOficial), ENT_QUOTES, 'UTF-8') ?></b>.
+  <div class="pub-main mpv-main">
+    <!-- COLUMNA DE INFORMACIÓN (a la izquierda en pantallas grandes) -->
+    <aside class="mpv-info">
+      <div class="pub-hero">
+        <h1>Mesa de Partes Virtual</h1>
+        <p>Presenta tus documentos a la municipalidad sin salir de casa y haz el seguimiento con tu número de expediente.</p>
       </div>
-    <?php } ?>
+      <?php
+      // Horario de atención (único lugar donde se muestra). Fuera de horario
+      // se indica desde qué fecha se considerará presentado el documento.
+      require_once './clases/calendario.php';
+      $mpvAhora = date('Y-m-d H:i:s');
+      $mpvOficial = sgd_cal_fecha_presentacion($mpvAhora);
+      $mpvFuera = strtotime($mpvOficial) !== strtotime($mpvAhora); ?>
+      <div class="mpv-horario <?= $mpvFuera ? 'fuera' : '' ?>">
+        <?php if ($mpvFuera) { ?>
+          <div class="h-tit"><i class="fa fa-moon-o"></i> Fuera del horario de atención</div>
+          <div>Puedes enviar tu documento igual: se considerará presentado el
+            <b><?= htmlspecialchars(sgd_cal_texto($mpvOficial), ENT_QUOTES, 'UTF-8') ?></b></div>
+        <?php } else { ?>
+          <div class="h-tit"><i class="fa fa-clock-o"></i> Estamos en horario de atención</div>
+          <div>Lo que se presente fuera de horario, fines de semana o feriados se considera presentado el siguiente día hábil.</div>
+        <?php } ?>
+        <div class="h-hor"><b>Horario:</b> <?= htmlspecialchars(SISGEDO_HORARIO_TEXTO, ENT_QUOTES, 'UTF-8') ?></div>
+      </div>
+    </aside>
 
+    <!-- COLUMNA DEL FORMULARIO -->
+    <section class="mpv-form">
     <!-- PASOS -->
     <div class="pasos">
       <div class="paso activo" id="ind1"><span class="pnum">1</span><span class="ptxt">Datos personales</span></div>
@@ -86,9 +96,7 @@ require_once './conexion/conexion.php';
         <div><label>Tipo de trámite <span class="req">*</span></label><select id="f_tramite">
             <option value="">Seleccione...</option><?php $mpvirtual->lista_tipo_tram(); ?>
           </select></div>
-        <div><label>N° del documento <span class="req">*</span></label><input id="f_numero" type="text" placeholder="Ej. S/N o 0123-2026" />
-          <div class="hint">Si tu documento no tiene número, escribe S/N.</div>
-        </div>
+        <div><label>N° del documento <span class="req">*</span></label><input id="f_numero" type="text" placeholder="Ej. 0123-2026 (o S/N si no tiene)" /></div>
         <div><label>Folios (páginas) <span class="req">*</span></label><input id="f_folios" type="number" min="1" placeholder="Cantidad de hojas" inputmode="numeric" /></div>
         <div class="full"><label>Asunto <span class="req">*</span></label><textarea id="f_asunto" rows="3" placeholder="Describe brevemente qué solicitas"></textarea></div>
         <div class="full"><label>Archivo adjunto</label><input id="f_fichero" type="file" />
@@ -116,9 +124,7 @@ require_once './conexion/conexion.php';
       </div>
     </div>
 
-    <div class="pub-footer" style="padding-top:6px">
-      <i class="fa fa-clock-o"></i> Horario de atención: <?= htmlspecialchars(SISGEDO_HORARIO_TEXTO, ENT_QUOTES, 'UTF-8') ?>. Los documentos presentados fuera de ese horario, en fines de semana o feriados se consideran presentados el siguiente día hábil.
-    </div>
+    </section>
   </div>
 
   <div class="pub-footer">
