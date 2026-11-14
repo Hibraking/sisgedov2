@@ -3,6 +3,26 @@
 Referencia de qué ocurre en cada paso (pantalla → servidor → base de datos).
 Actualizado: 13/11/2026.
 
+## Estructura de carpetas
+
+| Carpeta | Contenido |
+|---|---|
+| raíz | Páginas públicas: `login.php`, `mpvirtual.php`, `consulta_publico.php`, `subsanar.php`, `verificar.php`; `index.php` (inicio) |
+| `vistas/` | Pantallas internas (una por módulo) |
+| `clases/` | Lógica y acciones del servidor (una por módulo) + `seguridad.php`, `guardia.php`, `correo.php`, `calendario.php`… |
+| `partes/` | Piezas compartidas: menú lateral (`nav_nuevo.php`), plantilla de catálogos |
+| `js/`, `css/` | Un archivo por pantalla + `sisgedo-theme.css` y `v_recepcion_proveido.css` (comunes) |
+| `reportes/` | Consulta interna y reportes |
+| `conexion/` | Configuración: base de datos, institución, correo, Firma Perú (contraseñas en archivos fuera de Git) |
+| `migraciones/` | Cambios de la base de datos; `ACTUALIZAR_BD_COMPLETO.sql` los reúne todos |
+| `assets/` | Solo librerías externas en uso: Font Awesome 4.5 y jQuery 2.1.4 |
+| `tcpdf/` | Librería de PDF reducida a lo usado (fuentes helvetica/times/courier) + `examples/` con los cargos y reportes propios |
+| `librerias/`, `vendor/` | PHPMailer (correo) |
+| `images/` | Logos (original y versiones web/correo), ilustración del login, fotos de perfil |
+| `herramientas/` | Utilidades para el administrador (probar correo, huellas de archivos) |
+| `docs adjs …/` | Archivos adjuntos subidos (no van a Git) |
+| `bd/`, `logs/`, `_cuarentena_limpieza/` | Solo en la PC local (no van a Git ni al hosting) |
+
 ## Los tres tipos de documento
 
 | Tipo | Dónde nace | Tabla | Dónde se atiende |

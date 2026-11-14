@@ -121,24 +121,6 @@ class Accesos
             error_log($exc->getMessage());
         }
     }
-    public function lista_usuarios()
-    {
-        try {
-            $conexion = new Conexion();
-            $conectado = $conexion->conectar();
-            $sql = "SELECT personal.idpersonal,concat(personal.apellidos,', ',personal.nombres,' - ',personal.usuario) as details
-                FROM personal;";
-            $result = $conectado->prepare($sql);
-            $result->execute();
-            $lista_cat = "";
-            foreach ($result as $filas) {
-                echo '<option value="' . $filas[0] . '">' . $filas[1] . '</option>';
-            }
-            return substr($lista_cat, 0, strlen($lista_cat) - 5);
-        } catch (Exception $exc) {
-            error_log($exc->getMessage());
-        }
-    }
     public function datos_usuario($idusuario)
     {
         try {

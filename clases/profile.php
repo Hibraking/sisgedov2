@@ -7,22 +7,6 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
 }
 class Profile
 {
-    public function obtiene_datos($idpersonal)
-    {
-        try {
-            $conexion = new Conexion();
-            $conectado = $conexion->conectar();
-            $sql = "SELECT idpersonal,apellidos,nombres,direccion,email,telefono,imagen,clave,usuario
-                    FROM personal
-                    where personal.idpersonal=?;";
-            $result = $conectado->prepare($sql);
-            $result->execute([$idpersonal]);
-            $datos_obtenidos = $result->fetch(PDO::FETCH_BOTH);
-            return $datos_obtenidos;
-        } catch (Exception $exc) {
-            error_log($exc->getMessage());
-        }
-    }
     public function modificar_datos($idmodulo, $nombre_menu, $direccion, $clase_llamar, $dependencia, $font_icon, $codigo)
     {
 

@@ -132,24 +132,7 @@ class Menu
             echo 'ERROR_EN_USO: No se puede eliminar porque está siendo usado en otros registros del sistema.';
         }
     }
-    public function lista_menu()
-    {
-        try {
-            $conexion = new Conexion();
-            $conectado = $conexion->conectar();
-            $sql = "SELECT idmenu,nombre_menu FROM menu;";
-            $result = $conectado->prepare($sql);
-            $result->execute();
-            $lista_cat = "";
-            foreach ($result as $filas) {
-                echo '<option value="' . $filas[0] . '">' . $filas[1] . '</option>';
-            }
-            return substr($lista_cat, 0, strlen($lista_cat) - 5);
-        } catch (Exception $exc) {
-            error_log($exc->getMessage());
-        }
     }
-}
 //cuerpo de las ejecuciones  
 
 $dml_menu = new Menu();
