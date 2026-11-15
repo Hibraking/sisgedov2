@@ -283,3 +283,10 @@ select { appearance: none; -webkit-appearance: none; background-image: linear-gr
 .sb-lista::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; border: 2px solid #fff; }
 @media (min-width: 561px) and (max-height: 860px) { .mpv .sb-campo { padding: 8px 12px; } }
 @media (min-width: 561px) and (max-height: 720px) { .mpv .sb-campo { padding: 7px 11px; } }
+
+/* Botón "Presentar documento" mientras sube el archivo: se llena según el avance */
+.btn-p.btn-avance, .btn-p.btn-avance:disabled {
+  opacity: 1; min-width: 230px; justify-content: center;
+  background: linear-gradient(90deg, #1d4ed8 var(--avance, 0%), #60a5fa var(--avance, 0%));
+  border-color: #1d4ed8;
+}

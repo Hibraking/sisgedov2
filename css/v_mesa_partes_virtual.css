@@ -280,3 +280,34 @@
   margin-top: 2px;
   line-height: 1.45;
 }
+
+/* ---- Bandeja en vivo (js/mpv_en_vivo.js) ---- */
+.mpv-vivo {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; vertical-align: middle;
+  padding: 3px 10px; border-radius: 999px; background: #f1f5f9; color: #64748b;
+  font-size: 11px; font-weight: 600; letter-spacing: .2px; cursor: pointer; user-select: none;
+}
+.mpv-vivo .pt { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+.mpv-vivo.ok { background: #ecfdf3; color: #15803d; }
+.mpv-vivo.ok .pt { background: #22c55e; animation: mpvLatido 2s ease-in-out infinite; }
+.mpv-vivo.error { background: #fef2f2; color: #b91c1c; }
+.mpv-vivo.error .pt { background: #ef4444; }
+@keyframes mpvLatido { 0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, .55); } 50% { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); } }
+
+.row.row-nueva { animation: mpvNueva 4s ease-out 1; box-shadow: inset 3px 0 0 #22c55e; }
+@keyframes mpvNueva { 0%, 25% { background: #dcfce7; } 100% { background: transparent; } }
+
+.mpv-toasts { position: fixed; right: 18px; bottom: 18px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; max-width: 360px; }
+.mpv-toast {
+  display: flex; gap: 12px; align-items: flex-start; background: #fff; border: 1px solid #e2e8f0;
+  border-left: 4px solid #a855f7; border-radius: 12px; padding: 12px 12px 12px 14px; cursor: pointer;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .18); font-size: 12.5px; color: #334155; line-height: 1.45;
+  animation: mpvToastIn .25s ease-out;
+}
+.mpv-toast.fuera { opacity: 0; transform: translateX(20px); transition: all .25s; }
+.mpv-toast .ti { width: 32px; height: 32px; border-radius: 50%; background: #f3e8ff; color: #9333ea; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.mpv-toast .tx { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.mpv-toast .tx strong { color: #1e293b; }
+.mpv-toast .tc { border: 0; background: none; color: #94a3b8; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
+.mpv-toast .tc:hover { color: #475569; }
+@keyframes mpvToastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }

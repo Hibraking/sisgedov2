@@ -140,6 +140,43 @@ class MesaPartesVirtual
     }
 
     /** Historial de un documento: array de array(tipo, detalle, archivo, plazo, fecha, quien). */
+    /**
+     * "Huella" del estado de la Mesa de Partes Virtual para la actualización
+     * en vivo de la bandeja: cambia cuando llega un documento nuevo o cuando
+     * alguien recepciona, observa, deriva o el ciudadano subsana.
+     * Son consultas sobre índices (muy livianas): se puede llamar cada pocos segundos.
+     */
+    public function novedades()
+    {
+        $out = array('firma' => '', 'pendientes' => 0, 'ultimo' => null);
+        if (!sgd_mpv_ok()) {
+            return $out;
+        }
+        try {
+            $c = (new Conexion())->conectar();
+            $cont = $this->contadores();
+            $maxDoc = (int)$c->query("SELECT COALESCE(MAX(idregistro_documentos),0) FROM registro_documentos WHERE recepcion_web = 1")->fetchColumn();
+            $maxEvt = (int)$c->query("SELECT COALESCE(MAX(idevento),0) FROM sgd_mpv_evento")->fetchColumn();
+            $out['firma'] = implode('-', array($maxDoc, $maxEvt, $cont['pendientes'], $cont['observados'], $cont['por_derivar']));
+            $out['pendientes'] = $cont['pendientes'];
+            // El último documento recibido (para el aviso "Nuevo documento...")
+            $st = $c->query("SELECT rd.idregistro_documentos, rd.nro_exp,
+                                    TRIM(CONCAT(COALESCE(r.nombres,''),' ',COALESCE(r.apellidos,''))),
+                                    COALESCE(rd.asunto,'')
+                               FROM registro_documentos rd
+                               LEFT JOIN remitente r ON r.idremitente = rd.idremitente
+                              WHERE rd.recepcion_web = 1
+                              ORDER BY rd.idregistro_documentos DESC LIMIT 1");
+            $u = $st->fetch(PDO::FETCH_NUM);
+            if ($u) {
+                $out['ultimo'] = array('id' => (int)$u[0], 'exp' => (string)$u[1], 'remitente' => (string)$u[2], 'asunto' => (string)$u[3]);
+            }
+        } catch (Exception $e) {
+            error_log('MPV novedades: ' . $e->getMessage());
+        }
+        return $out;
+    }
+
     public function historial($id)
     {
         if (!sgd_mpv_ok()) {
@@ -561,6 +598,13 @@ if (basename(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '') === 
     if (isset($_POST['historial'])) {
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($mpv->historial($id));
+        exit;
+    }
+    if (isset($_POST['novedades'])) {
+        session_write_close();             // no bloquear las demás peticiones de la sesión
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        echo json_encode($mpv->novedades());
         exit;
     }
     echo 'ERROR_VALIDACION: Acción no reconocida.';

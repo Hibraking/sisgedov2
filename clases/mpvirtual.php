@@ -282,6 +282,8 @@ if (isset($_POST['gettemit'])) {
     $mpvirtual->get_remitente($_POST['email']);
 }
 if (isset($_POST['Insertar'])) {
+    require_once __DIR__ . '/util_respuesta.php';
+    sgd_respuesta_iniciar();
     // ---- Validación de servidor (no confiar solo en el JavaScript) ----
     $g = function ($k) {
         return isset($_POST[$k]) ? trim((string)$_POST[$k]) : '';
@@ -352,18 +354,13 @@ if (isset($_POST['Insertar'])) {
         if ($email === '' && isset($_POST['idremitente'])) {
             $email = $mpvirtual->get_correo($_POST['idremitente']);
         }
-        // Respuesta para js/mpvirtual.js: el número va primero, luego el estado del correo
-        echo $mpvirtual->envio_correo($email, $numexp, $g('asunto')) ? ' CORREO_OK' : ' CORREO_FALLO';
-
-        // Aviso interno a la Mesa de Partes (con el documento adjunto). Se envía
-        // DESPUÉS de entregar la respuesta al ciudadano para no hacerlo esperar.
-        ignore_user_abort(true);
-        if (function_exists('fastcgi_finish_request')) {
-            fastcgi_finish_request();
-        } elseif (function_exists('litespeed_finish_request')) {
-            litespeed_finish_request();
-        }
-        $mpvirtual->aviso_mesa_partes($numexp);
+        // Respuesta para js/mpvirtual.js: el número va primero. El ciudadano lo
+        // recibe YA; los correos (lentos: conexión segura + copia en "Enviados")
+        // se envían después. Si alguno falla queda registrado en sgd_correo.
+        echo ' CORREO_PENDIENTE';
+        sgd_respuesta_terminar();
+        $mpvirtual->envio_correo($email, $numexp, $g('asunto'));    // constancia al ciudadano
+        $mpvirtual->aviso_mesa_partes($numexp);                      // aviso interno con el adjunto
     } else {
         echo "no se registro";
     }

@@ -119,7 +119,7 @@ $firstF = $first ? mpv_fila($first) : null;
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
       <div class="main">
-        <h1 class="t">Mesa de Partes Virtual</h1>
+        <h1 class="t">Mesa de Partes Virtual <span id="mpvVivo" class="mpv-vivo" role="status"><span class="pt"></span> En vivo</span></h1>
         <div class="subt">Documentos que los ciudadanos presentan por internet. Horario de atención: <?= h(SISGEDO_HORARIO_TEXTO) ?> — lo enviado fuera de ese horario se considera presentado el siguiente día hábil.</div>
 
         <?php if (!$migracionOk) { ?>
@@ -408,6 +408,7 @@ $firstF = $first ? mpv_fila($first) : null;
   </div>
 
   <script src="../js/v_mesa_partes_virtual.js?v=<?= @filemtime(__DIR__ . '/../js/v_mesa_partes_virtual.js') ?>"></script>
+  <script src="../js/mpv_en_vivo.js?v=<?= @filemtime(__DIR__ . '/../js/mpv_en_vivo.js') ?>"></script>
 </body>
 
 </html>

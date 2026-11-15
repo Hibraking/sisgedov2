@@ -101,7 +101,7 @@ function enviarTramite() {
 
   var btn = document.getElementById('btnEnviar');
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa fa-circle-o-notch fa-spin"></i> Enviando...';
+  estadoBoton(fichero.files && fichero.files[0] ? 'Subiendo documento... 0%' : 'Generando expediente...', 0);
   var email = (document.getElementById('f_email').value || '').trim();
 
   $.ajax({
@@ -138,12 +138,25 @@ function enviarTramite() {
     if (idremitente !== null) fd.append('idremitente', idremitente);
     if (fichero.files && fichero.files[0]) fd.append('fichero', fichero.files[0]);
 
+    var conArchivo = !!(fichero.files && fichero.files[0]);
     $.ajax({
         url: URL_MPV,
         type: 'post',
         data: fd,
         processData: false,
-        contentType: false
+        contentType: false,
+        // Avance de la subida del archivo: "Subiendo documento... 45%"
+        xhr: function() {
+          var x = $.ajaxSettings.xhr();
+          if (conArchivo && x.upload) {
+            x.upload.addEventListener('progress', function(e) {
+              if (!e.lengthComputable) return;
+              var pct = Math.min(100, Math.round(e.loaded * 100 / e.total));
+              estadoBoton(pct < 100 ? 'Subiendo documento... ' + pct + '%' : 'Generando expediente...', pct);
+            });
+          }
+          return x;
+        }
       })
       .done(function(resp) {
         restaurarBoton();
@@ -161,11 +174,9 @@ function enviarTramite() {
         document.getElementById('expNum').textContent = exp;
         var msgCorreo = document.getElementById('msgCorreo');
         if (msgCorreo) {
-          msgCorreo.innerHTML = texto.indexOf('CORREO_OK') !== -1
-            ? 'También te enviamos la constancia a <b></b>. Si no la ves, revisa tu carpeta de spam.'
-            : '<b>No pudimos enviarte la constancia por correo</b>; anota o copia tu número de expediente.';
-          var b = msgCorreo.querySelector('b');
-          if (texto.indexOf('CORREO_OK') !== -1 && b) b.textContent = email;
+          // El correo se envía después de responder (CORREO_PENDIENTE): llega en unos instantes
+          msgCorreo.innerHTML = 'En unos instantes te llegará la constancia a <b></b>. Si no la ves, revisa tu carpeta de spam.';
+          msgCorreo.querySelector('b').textContent = email;
         }
         document.getElementById('lnkSeguimiento').href = 'consulta_publico.php?num_exp=' + encodeURIComponent(exp);
         marcarPasos(3);
@@ -182,8 +193,18 @@ function enviarTramite() {
       });
   }
 
+  /** Texto del botón mientras se envía; el fondo se llena según el avance. */
+  function estadoBoton(texto, pct) {
+    btn.innerHTML = '<i class="fa fa-circle-o-notch fa-spin"></i> <span></span>';
+    btn.querySelector('span').textContent = texto;
+    btn.classList.add('btn-avance');
+    btn.style.setProperty('--avance', (pct || 0) + '%');
+  }
+
   function restaurarBoton() {
     btn.disabled = false;
+    btn.classList.remove('btn-avance');
+    btn.style.removeProperty('--avance');
     btn.innerHTML = '<i class="fa fa-paper-plane"></i> Presentar documento';
   }
 }
