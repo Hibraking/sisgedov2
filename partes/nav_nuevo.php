@@ -205,3 +205,5 @@ if (isset($_SERVER['SCRIPT_NAME']) && preg_match('~/(vistas|reportes)/([a-z_0-9]
   </div>
 </div>
 <script src="<?= $NAV_PREFIJO ?>js/nav_nuevo.js?v=<?= @filemtime(__DIR__ . '/../js/nav_nuevo.js') ?>"></script>
+<!-- Notificaciones en vivo: documentos por recepcionar y Mesa de Partes Virtual (todas las pantallas) -->
+<script src="<?= $NAV_PREFIJO ?>js/notificaciones.js?v=<?= @filemtime(__DIR__ . '/../js/notificaciones.js') ?>" data-base="<?= h($NAV_PREFIJO) ?>"></script>
