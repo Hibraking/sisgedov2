@@ -138,7 +138,8 @@ class Recepcion_proveido
                 inner join oficinas on m.idoficina_derivar=oficinas.idoficinas
                 inner join documentos on registro_documentos.iddocumento=documentos.iddocumentos
                 left join aciones_documento on m.idacciondocs=aciones_documento.idaciones_documento
-                where oficinas.idoficinas=? and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)";
+                where oficinas.idoficinas=? and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)
+                  and (m.idmovimientoant is null or m.estado=1)"; // solo lo YA recibido: la recepción directa o una derivación ya recibida
             // NOTA: las dos partes se ejecutan POR SEPARADO y se unen en PHP.
             // Un UNION en SQL falla con "Illegal mix of collations" porque
             // registro_documentos y docs_emitidos quedaron con collations
@@ -157,7 +158,8 @@ class Recepcion_proveido
                 inner join oficinas on m.idoficina_derivar=oficinas.idoficinas
                 inner join documentos on docs_emitidos.iddocumento=documentos.iddocumentos
                 left join aciones_documento on m.idacciondocs=aciones_documento.idaciones_documento
-                where oficinas.idoficinas=? and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)";
+                where oficinas.idoficinas=? and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)
+                  and (m.idmovimientoant is null or m.estado=1)"; // solo lo YA recibido: la recepción directa o una derivación ya recibida
             $st1 = $conectado->prepare($sql);
             $st1->execute([$idoficina, $desde, $hasta]);
             $filas = $st1->fetchAll(PDO::FETCH_NUM);
@@ -261,7 +263,9 @@ class Recepcion_proveido
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
             // Recepcionados: movimientos ya recibidos por esta oficina
-            $q1 = $conectado->prepare("select count(*) from movimientos where idoficina_derivar=? and estado=1");
+            // Recibido por la oficina = recepción directa (primer movimiento, queda con
+            // estado 0 hasta que se deriva) o una derivación ya recibida (estado 1).
+            $q1 = $conectado->prepare("select count(*) from movimientos where idoficina_derivar=? and (idmovimientoant is null or estado=1)");
             $q1->execute([$idoficina]);
             $out['recepcionados'] = intval($q1->fetchColumn());
             // Enviados: movimientos generados por los responsables de esta oficina (derivaciones/envios)

@@ -1667,3 +1667,26 @@ h1.t {
   margin-top: 6px;
   line-height: 1.4;
 }
+
+/* Aviso tras recepcionar: el documento pasó a "Recepcionados" */
+.recep-ok {
+  display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 12px 14px;
+  background: #ecfdf3; border: 1px solid #bbf7d0; border-radius: 12px; color: #14532d; font-size: 13px; line-height: 1.45;
+  animation: sgdToastIn .25s ease-out;
+}
+.recep-ok > .fa { font-size: 20px; color: #16a34a; }
+.recep-ok > div { flex: 1; }
+.recep-ok .btn { white-space: nowrap; }
+.recep-ok .x { border: 0; background: none; color: #64748b; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.recep-ok.recep-ok-fuera { opacity: .0; transition: opacity .6s; pointer-events: none; }
+
+/* Aviso tras recepcionar: el documento pasó a "Recepcionados" */
+.recep-ok {
+  display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 12px 14px;
+  background: #ecfdf3; border: 1px solid #bbf7d0; border-radius: 12px; color: #14532d; font-size: 13px; line-height: 1.45;
+}
+.recep-ok > .fa { font-size: 20px; color: #16a34a; }
+.recep-ok > div { flex: 1; }
+.recep-ok .btn { white-space: nowrap; }
+.recep-ok .x { border: 0; background: none; color: #64748b; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.recep-ok.recep-ok-fuera { opacity: 0; transition: opacity .6s; pointer-events: none; }

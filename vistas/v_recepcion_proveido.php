@@ -76,7 +76,7 @@ try {
     $qk->execute(array($idoficina));
     $destinosMesKpi = intval($qk->fetchColumn());
   } else {
-    $qk = $pdoKpi->prepare("select count(*) from movimientos where idoficina_derivar=? and estado=1 and fecha_hora >= curdate() and fecha_hora < curdate() + interval 1 day");
+    $qk = $pdoKpi->prepare("select count(*) from movimientos where idoficina_derivar=? and (idmovimientoant is null or estado=1) and fecha_hora >= curdate() and fecha_hora < curdate() + interval 1 day");
     $qk->execute(array($idoficina));
     $recepHoyKpi = intval($qk->fetchColumn());
   }

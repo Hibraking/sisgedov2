@@ -96,14 +96,15 @@ class Archivar_docs
          $st = $conectado->prepare($q);
          $st->execute([$idoficina]);
          $filas = array_merge($filas, $st->fetchAll(PDO::FETCH_NUM));
-         // b) Movimientos tramitados (recepcionados) de documentos externos, sin archivar
+         // b) Documentos externos RECIBIDOS por la oficina, sin archivar. Recibido = recepción
+         //    directa (primer movimiento: queda en estado 0 hasta derivarlo) o derivación ya recibida.
          $q = "select m.idMovimientos,'TRAMITADO',documentos.nombre_documento,rd.nro_exp,rd.asunto,coalesce(m.detalles,''),
                       date_format(date_add(m.fecha_hora,interval 0 hour),'%d/%m/%Y %h:%i %p'),m.fecha_hora,
                       if(rd.adjunto is null,'#',concat('../docs adjs reg_doc/',rd.adjunto))
                     from movimientos m
                     inner join registro_documentos rd on m.idregdocs=rd.idregistro_documentos
                     inner join documentos on rd.iddocumento=documentos.iddocumentos
-                    where m.idoficina_derivar=? and m.estado=1 and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)
+                    where m.idoficina_derivar=? and (m.idmovimientoant is null or m.estado=1) and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)
                       and not exists (select 1 from docs_archivados da where da.idmovimientos=m.idMovimientos)";
          $st = $conectado->prepare($q);
          $st->execute([$idoficina, $desde, $hasta]);
@@ -115,7 +116,7 @@ class Archivar_docs
                     from movimientos m
                     inner join docs_emitidos de on m.iddocs_emitidos=de.iddocs_emitidos
                     inner join documentos on de.iddocumento=documentos.iddocumentos
-                    where m.idoficina_derivar=? and m.estado=1 and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)
+                    where m.idoficina_derivar=? and (m.idmovimientoant is null or m.estado=1) and m.fecha_hora >= ? and m.fecha_hora < date_add(?, interval 1 day)
                       and not exists (select 1 from docs_archivados da where da.idmovimientos=m.idMovimientos)";
          $st = $conectado->prepare($q);
          $st->execute([$idoficina, $desde, $hasta]);
@@ -201,7 +202,7 @@ class Archivar_docs
          $q = $conectado->prepare("select count(*) from docs_emitidos de inner join responsables r on de.idresponsable=r.idresponsables where r.idoficina=? and not exists (select 1 from docs_archivados da where da.iddocs_emitidos=de.iddocs_emitidos)");
          $q->execute([$idoficina]);
          $out['emitidos_sin_archivar'] = intval($q->fetchColumn());
-         $q = $conectado->prepare("select count(*) from movimientos m where m.idoficina_derivar=? and m.estado=1 and not exists (select 1 from docs_archivados da where da.idmovimientos=m.idMovimientos)");
+         $q = $conectado->prepare("select count(*) from movimientos m where m.idoficina_derivar=? and (m.idmovimientoant is null or m.estado=1) and not exists (select 1 from docs_archivados da where da.idmovimientos=m.idMovimientos)");
          $q->execute([$idoficina]);
          $out['tramitados_sin_archivar'] = intval($q->fetchColumn());
       } catch (Exception $exc) {

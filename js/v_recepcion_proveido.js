@@ -401,6 +401,11 @@ $("#rc_guardar").on("click", function () {
           "Algunos documentos no se pudieron recepcionar:\n" +
             errores.join("\n"),
         );
+      // Al recargar se explica adónde pasó lo recepcionado (sale de "pendientes")
+      var ok = recLote.length - errores.length;
+      if (ok > 0) {
+        try { sessionStorage.setItem("sgdRecepOk", String(ok)); } catch (e) {}
+      }
       location.reload();
       return;
     }
@@ -957,3 +962,32 @@ if (filaActivaInicial) {
     filaActivaInicial.dataset.tipo,
   );
 }
+
+
+/* Después de recepcionar: el documento sale de "Pendientes" y pasa a
+   "Recepcionados", donde se deriva, responde o archiva. Se avisa para que
+   no parezca que desapareció. */
+(function () {
+  var n = 0;
+  try {
+    n = parseInt(sessionStorage.getItem("sgdRecepOk") || "0", 10);
+    sessionStorage.removeItem("sgdRecepOk");
+  } catch (e) {}
+  if (!n) return;
+  var est = document.getElementById("estado");
+  if (est && est.value === "Recepcionado") return;      // ya está viendo los recepcionados
+  var d = document.createElement("div");
+  d.className = "recep-ok";
+  d.innerHTML =
+    '<i class="fa fa-check-circle"></i><div><strong>' +
+    (n === 1 ? "Documento recepcionado." : n + " documentos recepcionados.") +
+    "</strong> Ahora " + (n === 1 ? "está" : "están") +
+    " en <b>Recepcionados</b>, donde puede derivarlo, responderlo o archivarlo.</div>" +
+    '<button type="button" class="btn btn-p btn-sm">Ver recepcionados</button>' +
+    '<button type="button" class="x" title="Cerrar">&times;</button>';
+  d.querySelector(".btn").onclick = function () { setEstado("Recepcionado"); };
+  d.querySelector(".x").onclick = function () { d.remove(); };
+  var ref = document.querySelector(".kpis");
+  if (ref && ref.parentNode) ref.parentNode.insertBefore(d, ref);
+  setTimeout(function () { if (d.parentNode) d.classList.add("recep-ok-fuera"); }, 20000);
+})();
