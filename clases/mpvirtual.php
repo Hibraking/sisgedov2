@@ -86,17 +86,25 @@ class mpvirtual
             error_log($exc->getMessage());
         }
     }
-    public function get_remitente($email)
+    /**
+     * Remitente existente con el MISMO correo y el MISMO DNI/RUC (se reutiliza
+     * para no duplicarlo). Se resuelve en el servidor: antes el navegador
+     * preguntaba "¿existe este correo?" y recibía DNI, dirección y teléfono
+     * de la persona (cualquiera podía consultar datos ajenos con un correo).
+     * @return int idremitente o 0 si no existe
+     */
+    public function buscar_remitente($email, $d_identidad)
     {
         try {
-            $conexion = new Conexion();
-            $conectado = $conexion->conectar();
-            $sql = "select * from remitente where email=?";
-            $result = $conectado->prepare($sql);
-            $result->execute([$email]);
-            echo json_encode($result->fetchAll());
+            $c = (new Conexion())->conectar();
+            $st = $c->prepare("SELECT idremitente FROM remitente
+                                WHERE email = ? AND TRIM(d_identidad) = TRIM(?)
+                                ORDER BY idremitente DESC LIMIT 1");
+            $st->execute(array($email, $d_identidad));
+            return (int)$st->fetchColumn();
         } catch (Exception $exc) {
-            error_log($exc->getMessage());
+            error_log('MPV buscar_remitente: ' . $exc->getMessage());
+            return 0;
         }
     }
     /**
@@ -254,33 +262,9 @@ class mpvirtual
             )
         );
     }
-    public function get_correo($idremitente)
-    {
-        try {
-            $conexion = new Conexion();
-            $conectado = $conexion->conectar();
-            $sql = "select email
-                        from remitente
-                        where idremitente=?;";
-            $result = $conectado->prepare($sql);
-            $result->execute([$idremitente]);
-            $correo = "";
-            foreach ($result as $filas) {
-                $correo = $filas[0];
-            }
-            return $correo;
-        } catch (Exception $exc) {
-            error_log($exc->getMessage());
-            return "";
-        }
     }
-}
 
 $mpvirtual = new mpvirtual();
-if (isset($_POST['gettemit'])) {
-    require_once '../conexion/conexion.php';
-    $mpvirtual->get_remitente($_POST['email']);
-}
 if (isset($_POST['Insertar'])) {
     require_once __DIR__ . '/util_respuesta.php';
     sgd_respuesta_iniciar();
@@ -337,23 +321,21 @@ if (isset($_POST['Insertar'])) {
         }
     }
     require_once '../conexion/conexion.php';
-    //si el remitente no existe ingresa
-    if (isset($_POST['idremitente'])) {
-        $numexp = $mpvirtual->insertar_datos_reg_docs($_POST['iddocumento'], $_POST['idremitente'], $_POST['idtipo_tramite'], $_POST['numero_docu'], $_POST['asunto'], $_POST['folios'], $nombre_fichero);
-    } else {
-        $idremit = $mpvirtual->insertar_datos_remitente($_POST['d_identidad'], $_POST['apellidos'], $_POST['nombres'], $_POST['direccion'], $_POST['email'], $_POST['telefono']);
-        if ((int)$idremit <= 0) {
-            echo 'ERROR_VALIDACION: No se pudieron guardar sus datos. Revise que no haya caracteres especiales e intente nuevamente.';
-            return;
-        }
-        $numexp =$mpvirtual->insertar_datos_reg_docs($_POST['iddocumento'], $idremit, $_POST['idtipo_tramite'], $_POST['numero_docu'], $_POST['asunto'], $_POST['folios'], $nombre_fichero);
+    // Remitente: se reutiliza solo si coincide correo Y DNI/RUC; si no, se crea.
+    // (Nunca se acepta un idremitente enviado por el navegador: con eso se podía
+    // registrar un documento a nombre de otra persona.)
+    $idremit = $mpvirtual->buscar_remitente($g('email'), $g('d_identidad'));
+    if ($idremit <= 0) {
+        $idremit = (int)$mpvirtual->insertar_datos_remitente($g('d_identidad'), $g('apellidos'), $g('nombres'), $g('direccion'), $g('email'), $g('telefono'));
     }
+    if ($idremit <= 0) {
+        echo 'ERROR_VALIDACION: No se pudieron guardar sus datos. Revise que no haya caracteres especiales e intente nuevamente.';
+        return;
+    }
+    $numexp = $mpvirtual->insertar_datos_reg_docs($g('iddocumento'), $idremit, $g('idtipo_tramite'), $g('numero_docu'), $g('asunto'), $g('folios'), $nombre_fichero);
     echo $numexp;
     if ($numexp !== "-1") {
         $email = $g('email');
-        if ($email === '' && isset($_POST['idremitente'])) {
-            $email = $mpvirtual->get_correo($_POST['idremitente']);
-        }
         // Respuesta para js/mpvirtual.js: el número va primero. El ciudadano lo
         // recibe YA; los correos (lentos: conexión segura + copia en "Enviados")
         // se envían después. Si alguno falla queda registrado en sgd_correo.

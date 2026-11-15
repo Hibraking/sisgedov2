@@ -23,6 +23,27 @@ require_once __DIR__ . '/calendario.php';
 
 class MesaPartesVirtual
 {
+    /** Tareas lentas (correos) que se ejecutan DESPUÉS de responder al navegador. */
+    private $pendientes = array();
+
+    private function despues(callable $tarea)
+    {
+        $this->pendientes[] = $tarea;
+    }
+
+    /** Ejecuta los correos aplazados. Llamar después de sgd_respuesta_terminar(). */
+    public function ejecutar_pendientes()
+    {
+        foreach ($this->pendientes as $tarea) {
+            try {
+                $tarea();
+            } catch (Exception $e) {
+                error_log('MPV tarea aplazada: ' . $e->getMessage());
+            }
+        }
+        $this->pendientes = array();
+    }
+
     /** Columnas comunes de las bandejas (índices usados por la vista). */
     private function sqlBase()
     {
@@ -268,7 +289,9 @@ class MesaPartesVirtual
             return array('ok' => false, 'msg' => $this->motivo_no_disponible($id));
         }
         sgd_mpv_evento($c, $id, 'RECEPCIONADO', null, null, null, (int)$idpersonal);
-        return array('ok' => true, 'msg' => 'Recepcionado.', 'correo' => $this->correo_recepcionado((int)$id));
+        // El correo sale después de responder (el operador no espera); si falla queda en sgd_correo
+        $this->despues(function () use ($id) { $this->correo_recepcionado((int)$id); });
+        return array('ok' => true, 'msg' => 'Recepcionado.', 'correo' => 'CORREO_PENDIENTE');
     }
 
     /** OBSERVAR: motivo + plazo de subsanación + enlace por correo. */
@@ -322,7 +345,8 @@ class MesaPartesVirtual
             return array('ok' => false, 'msg' => 'El documento cambió de estado. Actualice la página.');
         }
         sgd_mpv_evento($c, $id, 'NO_PRESENTADO', 'No se subsanó dentro del plazo (Ley 27444, art. 136).', null, null, (int)$idpersonal);
-        return array('ok' => true, 'msg' => 'No presentado.', 'correo' => $this->correo_no_presentado((int)$id));
+        $this->despues(function () use ($id) { $this->correo_no_presentado((int)$id); });
+        return array('ok' => true, 'msg' => 'No presentado.', 'correo' => 'CORREO_PENDIENTE');
     }
 
     /** DERIVAR: asigna la oficina destino de un documento ya recepcionado. */
@@ -416,7 +440,9 @@ class MesaPartesVirtual
             return array('ok' => false, 'msg' => 'El enlace ya fue usado.');
         }
         sgd_mpv_evento($c, $doc[0], 'SUBSANADO', $nota !== '' ? $nota : null, $nombre, null, null);
-        $this->correo_subsanacion_recibida((int)$doc[0]);
+        // Confirmación al ciudadano: después de mostrarle la página (ver subsanar.php)
+        $idDoc = (int)$doc[0];
+        $this->despues(function () use ($idDoc) { $this->correo_subsanacion_recibida($idDoc); });
         return array('ok' => true, 'msg' => 'Subsanado.', 'exp' => $doc[1], 'id' => (int)$doc[0], 'archivo' => $destino, 'nombre_original' => $archivo['name'], 'nota' => $nota);
     }
 
@@ -576,8 +602,12 @@ if (basename(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '') === 
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 
     if (isset($_POST['recepcionar'])) {
+        require_once __DIR__ . '/util_respuesta.php';
+        sgd_respuesta_iniciar();
         $r = $mpv->recepcionar($id, $idpersonal);
         echo $r['ok'] ? 'OK ' . $r['correo'] : 'ERROR_VALIDACION: ' . $r['msg'];
+        sgd_respuesta_terminar();
+        $mpv->ejecutar_pendientes();
         exit;
     }
     if (isset($_POST['observar'])) {
@@ -586,8 +616,12 @@ if (basename(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '') === 
         exit;
     }
     if (isset($_POST['no_presentado'])) {
+        require_once __DIR__ . '/util_respuesta.php';
+        sgd_respuesta_iniciar();
         $r = $mpv->no_presentado($id, $idpersonal);
         echo $r['ok'] ? 'OK ' . $r['correo'] : 'ERROR_VALIDACION: ' . $r['msg'];
+        sgd_respuesta_terminar();
+        $mpv->ejecutar_pendientes();
         exit;
     }
     if (isset($_POST['derivar'])) {

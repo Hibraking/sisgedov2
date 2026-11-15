@@ -10,6 +10,8 @@
    ===================================================================== */
 require_once './conexion/conexion.php';   // configura la sesión; csrf_*() la inicia
 require_once './clases/seguridad.php';
+require_once './clases/util_respuesta.php';
+sgd_respuesta_iniciar();                   // para poder entregar la página antes de enviar los correos
 require_once './clases/mesa_partes_virtual.php';
 
 function hs($v)
@@ -143,14 +145,10 @@ $vigente = $doc ? MesaPartesVirtual::plazo_vigente($doc[19]) : false;
 
 </html>
 <?php
-// Aviso a la bandeja de mesa de partes (con el archivo corregido), DESPUÉS de
-// entregar la página al ciudadano para no hacerlo esperar.
+// Correos DESPUÉS de entregar la página al ciudadano (no espera):
+// confirmación al ciudadano + aviso a mesa de partes con el archivo corregido.
 if ($exito) {
-  ignore_user_abort(true);
-  if (function_exists('fastcgi_finish_request')) {
-    fastcgi_finish_request();
-  } elseif (function_exists('litespeed_finish_request')) {
-    litespeed_finish_request();
-  }
+  sgd_respuesta_terminar();
+  $mpv->ejecutar_pendientes();
   $mpv->aviso_subsanacion($exito['id'], $exito['archivo'], $exito['nombre_original'], $exito['nota']);
 }

@@ -52,7 +52,8 @@ $sumar("SELECT idoficina_derivar, COUNT(*), MIN(fecha_hora), SUM(fecha_hora < NO
           FROM movimientos WHERE estado = 0 AND idmovimientoant IS NOT NULL GROUP BY idoficina_derivar", 'der', true);
 // Recibidos hoy y derivaciones del mes
 $sumar("SELECT idoficina_derivar, COUNT(*) FROM movimientos
-         WHERE estado = 1 AND fecha_hora >= CURDATE() AND fecha_hora < CURDATE() + INTERVAL 1 DAY GROUP BY idoficina_derivar", 'hoy');
+         WHERE (idmovimientoant IS NULL OR estado = 1)   -- recepción directa o derivación ya recibida
+           AND fecha_hora >= CURDATE() AND fecha_hora < CURDATE() + INTERVAL 1 DAY GROUP BY idoficina_derivar", 'hoy');
 $sumar("SELECT r.idoficina, COUNT(*) FROM movimientos m
           JOIN movimientos ma ON m.idmovimientoant = ma.idMovimientos
           JOIN responsables r ON ma.idresponsable = r.idresponsables
@@ -79,6 +80,29 @@ if (sgd_mpv_ok($pdo)) {
     + (int)$pdo->query("SELECT COUNT(*) FROM registro_documentos WHERE recepcion_web = 1 AND idoficina IS NULL AND mpv_idpersonal IS NOT NULL AND mpv_recepcion IS NOT NULL AND COALESCE(estado_recepcion,0) = 0")->fetchColumn();
   $mpv['vencidos'] = (int)$pdo->query("SELECT COUNT(*) FROM registro_documentos WHERE recepcion_web = 1 AND mpv_estado = 'OBSERVADO' AND mpv_plazo < CURDATE()")->fetchColumn();
 }
+
+// Para revisar: oficinas sin un responsable activo (lo que se les derive no lo
+// recibe nadie y su aviso no le llega a nadie) y personas con más de un cargo
+// activo (al iniciar sesión solo trabajan como uno de ellos). No se cambia nada
+// automáticamente: quién atiende cada oficina lo decide la municipalidad.
+$sinResp = array();
+$variosCargos = array();
+try {
+  $sinResp = $pdo->query("SELECT o.idoficinas, o.nombre FROM oficinas o
+                           WHERE TRIM(COALESCE(o.nombre,'')) NOT IN ('','-')
+                             AND NOT EXISTS (SELECT 1 FROM responsables r WHERE r.idoficina = o.idoficinas AND r.estado = 1 AND r.idpersonal <> 1)
+                           ORDER BY o.nombre")->fetchAll(PDO::FETCH_NUM);
+  $variosCargos = $pdo->query("SELECT TRIM(CONCAT(COALESCE(p.nombres,''),' ',COALESCE(p.apellidos,''))),
+                                      GROUP_CONCAT(o.nombre ORDER BY o.nombre SEPARATOR ' · ')
+                                 FROM responsables r JOIN personal p ON p.idpersonal = r.idpersonal
+                                 JOIN oficinas o ON o.idoficinas = r.idoficina
+                                WHERE r.estado = 1 AND r.idpersonal <> 1
+                                GROUP BY r.idpersonal HAVING COUNT(*) > 1")->fetchAll(PDO::FETCH_NUM);
+} catch (Exception $e) {
+  error_log('supervision revisar: ' . $e->getMessage());
+}
+$pendPorOfi = array();
+foreach ($ofis as $o) $pendPorOfi[(int)$o['id']] = (int)$o['pend'];
 
 function sup_hace($f)
 {
@@ -113,6 +137,16 @@ function sup_hace($f)
     .sup-viejo { color: #b91c1c; font-weight: 600; }
     .sup-scroll { max-height: calc(100vh - 360px); overflow: auto; }
     .sup-tabla tfoot td { font-weight: 700; background: #f8fafc; border-top: 2px solid #e2e8f0; }
+    .sup-revisar { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; margin-bottom: 14px; font-size: 13px; color: #7c2d12; }
+    .sup-revisar summary { cursor: pointer; padding: 11px 14px; list-style: none; }
+    .sup-revisar summary::-webkit-details-marker { display: none; }
+    .sup-revisar summary .fa { color: #ea580c; margin-right: 6px; }
+    .sup-rev-cuerpo { padding: 0 16px 12px; line-height: 1.55; }
+    .sup-rev-cuerpo p { margin: 8px 0 4px; }
+    .sup-rev-cuerpo ul { margin: 0 0 6px 18px; padding: 0; columns: 2; column-gap: 28px; }
+    .sup-rev-cuerpo li { break-inside: avoid; }
+    .sup-rev-cuerpo a { color: #c2410c; font-weight: 600; }
+    @media (max-width: 900px) { .sup-rev-cuerpo ul { columns: 1; } }
     .sup-ayuda { font-size: 12.5px; color: #475569; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; line-height: 1.5; }
   </style>
 </head>
@@ -170,6 +204,33 @@ function sup_hace($f)
             </div>
           <?php } ?>
         </div>
+
+        <?php if ($sinResp || $variosCargos) { ?>
+          <details class="sup-revisar">
+            <summary><i class="fa fa-user-times"></i> Revisar responsables:
+              <?php if ($sinResp) { ?><b><?= count($sinResp) ?></b> oficina(s) sin responsable activo<?php } ?>
+              <?php if ($sinResp && $variosCargos) { ?> · <?php } ?>
+              <?php if ($variosCargos) { ?><b><?= count($variosCargos) ?></b> persona(s) con más de un cargo activo<?php } ?>
+              <span class="sup-det">(clic para ver)</span></summary>
+            <div class="sup-rev-cuerpo">
+              <?php if ($sinResp) { ?>
+                <p><b>Oficinas sin responsable activo.</b> Lo que se les derive no lo recibe nadie y su aviso de documento nuevo no le llega a nadie.
+                  Asigne a alguien en <a href="v_responsables.php">Mantenimiento &gt; Responsables</a> (o trabaje en su nombre desde el selector del menú).</p>
+                <ul>
+                  <?php foreach ($sinResp as $s) { $pp = isset($pendPorOfi[(int)$s[0]]) ? $pendPorOfi[(int)$s[0]] : 0; ?>
+                    <li><?= h($s[1]) ?><?php if ($pp > 0) { ?> — <span class="sup-pend"><?= number_format($pp) ?> por recepcionar</span><?php } ?></li>
+                  <?php } ?>
+                </ul>
+              <?php } ?>
+              <?php if ($variosCargos) { ?>
+                <p><b>Personas con más de un cargo activo.</b> Al iniciar sesión trabajan solo como uno de ellos. Si de verdad atienden ambas oficinas está bien; si no, desactive el cargo que ya no corresponde.</p>
+                <ul>
+                  <?php foreach ($variosCargos as $v) { ?><li><?= h($v[0]) ?> — <?= h($v[1]) ?></li><?php } ?>
+                </ul>
+              <?php } ?>
+            </div>
+          </details>
+        <?php } ?>
 
         <div class="card">
           <div class="filters">

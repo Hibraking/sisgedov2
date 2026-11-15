@@ -29,7 +29,7 @@ class Estados_documento
                           oficinas.nombre,
                           ((select count(*) from docs_emitidos where docs_emitidos.estado=0 and docs_emitidos.idoficina=oficinas.idoficinas)
                           +(select count(*) from registro_documentos where estado_recepcion=0 and idoficina=oficinas.idoficinas)
-                          +(select count(*) from movimientos where idoficina_derivar=oficinas.idoficinas and estado=0)) as docs_por_recepcionar,
+                          +(select count(*) from movimientos where idoficina_derivar=oficinas.idoficinas and idmovimientoant is not null and estado=0)) as docs_por_recepcionar,
                           (select count(*) from movimientos
                              inner join responsables on movimientos.idresponsable=responsables.idresponsables
                              where movimientos.idestadodocs=1 and responsables.idoficina=oficinas.idoficinas) as docs_atender
@@ -110,7 +110,7 @@ class Estados_documento
                         left join documentos doc on rd.iddocumento = doc.iddocumentos
                         left join docs_emitidos de on m.iddocs_emitidos = de.iddocs_emitidos
                         left join documentos docd on de.iddocumento = docd.iddocumentos
-                        where m.idoficina_derivar = ? and m.estado = 0
+                        where m.idoficina_derivar = ? and m.idmovimientoant is not null and m.estado = 0   /* la recepción directa (sin anterior) ya está en la oficina */
 
                         union all
 

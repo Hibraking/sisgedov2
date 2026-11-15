@@ -104,24 +104,9 @@ function enviarTramite() {
   estadoBoton(fichero.files && fichero.files[0] ? 'Subiendo documento... 0%' : 'Generando expediente...', 0);
   var email = (document.getElementById('f_email').value || '').trim();
 
-  $.ajax({
-      dataType: 'json',
-      url: URL_MPV,
-      type: 'post',
-      data: {
-        gettemit: '-',
-        email: email
-      }
-    })
-    .always(function(r) {
-      var idremitente = null;
-      if (r && r.length > 0 && r[0] && r[0][0]) {
-        idremitente = r[0][0];
-      }
-      presentar(idremitente);
-    });
+  presentar();
 
-  function presentar(idremitente) {
+  function presentar() {
     var fd = new FormData();
     fd.append('Insertar', '-');
     fd.append('iddocumento', tipodoc);
@@ -135,7 +120,6 @@ function enviarTramite() {
     fd.append('nombres', (document.getElementById('f_nombres').value || '').trim());
     fd.append('direccion', document.getElementById('f_direccion').value);
     fd.append('telefono', document.getElementById('f_telefono').value);
-    if (idremitente !== null) fd.append('idremitente', idremitente);
     if (fichero.files && fichero.files[0]) fd.append('fichero', fichero.files[0]);
 
     var conArchivo = !!(fichero.files && fichero.files[0]);

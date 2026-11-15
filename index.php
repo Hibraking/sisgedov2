@@ -58,7 +58,7 @@ try {
   $q = $pdo->prepare("select count(*) from docs_emitidos where estado=0 and idoficina=?");
   $q->execute(array($idoficina));
   $porRecepcionar += intval($q->fetchColumn());
-  $q = $pdo->prepare("select count(*) from movimientos where idoficina_derivar=? and estado=1 and fecha_hora >= curdate() and fecha_hora < curdate() + interval 1 day");
+  $q = $pdo->prepare("select count(*) from movimientos where idoficina_derivar=? and (idmovimientoant is null or estado=1) and fecha_hora >= curdate() and fecha_hora < curdate() + interval 1 day");
   $q->execute(array($idoficina));
   $recepHoy = intval($q->fetchColumn());
   $q = $pdo->prepare("select count(*) from movimientos m inner join movimientos ma on m.idmovimientoant=ma.idMovimientos inner join responsables r on ma.idresponsable=r.idresponsables where r.idoficina=? and m.fecha_hora >= curdate() and m.fecha_hora < curdate() + interval 1 day");
@@ -71,7 +71,7 @@ try {
   $nombreOficina = (string)$q->fetchColumn();
 
   // ---- Resumen del mes (panel derecho) ----
-  $q = $pdo->prepare("select count(*) from movimientos where idoficina_derivar=? and estado=1 and fecha_hora >= date_format(now(),'%Y-%m-01') and fecha_hora < date_format(now(),'%Y-%m-01') + interval 1 month");
+  $q = $pdo->prepare("select count(*) from movimientos where idoficina_derivar=? and (idmovimientoant is null or estado=1) and fecha_hora >= date_format(now(),'%Y-%m-01') and fecha_hora < date_format(now(),'%Y-%m-01') + interval 1 month");
   $q->execute(array($idoficina));
   $recepMes = intval($q->fetchColumn());
   $q = $pdo->prepare("select count(*) from movimientos m inner join movimientos ma on m.idmovimientoant=ma.idMovimientos inner join responsables r on ma.idresponsable=r.idresponsables where r.idoficina=? and m.fecha_hora >= date_format(now(),'%Y-%m-01') and m.fecha_hora < date_format(now(),'%Y-%m-01') + interval 1 month");
