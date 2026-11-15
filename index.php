@@ -189,8 +189,9 @@ foreach ($actividad as $a) {
           <div class="tb-fecha"><i class="fa fa-calendar"></i> <?= h($fechaHoy) ?></div>
         </div>
 
+        <?php $hoyFiltro = 'desde=' . date('Y-m-d') . '&hasta=' . date('Y-m-d'); // las tarjetas "hoy" abren su lista filtrada en el día ?>
         <div class="kpis">
-          <div class="kpi" style="cursor:pointer" onclick="location='./vistas/v_recepcion_proveido.php'">
+          <div class="kpi" style="cursor:pointer" title="Ver los documentos por recepcionar" onclick="location='./vistas/v_recepcion_proveido.php'">
             <div class="ic t-orange"><i class="fa fa-inbox"></i></div>
             <div>
               <div class="lab lab-orange">Por recepcionar</div>
@@ -198,7 +199,7 @@ foreach ($actividad as $a) {
               <div class="ss">En tu bandeja</div>
             </div>
           </div>
-          <div class="kpi" style="cursor:pointer" onclick="location='./vistas/v_recepcion_proveido.php?estado=Recepcionado'">
+          <div class="kpi" style="cursor:pointer" title="Ver lo recepcionado hoy" onclick="location='./vistas/v_recepcion_proveido.php?estado=Recepcionado&<?= $hoyFiltro ?>'">
             <div class="ic t-green"><i class="fa fa-check-circle"></i></div>
             <div>
               <div class="lab lab-green">Recepcionados hoy</div>
@@ -206,7 +207,7 @@ foreach ($actividad as $a) {
               <div class="ss">Por tu oficina</div>
             </div>
           </div>
-          <div class="kpi" style="cursor:pointer" onclick="location='./vistas/v_recepcion_proveido.php?estado=Derivado'">
+          <div class="kpi" style="cursor:pointer" title="Ver lo derivado hoy" onclick="location='./vistas/v_recepcion_proveido.php?estado=Derivado&<?= $hoyFiltro ?>'">
             <div class="ic t-purple"><i class="fa fa-paper-plane"></i></div>
             <div>
               <div class="lab lab-purple">Derivados hoy</div>
@@ -214,7 +215,7 @@ foreach ($actividad as $a) {
               <div class="ss">Desde tu oficina</div>
             </div>
           </div>
-          <div class="kpi" style="cursor:pointer" onclick="location='./vistas/o_reg_documentos.php'">
+          <div class="kpi" style="cursor:pointer" title="Ver lo registrado hoy en mesa de partes" onclick="location='./vistas/o_reg_documentos.php?<?= $hoyFiltro ?>'">
             <div class="ic t-blue"><i class="fa fa-list-alt"></i></div>
             <div>
               <div class="lab lab-blue">Mesa de partes hoy</div>
