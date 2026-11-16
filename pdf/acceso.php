@@ -11,10 +11,17 @@
        en su cargo (?c=XXXX-XXXX), que no se puede adivinar.
    ===================================================================== */
 
-require_once __DIR__ . '/../tcpdf/examples/config/tcpdf_config_alt.php';   // rutas de imágenes/fuentes
-require_once __DIR__ . '/../tcpdf/tcpdf.php';
 require_once __DIR__ . '/../conexion/conexion.php';
 require_once __DIR__ . '/../clases/gestion_documental.php';
+
+// Un PDF es salida binaria: cualquier aviso impreso antes lo rompe. Se apagan
+// ANTES de cargar TCPDF, porque sus avisos "Deprecated" aparecen al compilarse
+// (la primera petición tras reiniciar el servidor) y salían antes del PDF.
+ini_set('display_errors', '0');
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_WARNING);
+
+require_once __DIR__ . '/../tcpdf/examples/config/tcpdf_config_alt.php';   // rutas de imágenes/fuentes
+require_once __DIR__ . '/../tcpdf/tcpdf.php';
 
 /** ¿Hay un usuario del sistema con sesión iniciada? */
 function pdf_hay_sesion()

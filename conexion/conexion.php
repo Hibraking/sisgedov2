@@ -49,8 +49,24 @@ if (!defined('SISGEDO_ES_LOCAL')) {
             $scheme = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off') ? 'https' : 'http';
             $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : php_uname('n');
             $script = isset($_SERVER['SCRIPT_NAME']) ? str_replace('\\', '/', $_SERVER['SCRIPT_NAME']) : '';
-            $basePath = rtrim(str_replace('\\', '/', dirname($script)), '/');
-            $basePath = preg_replace('~/(?:clases|vistas|reportes|tcpdf(?:/examples)?)$~', '', $basePath);
+            // Raíz web del sistema = dirección del script MENOS su ruta dentro del
+            // proyecto (calculada con la ubicación real del archivo). Así funciona
+            // desde cualquier carpeta, incluidas las que se creen en el futuro.
+            $basePath = null;
+            $raiz = str_replace('\\', '/', realpath(dirname(__DIR__)) ?: '');
+            $archivo = isset($_SERVER['SCRIPT_FILENAME']) ? str_replace('\\', '/', realpath($_SERVER['SCRIPT_FILENAME']) ?: '') : '';
+            if ($raiz !== '' && $archivo !== '' && stripos($archivo, $raiz . '/') === 0) {
+                $relativa = substr($archivo, strlen($raiz));                        // ej. /pdf/cargo.php
+                if ($relativa !== '' && strlen($script) >= strlen($relativa)
+                    && strcasecmp(substr($script, -strlen($relativa)), $relativa) === 0) {
+                    $basePath = rtrim(substr($script, 0, -strlen($relativa)), '/');  // ej. /sisgedov2
+                }
+            }
+            if ($basePath === null) {
+                // Respaldo (consola u otros casos): quitar la carpeta conocida del final
+                $basePath = rtrim(str_replace('\\', '/', dirname($script)), '/');
+                $basePath = preg_replace('~/(?:clases|vistas|reportes|pdf|herramientas|partes|tcpdf(?:/examples)?)$~', '', $basePath);
+            }
             if ($basePath === '/' || $basePath === '.' || $basePath === '\\') {
                 $basePath = '';
             }

@@ -4,6 +4,9 @@
 // Parámetros: ?f_inicio=YYYY-MM-DD&f_fin=YYYY-MM-DD
 //============================================================================
 
+// Avisos apagados ANTES de cargar TCPDF: sus "Deprecated" al compilarse rompían el PDF.
+ini_set('display_errors', '0');
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_WARNING);
 require_once('tcpdf_include.php');
 require_once '../../conexion/conexion.php';
 
