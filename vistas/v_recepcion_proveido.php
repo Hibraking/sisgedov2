@@ -515,7 +515,7 @@ $queryBase = array(
                     <button class="ab ab-g" title="Derivar" onclick="event.stopPropagation();abrirAccionR(this,'derivar')"><i class="fa fa-paper-plane"></i></button>
                     <button class="ab ab-b" title="Devolver" onclick="event.stopPropagation();abrirAccionR(this,'devolver')"><i class="fa fa-arrow-left"></i></button>
                     <button class="ab ab-b" title="Archivar" onclick="event.stopPropagation();abrirArchivar(this)"><i class="fa fa-archive"></i></button>
-                    <a class="ab ab-b" title="Imprimir cargo" target="_blank" href="../tcpdf/examples/cargo_interno.php?exp=<?= h($r[0]) ?>" onclick="event.stopPropagation()"><i class="fa fa-print"></i></a>
+                    <a class="ab ab-b" title="Imprimir cargo" target="_blank" href="../pdf/cargo_interno.php?exp=<?= h($r[0]) ?>" onclick="event.stopPropagation()"><i class="fa fa-print"></i></a>
                     <a class="ab ab-b" title="Seguimiento" target="_blank" href="<?= h($segUrl) ?>" onclick="event.stopPropagation()"><i class="fa fa-eye"></i></a>
                   <?php } ?>
                   <?php if ($vistaEstado === 'enviado') {
@@ -524,7 +524,7 @@ $queryBase = array(
                       : '../consulta_publico.php?num_exp=' . rawurlencode((string)$r[4]);
                   ?>
                     <a class="ab ab-b" title="Seguimiento" target="_blank" href="<?= h($segUrlE) ?>" onclick="event.stopPropagation()"><i class="fa fa-eye"></i></a>
-                    <a class="ab ab-b" title="Imprimir cargo de derivación" target="_blank" href="../tcpdf/examples/cargo_interno.php?exp=<?= h($r[0]) ?>" onclick="event.stopPropagation()"><i class="fa fa-print"></i></a>
+                    <a class="ab ab-b" title="Imprimir cargo de derivación" target="_blank" href="../pdf/cargo_interno.php?exp=<?= h($r[0]) ?>" onclick="event.stopPropagation()"><i class="fa fa-print"></i></a>
                   <?php } ?>
                   <?php if ($adj !== '#' && $adj !== '' && $adj !== null) { ?><a class="ab ab-b" title="Ver adjunto" target="_blank" href="<?= h($adj) ?>" onclick="event.stopPropagation()"><i class="fa fa-paperclip"></i></a><?php } else { ?><span class="ab ab-d" title="Sin adjunto"><i class="fa fa-paperclip"></i></span><?php } ?>
                 </div>

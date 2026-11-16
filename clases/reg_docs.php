@@ -76,7 +76,7 @@ class Reg_docs
                 echo '<a class="red eliminar tooltip-error" data-rel="tooltip" title="Eliminar" href="#">';
                 echo '<i class="ace-icon fa fa-trash-o bigger-130"></i>';
                 echo '</a>';
-                echo '<a class="tooltip-info" data-rel="tooltip" title="Cargo" href="../tcpdf/examples/cargo_externo.php?exp=' . h($filas[5]) . '" target="_blank">';
+                echo '<a class="tooltip-info" data-rel="tooltip" title="Cargo" href="../pdf/cargo.php?exp=' . h($filas[5]) . '" target="_blank">';
                 echo '<i class="ace-icon fa fa-print bigger-130"></i>';
                 echo '</a>';
                 echo '</div>';
@@ -113,7 +113,7 @@ class Reg_docs
                                             echo '</a>';
                                         //echo '</li>';*/
                 echo '<li>';
-                echo '<a href="../tcpdf/examples/cargo_externo.php?exp=' . $filas[5] . '" target="_blank" class="tooltip-error" data-rel="tooltip" title="Cargo">';
+                echo '<a href="../pdf/cargo.php?exp=' . $filas[5] . '" target="_blank" class="tooltip-error" data-rel="tooltip" title="Cargo">';
                 echo '<span class="blue">';
                 echo '<i class="ace-icon fa fa-print bigger-120"></i>';
                 echo '</span>';

@@ -274,7 +274,7 @@ $("#dv_ok").on("click", function () {
         if (ventana) ventana.close();
         return;
       }
-      if (ventana) ventana.location = "../tcpdf/examples/cargo_externo.php?exp=" + encodeURIComponent(exp);
+      if (ventana) ventana.location = "../pdf/cargo.php?exp=" + encodeURIComponent(exp);
       location.reload();
     })
     .fail(function (xhr) {

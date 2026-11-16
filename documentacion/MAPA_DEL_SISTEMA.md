@@ -16,7 +16,8 @@ Actualizado: 13/11/2026.
 | `conexion/` | Configuración: base de datos, institución, correo, Firma Perú (contraseñas en archivos fuera de Git) |
 | `migraciones/` | Cambios de la base de datos; `ACTUALIZAR_BD_COMPLETO.sql` los reúne todos |
 | `assets/` | Solo librerías externas en uso: Font Awesome 4.5 y jQuery 2.1.4 |
-| `tcpdf/` | Librería de PDF reducida a lo usado (fuentes helvetica/times/courier) + `examples/` con los cargos y reportes propios |
+| `pdf/` | Cargos propios (`cargo.php`, `cargo_interno.php`) con control de acceso: personal con sesión, o el ciudadano con su código de verificación (`?c=`) |
+| `tcpdf/` | Librería de PDF reducida a lo usado (fuentes helvetica/times/courier) + `examples/` con los reportes diarios. Las direcciones antiguas de los cargos redirigen a `pdf/` |
 | `librerias/`, `vendor/` | PHPMailer (correo) |
 | `images/` | Logos (original y versiones web/correo), ilustración del login, fotos de perfil |
 | `herramientas/` | Utilidades para el administrador (probar correo, huellas de archivos) |

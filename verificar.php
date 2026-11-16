@@ -279,7 +279,11 @@ if ($busco && strlen($cvd) === 8) {
           <?php } ?>
         </dl>
         <?php if ($tipo === 'EXPEDIENTE') { ?>
-          <p style="margin-top:12px;font-size:13px"><a href="consulta_publico.php?num_exp=<?= rawurlencode($doc[2]) ?>" style="color:#2563eb"><i class="fa fa-map-o"></i> Ver el recorrido de este expediente</a></p>
+          <p style="margin-top:12px;font-size:13px;display:flex;gap:18px;flex-wrap:wrap">
+            <a href="consulta_publico.php?num_exp=<?= rawurlencode($doc[2]) ?>" style="color:#2563eb"><i class="fa fa-map-o"></i> Ver el recorrido de este expediente</a>
+            <!-- El ciudadano descarga su cargo con el código (no con el N° de expediente, que es correlativo) -->
+            <a href="pdf/cargo.php?c=<?= rawurlencode(sgd_formato_cvd($cvd)) ?>" target="_blank" style="color:#2563eb"><i class="fa fa-file-pdf-o"></i> Descargar el cargo de recepción</a>
+          </p>
         <?php } ?>
       </div>
 

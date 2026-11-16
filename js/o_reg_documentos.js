@@ -461,7 +461,7 @@ $("#dr_guardar").on("click", function () {
       // tiene oficina asignada, así que se genera su cargo automáticamente.
       if (derivRegSinDestino && derivRegExp !== "") {
         window.open(
-          "../tcpdf/examples/cargo_externo.php?exp=" +
+          "../pdf/cargo.php?exp=" +
             encodeURIComponent(derivRegExp),
           "_blank",
         );

@@ -302,7 +302,7 @@ $tok = csrf_token();
                     // su constancia por correo; el cargo solo aplica a lo registrado aquí. ?>
                     <span class="ab ab-d" title="Documento virtual: el ciudadano recibió su constancia por correo (no requiere cargo)" onclick="event.stopPropagation()"><i class="fa fa-print"></i></span>
                   <?php } elseif (!$sinDestino) { ?>
-                    <a class="ab ab-b" title="Imprimir cargo" target="_blank" href="../tcpdf/examples/cargo_externo.php?exp=<?= h(rawurlencode((string)$r[5])) ?>" onclick="event.stopPropagation()"><i class="fa fa-print"></i></a>
+                    <a class="ab ab-b" title="Imprimir cargo" target="_blank" href="../pdf/cargo.php?exp=<?= h(rawurlencode((string)$r[5])) ?>" onclick="event.stopPropagation()"><i class="fa fa-print"></i></a>
                   <?php } else { ?>
                     <span class="ab ab-d" title="El cargo se genera al derivar a una oficina" onclick="event.stopPropagation()"><i class="fa fa-print"></i></span>
                   <?php } ?>
