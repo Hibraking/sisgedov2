@@ -53,15 +53,61 @@ $vigente = $doc ? MesaPartesVirtual::plazo_vigente($doc[19]) : false;
   <link rel="stylesheet" href="assets/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link rel="stylesheet" href="css/publico.css?v=<?= @filemtime(__DIR__ . '/css/publico.css') ?>" />
   <style>
-    .obs { background: #fff7ed; border-left: 4px solid #f97316; border-radius: 6px; padding: 12px 14px; color: #7c2d12; line-height: 1.55; }
-    .ok-box { text-align: center; padding: 10px 0; }
-    .ok-box .fa { font-size: 44px; color: #16a34a; }
-    .datos { display: grid; grid-template-columns: 160px 1fr; gap: 6px 12px; font-size: 14px; margin: 12px 0; }
-    .datos dt { color: #64748b; }
-    .datos dd { margin: 0; color: #1e293b; }
-    .plazo { font-weight: 700; color: #c2410c; }
-    .err { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; }
-    @media (max-width: 600px) { .datos { grid-template-columns: 1fr; } }
+    .obs {
+      background: #fff7ed;
+      border-left: 4px solid #f97316;
+      border-radius: 6px;
+      padding: 12px 14px;
+      color: #7c2d12;
+      line-height: 1.55;
+    }
+
+    .ok-box {
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .ok-box .fa {
+      font-size: 44px;
+      color: #16a34a;
+    }
+
+    .datos {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 6px 12px;
+      font-size: 14px;
+      margin: 12px 0;
+    }
+
+    .datos dt {
+      color: #64748b;
+    }
+
+    .datos dd {
+      margin: 0;
+      color: #1e293b;
+    }
+
+    .plazo {
+      font-weight: 700;
+      color: #c2410c;
+    }
+
+    .err {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .datos {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 
@@ -99,10 +145,14 @@ $vigente = $doc ? MesaPartesVirtual::plazo_vigente($doc[19]) : false;
     <?php } else { ?>
       <div class="pub-card">
         <dl class="datos">
-          <dt>Expediente N°</dt><dd><b><?= hs($doc[1]) ?></b></dd>
-          <dt>Documento</dt><dd><?= hs(trim($doc[2] . ' ' . $doc[3])) ?></dd>
-          <dt>Asunto</dt><dd><?= hs($doc[9]) ?></dd>
-          <dt>Plazo para subsanar</dt><dd class="plazo">hasta el <?= hs(sgd_cal_texto(sgd_cal_cierre($doc[19]))) ?></dd>
+          <dt>Expediente N°</dt>
+          <dd><b><?= hs($doc[1]) ?></b></dd>
+          <dt>Documento</dt>
+          <dd><?= hs(trim($doc[2] . ' ' . $doc[3])) ?></dd>
+          <dt>Asunto</dt>
+          <dd><?= hs($doc[9]) ?></dd>
+          <dt>Plazo para subsanar</dt>
+          <dd class="plazo">hasta el <?= hs(sgd_cal_texto(sgd_cal_cierre($doc[19]))) ?></dd>
         </dl>
         <div style="font-size:14px;font-weight:700;color:#123a7a;margin:14px 0 6px">Observación de mesa de partes</div>
         <div class="obs"><?= nl2br(hs($doc[20])) ?></div>

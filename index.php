@@ -189,7 +189,8 @@ foreach ($actividad as $a) {
           <div class="tb-fecha"><i class="fa fa-calendar"></i> <?= h($fechaHoy) ?></div>
         </div>
 
-        <?php $hoyFiltro = 'desde=' . date('Y-m-d') . '&hasta=' . date('Y-m-d'); // las tarjetas "hoy" abren su lista filtrada en el día ?>
+        <?php $hoyFiltro = 'desde=' . date('Y-m-d') . '&hasta=' . date('Y-m-d'); // las tarjetas "hoy" abren su lista filtrada en el día 
+        ?>
         <div class="kpis">
           <div class="kpi" style="cursor:pointer" title="Ver los documentos por recepcionar" onclick="location='./vistas/v_recepcion_proveido.php'">
             <div class="ic t-orange"><i class="fa fa-inbox"></i></div>

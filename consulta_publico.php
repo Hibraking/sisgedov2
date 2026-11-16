@@ -336,7 +336,8 @@ if (count($eventos) > 0) {
       <h2 id="avisoAnteriorTit">Nuevo sistema de trámite documentario</h2>
       <p>Desde el <b><?= hpub(SISGEDO_VIGENTE_DESDE) ?></b> la municipalidad usa este nuevo sistema.</p>
       <p>Si presentaste tu documento <b>hasta el <?= hpub(SISGEDO_ANTERIOR_HASTA) ?></b>, consúltalo en el
-        <b>SISGEDO anterior</b> con el mismo número de expediente.</p>
+        <b>SISGEDO anterior</b> con el mismo número de expediente.
+      </p>
       <div class="acc">
         <a class="btn btn-p" href="<?= hpub(SISGEDO_ANTERIOR_URL) ?>" target="_blank" rel="noopener">
           <i class="fa fa-external-link"></i> Ir al SISGEDO anterior</a>
@@ -345,7 +346,7 @@ if (count($eventos) > 0) {
     </div>
   </div>
   <script>
-    (function () {
+    (function() {
       // Se muestra SIEMPRE al entrar a la página y al recargarla (F5).
       // Única excepción: el resultado de una búsqueda hecha desde esta misma
       // página (botón Consultar), para no tapar el resultado en cada consulta.
@@ -363,10 +364,17 @@ if (count($eventos) > 0) {
       var esBusqueda = tipo === 'navigate' && desdeEstaPagina && location.search.indexOf('num_exp=') !== -1;
       if (esBusqueda) return;
       m.hidden = false;
-      function cerrar() { m.hidden = true; }
+
+      function cerrar() {
+        m.hidden = true;
+      }
       document.getElementById('avisoAnteriorCerrar').onclick = cerrar;
-      m.addEventListener('click', function (e) { if (e.target === m) cerrar(); });
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !m.hidden) cerrar(); });
+      m.addEventListener('click', function(e) {
+        if (e.target === m) cerrar();
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !m.hidden) cerrar();
+      });
     })();
   </script>
 </body>

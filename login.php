@@ -49,7 +49,8 @@ $loginError = isset($_GET['e']) ? (int) $_GET['e'] : 0;
         <div class="building-wrap">
           <?php $edifWebp = preg_replace('/\.(png|jpe?g)$/i', '.webp', SISGEDO_IMG_EDIFICIO); ?>
           <picture style="display:contents">
-            <?php if ($edifWebp !== SISGEDO_IMG_EDIFICIO && is_file(__DIR__ . '/' . $edifWebp)) { ?><source srcset="<?= $edifWebp ?>" type="image/webp" /><?php } ?>
+            <?php if ($edifWebp !== SISGEDO_IMG_EDIFICIO && is_file(__DIR__ . '/' . $edifWebp)) { ?>
+              <source srcset="<?= $edifWebp ?>" type="image/webp" /><?php } ?>
             <img class="building" src="<?= SISGEDO_IMG_EDIFICIO ?>" width="1200" height="800" alt="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>" />
           </picture>
         </div>
