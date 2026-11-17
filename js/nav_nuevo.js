@@ -1,8 +1,20 @@
+/* Grupos del menú como acordeón: al abrir uno se cierran los demás
+   (así el menú no crece y siempre se ve lo que se está usando). */
 function navToggleGrupo(g) {
   var sub = g.nextElementSibling;
   if (!sub || !sub.classList.contains('subm')) return;
-  g.classList.toggle('open');
-  sub.classList.toggle('cerrado');
+  var abrir = !g.classList.contains('open');
+  if (abrir) {
+    var nav = g.parentNode;
+    Array.prototype.forEach.call(nav.querySelectorAll('.grp.open'), function (otro) {
+      if (otro === g) return;
+      otro.classList.remove('open');
+      var s = otro.nextElementSibling;
+      if (s && s.classList.contains('subm')) s.classList.add('cerrado');
+    });
+  }
+  g.classList.toggle('open', abrir);
+  sub.classList.toggle('cerrado', !abrir);
 }
 
 (function() {
