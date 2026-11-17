@@ -124,8 +124,15 @@ function lista_datos($idmov){
                     <td align="right" width="20%" style="background-color:#F0F0F0;"><b>HORA:</b></td><td width="30%">'.esc_pdf($dato[1]).'</td>
                 </tr>
                 <tr>
-                    <td align="right" style="background-color:#F0F0F0;"><b>EXPEDIENTE:</b></td><td><b>'.esc_pdf($dato[2]).'</b></td>
+                    '.($dato[9] === 'EXPEDIENTE'
+                        // Documento externo: su N° de EXPEDIENTE (el mismo de todo su recorrido)
+                        ? '<td align="right" style="background-color:#F0F0F0;"><b>EXPEDIENTE:</b></td><td><b>'.esc_pdf($dato[10]).'</b></td>'
+                        // Documento interno (emitido): no tiene expediente; se identifica por su código
+                        : '<td align="right" style="background-color:#F0F0F0;"><b>DOC. INTERNO N°:</b></td><td><b>'.esc_pdf($dato[10]).'</b></td>').'
                     <td align="right" style="background-color:#F0F0F0;"><b>N° FOLIO:</b></td><td>'.esc_pdf($dato[3]).'</td>
+                </tr>
+                <tr>
+                    <td align="right" style="background-color:#F0F0F0;"><b>REG. DE LA OFICINA:</b></td><td colspan="3">'.esc_pdf($dato[2]).' <span style="font-size:7px;color:#666666;">(número de registro interno de la oficina que lo recibió; no es el expediente)</span></td>
                 </tr>
                 <tr>
                     <td align="right" style="background-color:#F0F0F0;"><b>TIPO DOCUMENTO:</b></td><td>'.esc_pdf($dato[4]).'</td>

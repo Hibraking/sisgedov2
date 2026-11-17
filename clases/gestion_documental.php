@@ -140,8 +140,35 @@ function sgd_nuevo_expediente()
 
 /* ===================================================================
    3. NÚMERO DE REGISTRO INTERNO (recepción/derivación por oficina)
-      Formato histórico: <año><correlativo>, por oficina.
+      Cada oficina numera lo que recibe. Formato: <SIGLAS>-<año>-<correlativo>
+      Ej.: GODUyR-2026-0596. Antes era <año><correlativo> (20260596), igual
+      que un expediente, y se confundía con él. El correlativo continúa.
    =================================================================== */
+
+/** ¿La columna movimientos.num_exp ya admite el formato con siglas? (migración 013) */
+function sgd_registro_con_siglas_ok()
+{
+    static $ok = null;
+    if ($ok === null) {
+        try {
+            $st = sgd_db()->query("SELECT CHARACTER_MAXIMUM_LENGTH FROM information_schema.columns
+                                    WHERE table_schema = DATABASE() AND table_name = 'movimientos' AND column_name = 'num_exp'");
+            $ok = ((int)$st->fetchColumn()) >= 30;
+        } catch (Exception $e) {
+            $ok = false;
+        }
+    }
+    return $ok;
+}
+
+/** Prefijo del registro de la oficina: sus siglas sin "MPH/" (ej. GODUyR); "OF<id>" si no tiene. */
+function sgd_prefijo_registro($idoficina)
+{
+    $s = sgd_siglas_oficina($idoficina);
+    $s = preg_replace('~^' . preg_quote(SISGEDO_MUNI_SIGLAS, '~') . '\s*/\s*~i', '', (string)$s);   // quita "MPH/"
+    $s = trim(preg_replace('~[^A-Za-z0-9]+~', '-', $s), '-');
+    return $s !== '' ? mb_substr($s, 0, 14) : 'OF' . (int)$idoficina;
+}
 
 function sgd_nuevo_registro_interno($idoficina)
 {
@@ -151,18 +178,24 @@ function sgd_nuevo_registro_interno($idoficina)
     $semilla = 0;
     $sinMigracion = !sgd_migracion_ok();
     if ($sinMigracion || sgd_secuencia_actual($clave) === null) {
-        $st = sgd_db()->prepare("SELECT MAX(CAST(SUBSTRING(m.num_exp, 5) AS UNSIGNED))
+        // Mayor correlativo ya usado este año por la oficina, en cualquiera de los
+        // dos formatos: antiguo "20260594" o nuevo "GODUyR-2026-0594".
+        $st = sgd_db()->prepare("SELECT MAX(CASE WHEN m.num_exp REGEXP '^[0-9]+$'
+                                                 THEN CAST(SUBSTRING(m.num_exp, 5) AS UNSIGNED)
+                                                 ELSE CAST(SUBSTRING_INDEX(m.num_exp, '-', -1) AS UNSIGNED) END)
                                    FROM movimientos m
                                    INNER JOIN responsables r ON m.idresponsable = r.idresponsables
-                                  WHERE r.idoficina = ? AND m.num_exp LIKE ? AND m.fecha_hora >= ?");
-        $st->execute(array($idoficina, $anio . '%', $anio . '-01-01'));
+                                  WHERE r.idoficina = ? AND m.fecha_hora >= ?
+                                    AND (m.num_exp LIKE ? OR m.num_exp LIKE ?)");
+        $st->execute(array($idoficina, $anio . '-01-01', $anio . '%', '%-' . $anio . '-%'));
         $semilla = (int)$st->fetchColumn();
     }
-    if ($sinMigracion) {
-        return $anio . str_pad((string)($semilla + 1), 4, '0', STR_PAD_LEFT);
+    $n = $sinMigracion ? $semilla + 1 : sgd_secuencia_siguiente($clave, $semilla);
+    $corr = str_pad((string)$n, 4, '0', STR_PAD_LEFT);
+    if ($sinMigracion || !sgd_registro_con_siglas_ok()) {
+        return $anio . $corr;                       // formato antiguo hasta aplicar la migración 013
     }
-    $n = sgd_secuencia_siguiente($clave, $semilla);
-    return $anio . str_pad((string)$n, 4, '0', STR_PAD_LEFT);
+    return sgd_prefijo_registro($idoficina) . '-' . $anio . '-' . $corr;
 }
 
 /* ===================================================================

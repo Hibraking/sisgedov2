@@ -64,7 +64,7 @@ class Estados_documento
                         /* 1) POR ATENDER: movimientos asignados al responsable de la oficina */
                         select
                             m.idMovimientos as codigo,
-                            coalesce(rd.nro_exp, m.num_exp, '') as num_exp,
+                            coalesce(rd.nro_exp, de.iddocs_emitidos, '') as num_exp,
                             coalesce(ofd.nombre, '') as of_origen,
                             coalesce(tt.nombre, '') as tramite,
                             coalesce(rd.asunto, de.asunto, m.detalles, '') as asunto,
@@ -91,7 +91,7 @@ class Estados_documento
                         /* 2) POR RECEPCIONAR: movimientos derivados a la oficina, aun no recibidos */
                         select
                             m.idMovimientos,
-                            coalesce(rd.nro_exp, m.num_exp, ''),
+                            coalesce(rd.nro_exp, de.iddocs_emitidos, ''),
                             coalesce(ofori.nombre, ''),
                             coalesce(tt.nombre, ''),
                             coalesce(rd.asunto, de.asunto, m.detalles, ''),
