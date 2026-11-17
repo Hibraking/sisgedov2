@@ -303,9 +303,12 @@ VALUES
 ?);";
             $result = $conectado->prepare($sql);
             $result->execute([$iddocumento, $idremitente, $idtipo_tramite, $idoficina, $nro_exp, $numero_docu, $asunto, $parasu, $observacion, $folios, $adjunto, $idpersonal, $procedencia]);
-            echo $iddocumento, $idremitente, $idtipo_tramite, $idoficina, $nro_exp, $numero_docu, $asunto, $parasu, $observacion, $folios, $adjunto, $idpersonal, $procedencia;
+            return true;
         } catch (Exception $exc) {
-            echo $exc->getMessage();
+            // Antes se imprimía el mensaje técnico sin "ERROR_" y la pantalla lo
+            // tomaba como éxito. Ahora el llamador decide (transacción).
+            error_log('reg_docs insertar_datos: ' . $exc->getMessage());
+            return false;
         }
     }
     public function modificar_datos($iddocumento, $idremitente, $idtipo_tramite, $idoficina, $numero_docu, $asunto, $parasu, $observacion, $folios, $idpersonal, $procedencia, $codigo)
@@ -330,9 +333,11 @@ VALUES
                         WHERE idregistro_documentos = ?";
             $result = $conectado->prepare($sql);
             $result->execute([$iddocumento, $idremitente, $idtipo_tramite, $idoficina, $numero_docu, $asunto, $parasu, $observacion, $folios, $idpersonal, $procedencia, $codigo]);
-            //                echo $iddocumento,$idremitente,$idtipo_tramite,$idoficina,$numero_docu,$asunto,$parasu,$observacion,$folios,$idpersonal,$procedencia,$codigo;
+            return true;
         } catch (Exception $exc) {
-            echo $exc->getMessage();
+            // Antes se imprimía el mensaje técnico sin "ERROR_" y la pantalla lo tomaba como éxito
+            error_log('reg_docs modificar_datos: ' . $exc->getMessage());
+            return false;
         }
     }
     public function elimnar_datos($codigo)
@@ -474,40 +479,69 @@ if (isset($_POST["Insertar"])) {
     if ($folios < 1) {
         $errores[] = 'Ingrese un número de folios válido.';
     }
-    if ($cadena === '') {
+    $oficinas = array_values(array_filter(array_map('intval', explode(',', $cadena))));
+    if (count($oficinas) === 0) {
         $errores[] = 'Seleccione al menos una oficina destino.';
+    }
+    // Texto mal codificado: la base de datos lo rechazaría a mitad del registro
+    foreach (array($numdoc, $asunto, $parasu, $observacion, $Procedencia) as $txt) {
+        if (!mb_check_encoding((string)$txt, 'UTF-8')) {
+            $errores[] = 'Hay texto con caracteres no válidos; vuelva a escribirlo.';
+            break;
+        }
     }
     if (!empty($errores)) {
         echo 'ERROR_VALIDACION: ' . implode(' ', $errores);
         exit;
     }
     $nombre_fichero = null;
+    $upload = null;
     if (isset($_FILES['fichero'])) {
         if (is_uploaded_file($_FILES['fichero']['tmp_name'])) {
             require_once __DIR__ . '/util_subida.php';
             if (!sisgedo_validar_archivo($_FILES['fichero'], $err_subida)) {
-                echo $err_subida;
-                return;
+                echo 'ERROR_ARCHIVO: ' . $err_subida;      // antes sin "ERROR_": la pantalla lo tomaba como éxito
+                exit;
             }
             $nombre_fichero = sisgedo_nombre_seguro($_FILES['fichero']);
             $ruta = "../docs adjs reg_doc/";
             $upload = $ruta . $nombre_fichero;
             if (!move_uploaded_file($_FILES['fichero']['tmp_name'], $upload)) { //movemos el archivo a su ubicacion
-                echo "ERROR AL SUBIR EL ARCHIVO";
-                return;
+                echo 'ERROR_ARCHIVO: No se pudo guardar el archivo.';
+                exit;
             }
             // Integridad (MGD): huella SHA-256 y metadatos del archivo recibido
             require_once __DIR__ . '/gestion_documental.php';
             sgd_registrar_archivo('REGISTRO', $nombre_fichero, $upload, $_FILES['fichero']['name'], 'PRESENCIAL');
         }
     }
-    $nro_exp = $dml_reg_docs->nro_expediente();
-    $oficinas = explode(",", $cadena);
-    foreach ($oficinas as $idoficina) {
-        $dml_reg_docs->insertar_datos($documento, $remitente, $tipotram, intval($idoficina), $nro_exp, $numdoc, $asunto, $parasu, $observacion, $folios, $nombre_fichero, $idpersonal, $Procedencia);
+    // Todos los destinos y el número de expediente en UNA transacción: si algo
+    // falla no queda un registro a medias ni se pierde un número de expediente.
+    require_once __DIR__ . '/gestion_documental.php';
+    $dbReg = sgd_db();
+    try {
+        $dbReg->beginTransaction();
+        $nro_exp = $dml_reg_docs->nro_expediente();
+        foreach ($oficinas as $idoficina) {
+            if (!$dml_reg_docs->insertar_datos($documento, $remitente, $tipotram, $idoficina, $nro_exp, $numdoc, $asunto, $parasu, $observacion, $folios, $nombre_fichero, $idpersonal, $Procedencia)) {
+                throw new Exception('No se pudo insertar el registro para la oficina ' . $idoficina);
+            }
+        }
+        $dbReg->commit();
+    } catch (Exception $e) {
+        if ($dbReg->inTransaction()) {
+            $dbReg->rollBack();
+        }
+        if ($upload !== null) {
+            @unlink($upload);
+        }
+        error_log('reg_docs Insertar: ' . $e->getMessage());
+        echo 'ERROR_VALIDACION: No se pudo registrar el documento. Intente nuevamente.';
+        exit;
     }
     // Código de verificación digital del expediente (aparece en el cargo con QR)
     sgd_obtener_cvd('EXPEDIENTE', $nro_exp);
+    echo 'OK ' . $nro_exp;
     //                echo $documento," :: ", $remitente, " :: ",$tipotram," :: ", $idoficina," :: ", $nro_exp," :: ", $numdoc," :: ", $asunto," :: ", $parasu," :: ", $observacion," :: ", $folios," :: ", $nombre_fichero," :: ",$idpersonal," :: ",$Procedencia;
 }
 if (isset($_POST["Modificar"])) {
@@ -523,39 +557,49 @@ if (isset($_POST["Modificar"])) {
     $documento = intval($_POST["Documento"]);
     $remitente = intval($_POST["Remitente"]);
     $tipotram = intval($_POST["TipoTram"]);
-    $oficina = $_POST["OficinaRecep"];
-    $numdoc = $_POST["NumDoc"];
-    $folios = intval($_POST["Folios"]);
-    $asunto = $_POST["Asunto"];
-    $parasu = $_POST["Parasu"];
-    $observacion = $_POST["observacion"];
-    $Procedencia = $_POST["Procedencia"];
-    $cadena = $_POST['lista_oficinas'];
+    $numdoc = isset($_POST["NumDoc"]) ? $_POST["NumDoc"] : '';
+    $folios = intval(isset($_POST["Folios"]) ? $_POST["Folios"] : 0);
+    $asunto = isset($_POST["Asunto"]) ? $_POST["Asunto"] : '';
+    $parasu = isset($_POST["Parasu"]) ? $_POST["Parasu"] : '';
+    $observacion = isset($_POST["observacion"]) ? $_POST["observacion"] : '';
+    $Procedencia = isset($_POST["Procedencia"]) ? $_POST["Procedencia"] : '';
+    $cadena = isset($_POST['lista_oficinas']) ? $_POST['lista_oficinas'] : '';
     $nombre_fichero = null;
     if (isset($_FILES['fichero'])) {
         if (is_uploaded_file($_FILES['fichero']['tmp_name'])) {
             require_once __DIR__ . '/util_subida.php';
             if (!sisgedo_validar_archivo($_FILES['fichero'], $err_subida)) {
-                echo $err_subida;
-                return;
+                echo 'ERROR_ARCHIVO: ' . $err_subida;      // antes sin "ERROR_": la pantalla lo tomaba como éxito
+                exit;
             }
             $nombre_fichero = sisgedo_nombre_seguro($_FILES['fichero']);
             $ruta = "../docs adjs reg_doc/";
             $upload = $ruta . $nombre_fichero;
             if (!move_uploaded_file($_FILES['fichero']['tmp_name'], $upload)) { //movemos el archivo a su ubicacion
-                echo "ERROR AL SUBIR EL ARCHIVO";
-                return;
+                echo 'ERROR_ARCHIVO: No se pudo guardar el archivo.';
+                exit;
             }
             // Integridad (MGD): huella SHA-256 y metadatos del archivo recibido
             require_once __DIR__ . '/gestion_documental.php';
             sgd_registrar_archivo('REGISTRO', $nombre_fichero, $upload, $_FILES['fichero']['name'], 'PRESENCIAL');
         }
     }
-
-    $dml_reg_docs->modificar_datos($documento, $remitente, $tipotram, intval($cadena), $numdoc, $asunto, $parasu, $observacion, $folios, $idpersonal, $Procedencia, $codigo);
+    foreach (array($numdoc, $asunto, $parasu, $observacion, $Procedencia) as $txt) {
+        if (!mb_check_encoding((string)$txt, 'UTF-8')) {
+            echo 'ERROR_VALIDACION: Hay texto con caracteres no válidos; vuelva a escribirlo.';
+            exit;
+        }
+    }
+    // Sin oficina = sin destino (NULL). Antes intval('') guardaba la oficina 0.
+    $idofiMod = intval($cadena) > 0 ? intval($cadena) : null;
+    if (!$dml_reg_docs->modificar_datos($documento, $remitente, $tipotram, $idofiMod, $numdoc, $asunto, $parasu, $observacion, $folios, $idpersonal, $Procedencia, $codigo)) {
+        echo 'ERROR_VALIDACION: No se pudo guardar el cambio. Intente nuevamente.';
+        exit;
+    }
     if ($nombre_fichero !== null) {
         $dml_reg_docs->actualizar_adjunto($codigo, $nombre_fichero);
     }
+    echo 'OK';
 }
 
 if (isset($_POST['Emilinar'])) {

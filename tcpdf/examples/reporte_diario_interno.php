@@ -21,6 +21,14 @@ if (!isset($_SESSION['usuario'])) {
     header("Location: ../../login.php");
     return;
 }
+// Mismo permiso que la pantalla del cuaderno (antes bastaba con tener sesión)
+require_once __DIR__ . '/../../clases/seguridad.php';
+if (!usuario_tiene_acceso('vistas/v_reporte_cuadernointerno.php')) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'No tiene permiso para este reporte.';
+    exit;
+}
 
 // Cabecera y pie institucionales
 class MYPDF extends TCPDF {
@@ -113,16 +121,16 @@ where idMovimientos=anterior )) as origen,
                         . "</thead>";
                 foreach ($result as $filas) {
                        $resultado.="<tr>";
-                        $resultado.="<td width=\"45\" align=\"center\">".$filas[0]."</td>";
-                        $resultado.="<td width=\"45\" align=\"center\">".$filas[1]."</td>";
-                        $resultado.="<td width=\"90\" align=\"left\">".$filas[2]."</td>";
-                        $resultado.="<td width=\"90\" align=\"left\">".$filas[3]."</td>";
-                        $resultado.="<td width=\"180\" align=\"justify\">".$filas[4]."</td>";
-                        $resultado.="<td width=\"250\" align=\"justify\">".$filas[5]."</td>";
-                        $resultado.="<td width=\"50\" align=\"center\">".$filas[6]."</td>";
-                        $resultado.="<td width=\"80\" align=\"left\">".$filas[7]."</td>";
-                        $resultado.="<td width=\"80\" align=\"center\">".$filas[8]."</td>";
-                        $resultado.="<td width=\"50\" align=\"center\">".$filas[9]."</td>";
+                        $resultado.="<td width=\"45\" align=\"center\">".htmlspecialchars((string)$filas[0], ENT_QUOTES, 'UTF-8', false)."</td>";
+                        $resultado.="<td width=\"45\" align=\"center\">".htmlspecialchars((string)$filas[1], ENT_QUOTES, 'UTF-8', false)."</td>";
+                        $resultado.="<td width=\"90\" align=\"left\">".htmlspecialchars((string)$filas[2], ENT_QUOTES, 'UTF-8', false)."</td>";
+                        $resultado.="<td width=\"90\" align=\"left\">".htmlspecialchars((string)$filas[3], ENT_QUOTES, 'UTF-8', false)."</td>";
+                        $resultado.="<td width=\"180\" align=\"justify\">".htmlspecialchars((string)$filas[4], ENT_QUOTES, 'UTF-8', false)."</td>";
+                        $resultado.="<td width=\"250\" align=\"justify\">".htmlspecialchars((string)$filas[5], ENT_QUOTES, 'UTF-8', false)."</td>";
+                        $resultado.="<td width=\"50\" align=\"center\">".htmlspecialchars((string)$filas[6], ENT_QUOTES, 'UTF-8', false)."</td>";
+                        $resultado.="<td width=\"80\" align=\"left\">".htmlspecialchars((string)$filas[7], ENT_QUOTES, 'UTF-8', false)."</td>";
+                        $resultado.="<td width=\"80\" align=\"center\">".htmlspecialchars((string)$filas[8], ENT_QUOTES, 'UTF-8', false)."</td>";
+                        $resultado.="<td width=\"50\" align=\"center\">".htmlspecialchars((string)$filas[9], ENT_QUOTES, 'UTF-8', false)."</td>";
                        $resultado.="</tr>";
                 }
                 $resultado.="</table>";
@@ -164,7 +172,12 @@ $pdf->SetFont('times', '', 8);
 
 $inicio = isset($_GET['f_inicio']) ? $_GET['f_inicio'] : '';
 $fin = isset($_GET['f_fin']) ? $_GET['f_fin'] : '';
-$idoficna = isset($_GET['idoficina']) ? $_GET['idoficina'] : '';
+// La oficina es la de la sesión (antes llegaba por la dirección y cualquiera podía
+// pedir el cuaderno de otra oficina). El administrador sí puede elegir la oficina.
+$idoficna = isset($_SESSION['idoficina']) ? intval($_SESSION['idoficina']) : 0;
+if (isset($_SESSION['usuario']) && intval($_SESSION['usuario']) === 1 && isset($_GET['idoficina']) && intval($_GET['idoficina']) > 0) {
+    $idoficna = intval($_GET['idoficina']);
+}
 $html = lista_datos($idoficna,$inicio,$fin);
 $pdf->writeHTML($html, true, false, true, false, '');
 

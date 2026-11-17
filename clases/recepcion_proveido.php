@@ -559,26 +559,39 @@ class Recepcion_proveido
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
             $conectado->beginTransaction();
+            // Se bloquea el documento y se lee su oficina destino
             if ($idregdocs !== null) {
-                $lock = $conectado->prepare("SELECT idregistro_documentos FROM registro_documentos WHERE idregistro_documentos = ? FOR UPDATE");
+                $lock = $conectado->prepare("SELECT idoficina FROM registro_documentos WHERE idregistro_documentos = ? FOR UPDATE");
                 $lock->execute([$idregdocs]);
                 $ya = $conectado->prepare("SELECT COUNT(*) FROM movimientos WHERE idregdocs = ? AND idmovimientoant IS NULL");
                 $ya->execute([$idregdocs]);
             } else {
-                $lock = $conectado->prepare("SELECT iddocs_emitidos FROM docs_emitidos WHERE iddocs_emitidos = ? FOR UPDATE");
+                $lock = $conectado->prepare("SELECT idoficina FROM docs_emitidos WHERE iddocs_emitidos = ? FOR UPDATE");
                 $lock->execute([$iddocs_emitidos]);
                 $ya = $conectado->prepare("SELECT COUNT(*) FROM movimientos WHERE iddocs_emitidos = ? AND idmovimientoant IS NULL");
                 $ya->execute([$iddocs_emitidos]);
             }
-            if ($lock->fetchColumn() === false) {
+            $destino = $lock->fetchColumn();
+            if ($destino === false) {
                 $conectado->rollBack();
                 $this->ultimo_error = 'El documento ya no existe. Actualice la página.';
+                return 0;
+            }
+            // Solo la oficina a la que fue dirigido puede recepcionarlo
+            if ((int)$destino !== (int)$idoficina) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'Este documento no está dirigido a su oficina. Actualice la página.';
                 return 0;
             }
             if ((int)$ya->fetchColumn() > 0) {
                 $conectado->rollBack();
                 $this->ultimo_error = 'Este documento ya fue recepcionado. Actualice la página.';
                 return 0;
+            }
+            // El número de registro se toma recién aquí: un intento rechazado
+            // (doble clic, ya recepcionado) ya no consume un número.
+            if ($num_exp === null) {
+                $num_exp = $this->gen_num_exp($idoficina);
             }
             $sql = "INSERT INTO movimientos(idregdocs,iddocs_emitidos,idacciondocs,idoficina_derivar,idresponsable,num_exp,detalles,folio)
                     VALUES(?,?,?,?,?,?,?,?);";
@@ -631,11 +644,19 @@ class Recepcion_proveido
             // Las dos operaciones van JUNTAS (transacción): antes, si fallaba la
             // segunda, quedaba el documento derivado y a la vez pendiente en origen.
             $conectado->beginTransaction();
-            $lock = $conectado->prepare("SELECT idMovimientos FROM movimientos WHERE idMovimientos = ? FOR UPDATE");
+            $lock = $conectado->prepare("SELECT idoficina_derivar FROM movimientos WHERE idMovimientos = ? FOR UPDATE");
             $lock->execute([intval($codigo)]);
-            if ($lock->fetchColumn() === false) {
+            $ofiMov = $lock->fetchColumn();
+            if ($ofiMov === false) {
                 $conectado->rollBack();
                 $this->ultimo_error = 'No se encontró el movimiento del documento. Actualice la página.';
+                return false;
+            }
+            // Solo se deriva/devuelve lo que está en la oficina del usuario
+            $ctx = sisgedo_contexto_usuario_actual();
+            if ((int)$ofiMov !== (int)$ctx['idoficina']) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'Este documento no está en su oficina. Actualice la página.';
                 return false;
             }
             if ($this->derivacion_pendiente($codigo, $idoficina_derivar, $conectado)) {
@@ -682,29 +703,38 @@ class Recepcion_proveido
             return false;
         }
     }
-    public function recibir_derivado($idresponsable, $numexp, $detalles, $folio, $idmovimiento)
+    public function recibir_derivado($idresponsable, $idoficina, $detalles, $folio, $idmovimiento)
     {
+        $this->ultimo_error = '';
+        $conectado = null;
         try {
-            //              if (session_status() == PHP_SESSION_NONE) {
-            //                    header("location: ../login.php");
-            //                   return;
-            //               }
-            $this->ultimo_error = '';
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
-            // Solo si sigue PENDIENTE (estado=0): antes, recibirlo de nuevo (doble
-            // clic, dos personas) sobrescribía quién y cuándo lo recibió.
+            // Solo si sigue PENDIENTE (estado=0) y está dirigido a esta oficina: antes,
+            // recibirlo de nuevo (doble clic, dos personas) sobrescribía quién y cuándo
+            // lo recibió, y se podía recibir lo derivado a otra oficina.
+            $conectado->beginTransaction();
+            $lock = $conectado->prepare("SELECT idMovimientos FROM movimientos
+                                          WHERE idMovimientos = ? AND estado = 0 AND idoficina_derivar = ? FOR UPDATE");
+            $lock->execute([intval($idmovimiento), intval($idoficina)]);
+            if ($lock->fetchColumn() === false) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'Este documento ya fue recepcionado (o ya no está pendiente en su oficina). Actualice la página.';
+                return false;
+            }
+            // El número se toma después de comprobarlo: un intento rechazado no lo consume
+            $numexp = $this->gen_num_exp($idoficina);
             $sql = "update movimientos
                     set idestadodocs=1,idresponsable=?,num_exp=?,detalles=?,fecha_hora=now(),estado=1,folio=?
                     where idMovimientos=? and estado=0";
             $result = $conectado->prepare($sql);
             $result->execute([$idresponsable, $numexp, $detalles, $folio, $idmovimiento]);
-            if ($result->rowCount() === 0) {
-                $this->ultimo_error = 'Este documento ya fue recepcionado (o ya no está pendiente). Actualice la página.';
-                return false;
-            }
+            $conectado->commit();
             return true;
         } catch (Exception $exc) {
+            if ($conectado && $conectado->inTransaction()) {
+                $conectado->rollBack();
+            }
             error_log('recibir_derivado: ' . $exc->getMessage());
             $this->ultimo_error = 'No se pudo recepcionar el documento. Intente nuevamente.';
             return false;
@@ -739,11 +769,26 @@ class Recepcion_proveido
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
             $conectado->beginTransaction();
-            $lock = $conectado->prepare("SELECT idMovimientos FROM movimientos WHERE idMovimientos = ? FOR UPDATE");
+            // El archivador y el documento deben ser de la oficina del usuario
+            $ctx = sisgedo_contexto_usuario_actual();
+            $arch = $conectado->prepare("SELECT COUNT(*) FROM archivador WHERE idarchivador = ? AND idoficina = ?");
+            $arch->execute([intval($idarchivador), intval($ctx['idoficina'])]);
+            if ((int)$arch->fetchColumn() === 0) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'Seleccione un archivador de su oficina.';
+                return false;
+            }
+            $lock = $conectado->prepare("SELECT idoficina_derivar FROM movimientos WHERE idMovimientos = ? FOR UPDATE");
             $lock->execute([intval($idmovimiento)]);
-            if ($lock->fetchColumn() === false) {
+            $ofiMov = $lock->fetchColumn();
+            if ($ofiMov === false) {
                 $conectado->rollBack();
                 $this->ultimo_error = 'No se encontró el documento. Actualice la página.';
+                return false;
+            }
+            if ((int)$ofiMov !== (int)$ctx['idoficina']) {
+                $conectado->rollBack();
+                $this->ultimo_error = 'Este documento no está en su oficina. Actualice la página.';
                 return false;
             }
             $ya = $conectado->prepare("SELECT COUNT(*) FROM docs_archivados WHERE idmovimientos = ?");
@@ -819,8 +864,8 @@ if (isset($_POST['insertar'])) {
     $idresponsable = !empty($contexto['idresponsable']) ? intval($contexto['idresponsable']) : null;
     $idoficina     = !empty($contexto['idoficina']) ? intval($contexto['idoficina']) : 0;
     $detalles = $_POST['detalles'];
-    $num_exp = $dml_recep_docs->gen_num_exp($idoficina);
-    $nuevo_mov = $dml_recep_docs->insertar_datos($idregdocs, $iddocs_emitidos, $idaccion, $idoficina, $idresponsable, $num_exp, $detalles, $folio);
+    // El número de registro se genera dentro de insertar_datos, después de validar
+    $nuevo_mov = $dml_recep_docs->insertar_datos($idregdocs, $iddocs_emitidos, $idaccion, $idoficina, $idresponsable, null, $detalles, $folio);
     // Devuelve el id del movimiento creado. Antes, si fallaba, respondía "0" y la
     // pantalla lo tomaba como éxito sin avisar: ahora explica el motivo.
     if (intval($nuevo_mov) > 0) {
@@ -907,13 +952,15 @@ if (isset($_POST['recibir_derivado'])) {
     $contexto = sisgedo_contexto_usuario_actual();
     $idresponsable_rd = !empty($contexto['idresponsable']) ? intval($contexto['idresponsable']) : null;
     $idoficina_rd     = !empty($contexto['idoficina']) ? intval($contexto['idoficina']) : 0;
-    $num_exp = $dml_recep_docs->gen_num_exp($idoficina_rd);
-    if (!$dml_recep_docs->recibir_derivado($idresponsable_rd, $num_exp, $_POST['detalles'], intval($folio_rd), intval($_POST['codigo']))) {
+    // El número de registro se genera dentro de recibir_derivado, después de validar
+    if (!$dml_recep_docs->recibir_derivado($idresponsable_rd, $idoficina_rd, $_POST['detalles'], intval($folio_rd), intval($_POST['codigo']))) {
         echo 'ERROR_VALIDACION: ' . $dml_recep_docs->ultimo_error;
     }
 }
 if (isset($_POST['get_archivadores'])) {
-    $dml_recep_docs->recuperar_archivadores($_POST['idoficina']);
+    // (Seguridad) Archivadores de la oficina en SESIÓN, no de la que envía el navegador
+    $ctxArch = sisgedo_contexto_usuario_actual();
+    $dml_recep_docs->recuperar_archivadores(intval($ctxArch['idoficina']));
 }
 if (isset($_POST['insert_archivar'])) {
     if (!$dml_recep_docs->insert_archivar($_POST['idarchivador'], $_POST['idmovimiento'], $_POST['detalles'], $_POST['idestadodoc'])) {

@@ -303,6 +303,11 @@ if (isset($_POST["Insertar"]) || isset($_POST["Modificar"]) || isset($_POST["Cod
 // Al pulsar Eliminar también llega 'Codigo': este bloque (insertar/modificar)
 // NO debe ejecutarse, o dejaba el registro con nombre vacío si no se podía borrar.
 if (isset($_POST['Codigo']) && !isset($_POST['Emilinar'])) {
+    $emailRem = isset($_POST['Email']) ? trim((string)$_POST['Email']) : '';
+    if ($emailRem !== '' && !filter_var($emailRem, FILTER_VALIDATE_EMAIL)) {
+        echo 'ERROR_VALIDACION: El email no tiene un formato válido.';
+        exit;
+    }
 
     if ($_POST['Codigo'] == '' & $_POST['Nombres'] != '') {
 

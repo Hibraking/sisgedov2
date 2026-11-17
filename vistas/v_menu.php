@@ -38,7 +38,7 @@ $CAT = array(
     'campos'    => array(
         array('post' => 'Nombre', 'label' => 'Nombre', 'tipo' => 'text', 'req' => true),
         array('post' => 'Ruta', 'label' => 'Ruta (p. ej. vistas/v_oficinas.php, o # para grupos)', 'tipo' => 'text', 'req' => false),
-        array('post' => 'Dependencia', 'label' => 'Grupo (dependencia)', 'tipo' => 'text', 'req' => false),
+        array('post' => 'Dependencia', 'label' => 'Grupo (dependencia: número del ítem grupo)', 'tipo' => 'number', 'req' => false),
         array('post' => 'Modulo', 'label' => 'Módulo (número)', 'tipo' => 'number', 'req' => false),
         array('post' => 'Clase', 'label' => 'Clase / icono', 'tipo' => 'text', 'req' => false),
     ),

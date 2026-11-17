@@ -95,6 +95,9 @@ class Menu
             $result->execute([$idmodulo, $nombre_menu, $direccion, $clase_llamar, $dependencia, $font_icon]);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
+            // Antes el error solo iba al log y la pantalla recargaba como si se hubiera guardado
+            echo 'ERROR_VALIDACION: No se pudo guardar. Revise los datos e intente nuevamente.';
+            exit;
         }
     }
     public function modificar_datos($idmodulo, $nombre_menu, $direccion, $clase_llamar, $dependencia, $font_icon, $codigo)
@@ -116,6 +119,9 @@ class Menu
             $result->execute([$idmodulo, $nombre_menu, $direccion, $clase_llamar, $dependencia, $font_icon, $codigo]);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
+            // Antes el error solo iba al log y la pantalla recargaba como si se hubiera guardado
+            echo 'ERROR_VALIDACION: No se pudo guardar. Revise los datos e intente nuevamente.';
+            exit;
         }
     }
     public function elimnar_datos($codigo)
@@ -143,6 +149,16 @@ if (isset($_POST["Insertar"]) || isset($_POST["insertar"]) || isset($_POST["Modi
 // Al pulsar Eliminar también llega 'Codigo': este bloque (insertar/modificar)
 // NO debe ejecutarse, o dejaba el registro con nombre vacío si no se podía borrar.
 if (isset($_POST['Codigo']) && !isset($_POST['Emilinar'])) {
+    // Módulo y Grupo (dependencia) son columnas numéricas: antes un texto hacía fallar
+    // el guardado sin aviso.
+    foreach (array('Modulo' => 'Módulo', 'Dependencia' => 'Grupo (dependencia)') as $campoNum => $etiquetaNum) {
+        $valNum = isset($_POST[$campoNum]) ? trim((string)$_POST[$campoNum]) : '';
+        if ($valNum !== '' && !ctype_digit($valNum)) {
+            echo 'ERROR_VALIDACION: ' . $etiquetaNum . ' debe ser un número.';
+            exit;
+        }
+        $_POST[$campoNum] = $valNum === '' ? null : (int)$valNum;
+    }
     $Modulo = $_POST['Modulo'];
     $Nombre = $_POST['Nombre'];
     $Ruta = $_POST['Ruta'];

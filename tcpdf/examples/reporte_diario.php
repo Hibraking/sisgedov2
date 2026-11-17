@@ -21,6 +21,14 @@ if (!isset($_SESSION['usuario'])) {
     header("Location: ../../login.php");
     return;
 }
+// Mismo permiso que la pantalla del cuaderno (antes bastaba con tener sesión)
+require_once __DIR__ . '/../../clases/seguridad.php';
+if (!usuario_tiene_acceso('vistas/v_reporte_cuadernoexterno.php')) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'No tiene permiso para este reporte.';
+    exit;
+}
 
 // Cabecera y pie institucionales
 class MYPDF extends TCPDF {
@@ -77,17 +85,17 @@ function lista_datos($inicio, $fin){
                 . "</thead>";
         foreach ($result as $filas) {
             $resultado .= "<tr>";
-            $resultado .= "<td width=\"45\" align=\"center\">".$filas[1]."</td>";
-            $resultado .= "<td width=\"160\" align=\"left\">".$filas[2]."</td>";
-            $resultado .= "<td width=\"80\" align=\"center\">".$filas[4]."</td>";
-            $resultado .= "<td width=\"40\" align=\"center\">".$filas[5]."</td>";
-            $resultado .= "<td width=\"200\" align=\"justify\">".$filas[6]."</td>";
-            $resultado .= "<td width=\"100\" align=\"left\">".$filas[3]."</td>";
-            $resultado .= "<td width=\"90\" align=\"center\">".$filas[8]."</td>";
-            $resultado .= "<td width=\"35\" align=\"center\">".$filas[9]."</td>";
-            $resultado .= "<td width=\"50\" align=\"center\">".$filas[10]."</td>";
-            $resultado .= "<td width=\"120\" align=\"center\">".$filas[11]."</td>";
-            $resultado .= "<td width=\"50\" align=\"center\">".$filas[12]."</td>";
+            $resultado .= "<td width=\"45\" align=\"center\">".htmlspecialchars((string)$filas[1], ENT_QUOTES, 'UTF-8', false)."</td>";
+            $resultado .= "<td width=\"160\" align=\"left\">".htmlspecialchars((string)$filas[2], ENT_QUOTES, 'UTF-8', false)."</td>";
+            $resultado .= "<td width=\"80\" align=\"center\">".htmlspecialchars((string)$filas[4], ENT_QUOTES, 'UTF-8', false)."</td>";
+            $resultado .= "<td width=\"40\" align=\"center\">".htmlspecialchars((string)$filas[5], ENT_QUOTES, 'UTF-8', false)."</td>";
+            $resultado .= "<td width=\"200\" align=\"justify\">".htmlspecialchars((string)$filas[6], ENT_QUOTES, 'UTF-8', false)."</td>";
+            $resultado .= "<td width=\"100\" align=\"left\">".htmlspecialchars((string)$filas[3], ENT_QUOTES, 'UTF-8', false)."</td>";
+            $resultado .= "<td width=\"90\" align=\"center\">".htmlspecialchars((string)$filas[8], ENT_QUOTES, 'UTF-8', false)."</td>";
+            $resultado .= "<td width=\"35\" align=\"center\">".htmlspecialchars((string)$filas[9], ENT_QUOTES, 'UTF-8', false)."</td>";
+            $resultado .= "<td width=\"50\" align=\"center\">".htmlspecialchars((string)$filas[10], ENT_QUOTES, 'UTF-8', false)."</td>";
+            $resultado .= "<td width=\"120\" align=\"center\">".htmlspecialchars((string)$filas[11], ENT_QUOTES, 'UTF-8', false)."</td>";
+            $resultado .= "<td width=\"50\" align=\"center\">".htmlspecialchars((string)$filas[12], ENT_QUOTES, 'UTF-8', false)."</td>";
             $resultado .= "</tr>";
         }
         $resultado .= "</table>";

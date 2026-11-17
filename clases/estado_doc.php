@@ -90,6 +90,9 @@ class Estados
             $result->execute([$nombre, $descripcion]);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
+            // Antes el error solo iba al log y la pantalla recargaba como si se hubiera guardado
+            echo 'ERROR_VALIDACION: No se pudo guardar. Revise los datos e intente nuevamente.';
+            exit;
         }
     }
     public function modificar_datos($codigo, $nombre, $descripcion)
@@ -107,6 +110,9 @@ class Estados
             $result->execute([$nombre, $descripcion, $codigo]);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
+            // Antes el error solo iba al log y la pantalla recargaba como si se hubiera guardado
+            echo 'ERROR_VALIDACION: No se pudo guardar. Revise los datos e intente nuevamente.';
+            exit;
         }
     }
     public function elimnar_datos($codigo)

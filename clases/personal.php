@@ -119,8 +119,22 @@ class Personal
                 $result = $conectado->prepare($sql);
                 $result->execute([$apellidos, $nombre, $direccion, $email, $telefono, $usuario, $clave, $codigo]);
             }
+            return null;
         } catch (Exception $exc) {
             error_log($exc->getMessage());
+            return $exc->getMessage();
+        }
+    }
+    /** ¿Otra persona ya usa ese nombre de usuario? */
+    public function usuario_ocupado($usuario, $excluir)
+    {
+        try {
+            $st = (new Conexion())->conectar()->prepare("SELECT COUNT(*) FROM personal WHERE usuario = ? AND idpersonal <> ?");
+            $st->execute([$usuario, intval($excluir)]);
+            return (int)$st->fetchColumn() > 0;
+        } catch (Exception $exc) {
+            error_log($exc->getMessage());
+            return false;
         }
     }
     public function elimnar_datos($codigo)
@@ -152,13 +166,32 @@ $dml_personal = new Personal();
 // NO debe ejecutarse, o dejaba el registro con nombre vacío si no se podía borrar.
 if (isset($_POST['Codigo']) && !isset($_POST['Emilinar'])) {
 
+    // Validaciones (antes: dos personas podían tener el mismo usuario y cualquier
+    // contraseña era válida; y un error al guardar no se informaba)
+    $usuNuevo = isset($_POST['nusu']) ? trim((string)$_POST['nusu']) : '';
+    $claveNueva = isset($_POST['Clave']) ? (string)$_POST['Clave'] : '';
+    if ($usuNuevo !== '' && $dml_personal->usuario_ocupado($usuNuevo, $_POST['Codigo'] === '' ? 0 : $_POST['Codigo'])) {
+        echo 'ERROR_VALIDACION: Ese nombre de usuario ya lo usa otra persona.';
+        exit;
+    }
+    if ($claveNueva !== '' && strlen($claveNueva) < 6) {
+        echo 'ERROR_VALIDACION: La contraseña debe tener al menos 6 caracteres.';
+        exit;
+    }
     if ($_POST['Codigo'] == '' & $_POST['Nombres'] != '') {
 
-        $dml_personal->insertar_datos($_POST['Apellidos'], $_POST['Nombres'], $_POST['Direccion'], $_POST['Email'], $_POST['Telefono'], $_POST['nusu'], $_POST['Clave']);
+        $errPer = $dml_personal->insertar_datos($_POST['Apellidos'], $_POST['Nombres'], $_POST['Direccion'], $_POST['Email'], $_POST['Telefono'], $_POST['nusu'], $_POST['Clave']);
+        if ($errPer !== null) {
+            echo 'ERROR_VALIDACION: No se pudo guardar.';
+            exit;
+        }
         header("location: ../vistas/v_personal.php");
     } elseif ($_POST['Codigo'] != '') {
-        $dml_personal->modificar_datos($_POST['Apellidos'], $_POST['Nombres'], $_POST['Direccion'], $_POST['Email'], $_POST['Telefono'], $_POST['nusu'], $_POST['Clave'], $_POST['Codigo']);
-
+        $errPer = $dml_personal->modificar_datos($_POST['Apellidos'], $_POST['Nombres'], $_POST['Direccion'], $_POST['Email'], $_POST['Telefono'], $_POST['nusu'], $_POST['Clave'], $_POST['Codigo']);
+        if ($errPer !== null) {
+            echo 'ERROR_VALIDACION: No se pudo guardar.';
+            exit;
+        }
         header("location: ../vistas/v_personal.php");
     }
 }

@@ -91,6 +91,9 @@ class Archivador
             $result->execute([$idoficina, $nombre, $detalles, $anio]);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
+            // Antes el error solo iba al log y la pantalla recargaba como si se hubiera guardado
+            echo 'ERROR_VALIDACION: No se pudo guardar. Revise los datos e intente nuevamente.';
+            exit;
         }
     }
     public function modificar_datos($nombre, $detalles, $anio, $codigo)
@@ -109,6 +112,25 @@ class Archivador
             $result->execute([$nombre, $detalles, $anio, $codigo]);
         } catch (Exception $exc) {
             error_log($exc->getMessage());
+            // Antes el error solo iba al log y la pantalla recargaba como si se hubiera guardado
+            echo 'ERROR_VALIDACION: No se pudo guardar. Revise los datos e intente nuevamente.';
+            exit;
+        }
+    }
+    /** ¿El archivador pertenece a la oficina en sesión? */
+    public function es_de_oficina($codigo)
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $ofi = isset($_SESSION['idoficina']) ? intval($_SESSION['idoficina']) : 0;
+        try {
+            $st = (new Conexion())->conectar()->prepare("SELECT COUNT(*) FROM archivador WHERE idarchivador = ? AND idoficina = ?");
+            $st->execute([intval($codigo), $ofi]);
+            return (int)$st->fetchColumn() > 0;
+        } catch (Exception $exc) {
+            error_log($exc->getMessage());
+            return false;
         }
     }
     public function elimnar_datos($codigo)
@@ -144,11 +166,20 @@ if (isset($_POST['Codigo']) && !isset($_POST['Emilinar'])) {
         $dml_Archivador->insertar_datos($_SESSION['idoficina'], $_POST['Nombre'], $_POST['Detalles'], $_POST['anio']);
         header("location: ../vistas/v_archivador.php");
     } elseif ($_POST['Codigo'] != '') {
+        // Solo los archivadores de la propia oficina (antes se podía editar el de cualquiera)
+        if (!$dml_Archivador->es_de_oficina($_POST['Codigo'])) {
+            echo 'ERROR_VALIDACION: Solo puede modificar archivadores de su oficina.';
+            exit;
+        }
         $dml_Archivador->modificar_datos($_POST['Nombre'], $_POST['Detalles'], $_POST['anio'], $_POST['Codigo']);
         header("location: ../vistas/v_archivador.php");
     }
 }
 
 if (isset($_POST['Emilinar'])) {
+    if (!$dml_Archivador->es_de_oficina($_POST['Codigo'])) {
+        echo 'ERROR_VALIDACION: Solo puede eliminar archivadores de su oficina.';
+        exit;
+    }
     $dml_Archivador->elimnar_datos($_POST['Codigo']);
 }

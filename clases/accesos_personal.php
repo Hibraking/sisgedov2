@@ -99,6 +99,12 @@ class Accesos
         try {
             $conexion = new Conexion();
             $conectado = $conexion->conectar();
+            // Sin duplicados (doble clic): antes cada clic creaba otra fila
+            $ya = $conectado->prepare("SELECT COUNT(*) FROM accesos_usuario WHERE idmenu = ? AND idusuario = ? AND access = 1");
+            $ya->execute([intval($idmenu), intval($idusuario)]);
+            if ((int)$ya->fetchColumn() > 0) {
+                return;
+            }
             $sql = "INSERT INTO accesos_usuario(idmenu,idusuario,access)
                         VALUES(?,?,true);";
             $result = $conectado->prepare($sql);
@@ -154,8 +160,6 @@ if (isset($_POST['Usuarios'])) {
 }
 if (isset($_POST['otorgar'])) {
     // Protección CSRF + permiso del módulo (antes esta acción no estaba cubierta)
-    csrf_require();
-    exigir_acceso_endpoint();
     csrf_require();
     exigir_acceso_endpoint();
     $dml_menu->insertar_datos($_POST['Idmenu'], $_POST['Idusuario']);

@@ -228,18 +228,33 @@ class Archivar_docs
          $conectado = $conexion->conectar();
          // No archivar dos veces el mismo documento (doble clic / dos personas)
          $conectado->beginTransaction();
+         // El archivador debe ser de la oficina en sesión (antes se aceptaba cualquiera)
+         $idofiSes = isset($_SESSION['idoficina']) ? intval($_SESSION['idoficina']) : 0;
+         $arch = $conectado->prepare("SELECT COUNT(*) FROM archivador WHERE idarchivador = ? AND idoficina = ?");
+         $arch->execute([intval($idarchivador), $idofiSes]);
+         if ((int)$arch->fetchColumn() === 0) {
+            $conectado->rollBack();
+            return 'Seleccione un archivador de su oficina.';
+         }
+         // ...y el documento: emitido por la oficina, o un movimiento que está en ella
          if ($iddocsemitidos !== null) {
-            $lock = $conectado->prepare("SELECT iddocs_emitidos FROM docs_emitidos WHERE iddocs_emitidos = ? FOR UPDATE");
+            $lock = $conectado->prepare("SELECT r.idoficina FROM docs_emitidos de INNER JOIN responsables r ON de.idresponsable = r.idresponsables
+                                          WHERE de.iddocs_emitidos = ? FOR UPDATE");
             $lock->execute([intval($iddocsemitidos)]);
             $ya = $conectado->prepare("SELECT COUNT(*) FROM docs_archivados WHERE iddocs_emitidos = ?");
             $ya->execute([intval($iddocsemitidos)]);
          } else {
-            $lock = $conectado->prepare("SELECT idMovimientos FROM movimientos WHERE idMovimientos = ? FOR UPDATE");
+            $lock = $conectado->prepare("SELECT idoficina_derivar FROM movimientos WHERE idMovimientos = ? FOR UPDATE");
             $lock->execute([intval($idmovimiento)]);
             $ya = $conectado->prepare("SELECT COUNT(*) FROM docs_archivados WHERE idmovimientos = ?");
             $ya->execute([intval($idmovimiento)]);
          }
-         if ($lock->fetchColumn() === false) {
+         $ofiDoc = $lock->fetchColumn();
+         if ($ofiDoc !== false && (int)$ofiDoc !== $idofiSes) {
+            $conectado->rollBack();
+            return 'Este documento no es de su oficina.';
+         }
+         if ($ofiDoc === false) {
             $conectado->rollBack();
             return 'El documento ya no existe. Actualice la página.';
          }
