@@ -64,7 +64,7 @@ try {
       <?php $NAV_ACTIVO = 'vistas/v_remitentes.php';
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t">Remitentes</h1>
         <div class="subt">Personas y entidades que presentan documentos en mesa de partes — búsqueda y paginación en servidor</div>
 

@@ -354,7 +354,7 @@ $queryBase = array(
       ?>
 
       <!-- CONTENIDO -->
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t"><?= $vistaEstado === 'enviado' ? 'Documentos Derivados' : 'Recepción de Documentos' ?></h1>
         <div class="subt"><?= $vistaEstado === 'enviado' ? 'Documentos derivados por tu oficina a otras dependencias' : 'Administra los documentos recibidos por la entidad' ?><?php if ($vistaEstado !== 'pendiente') { ?> — mostrando <b><?= $sufijoExport ?></b> del <?= h(date('d/m/Y', strtotime($desdeSql))) ?> al <?= h(date('d/m/Y', strtotime($hastaSql))) ?> (use los filtros de fecha para ampliar el rango)<?php } ?></div>
 

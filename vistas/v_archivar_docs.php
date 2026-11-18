@@ -209,7 +209,7 @@ $tok = csrf_token();
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
       <!-- CONTENIDO -->
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t">Archivo de Documentos</h1>
         <div class="subt">Archiva y consulta los documentos de tu oficina<?php if ($bandeja === 'porarchivar') { ?> — tramitados del <?= h(date('d/m/Y', strtotime($desdeSql))) ?> al <?= h(date('d/m/Y', strtotime($hastaSql))) ?> (amplía con los filtros de fecha)<?php } ?></div>
 

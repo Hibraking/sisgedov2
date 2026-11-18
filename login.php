@@ -28,7 +28,7 @@ $loginError = isset($_GET['e']) ? (int) $_GET['e'] : 0;
 </head>
 
 <body data-login-error="<?php echo $loginError; ?>">
-  <div class="page">
+  <div class="page" role="main">
     <div class="shell">
 
       <section class="left">
@@ -54,7 +54,7 @@ $loginError = isset($_GET['e']) ? (int) $_GET['e'] : 0;
             <img class="building" src="<?= SISGEDO_IMG_EDIFICIO ?>" width="1200" height="800" alt="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>" />
           </picture>
         </div>
-        <svg class="building-fallback" viewBox="0 0 1780 880" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>">
+        <svg class="building-fallback" role="img" viewBox="0 0 1780 880" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="<?= htmlspecialchars(SISGEDO_ENTIDAD, ENT_QUOTES, 'UTF-8') ?>">
           <circle cx="986" cy="104" r="5" />
           <path d="M986 250 V100" />
           <path d="M986 116 C1020 128 1055 104 1092 120 L1092 158 C1055 142 1020 166 986 152 Z" />

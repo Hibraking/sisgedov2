@@ -137,7 +137,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
       <?php $NAV_ACTIVO = 'vistas/v_reporte_estados_documento.php';
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t">Estados de Atención</h1>
         <div class="subt">Documentos tramitados por tu oficina según su estado — del <?= h(date('d/m/Y', strtotime($desdeSql))) ?> al <?= h(date('d/m/Y', strtotime($hastaSql))) ?></div>
 

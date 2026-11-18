@@ -78,7 +78,7 @@ foreach ($filas as $r) {
       <?php $NAV_ACTIVO = 'vistas/v_responsables.php';
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t">Responsables</h1>
         <div class="subt">Asignación de personal responsable por oficina (quien recepciona y deriva los documentos)</div>
 

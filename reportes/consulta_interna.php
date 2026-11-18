@@ -157,7 +157,7 @@ if (!$busco) {
       <?php $NAV_ACTIVO = 'reportes/consulta_interna.php';
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t">Consulta Interna</h1>
         <div class="subt">Seguimiento completo de un expediente externo o un documento interno</div>
 

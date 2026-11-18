@@ -84,7 +84,7 @@ try {
       <?php $NAV_ACTIVO = 'vistas/v_reporte_cuadernoexterno.php';
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t">Cuaderno de Registro Externo</h1>
         <div class="subt">Genera el PDF del cuaderno diario de documentos registrados en mesa de partes</div>
 

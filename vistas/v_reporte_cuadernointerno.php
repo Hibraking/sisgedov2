@@ -69,7 +69,7 @@
   <div class="body">
     <?php $NAV_ACTIVO = 'vistas/v_reporte_cuadernointerno.php'; include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-    <div class="main">
+    <div class="main" role="main">
       <h1 class="t">Cuaderno de Registro Interno</h1>
       <div class="subt">Genera el PDF del cuaderno de documentos emitidos por tu oficina</div>
 

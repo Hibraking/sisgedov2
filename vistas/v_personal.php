@@ -73,7 +73,7 @@ $first = count($filas) > 0 ? $filas[0] : null;
       <?php $NAV_ACTIVO = 'vistas/v_personal.php';
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t">Personal</h1>
         <div class="subt">Trabajadores y usuarios del sistema — la contraseña se guarda siempre cifrada</div>
 

@@ -180,7 +180,7 @@ foreach ($actividad as $a) {
       include __DIR__ . '/partes/nav_nuevo.php'; ?>
 
       <!-- CONTENIDO -->
-      <div class="main">
+      <div class="main" role="main">
         <div class="tb-hola">
           <div>
             <h1 class="t"><?= h($saludo) ?>, <?= h($alias) ?> 👋</h1>

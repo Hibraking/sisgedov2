@@ -78,7 +78,7 @@ try {
       <?php $NAV_ACTIVO = 'vistas/v_accesos_personal.php';
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t">Accesos del Personal</h1>
         <div class="subt">Concede o revoca el acceso de cada usuario a los módulos del sistema (el menú lateral se adapta automáticamente)</div>
 

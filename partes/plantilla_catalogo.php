@@ -69,7 +69,7 @@ $CAT_first = $CAT_total > 0 ? $CAT['datos'][0] : null;
       include __DIR__ . '/nav_nuevo.php'; ?>
 
       <!-- CONTENIDO -->
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t"><?= h($CAT['titulo']) ?></h1>
         <div class="subt"><?= h($CAT['subtitulo']) ?></div>
 

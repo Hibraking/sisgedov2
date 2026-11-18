@@ -153,7 +153,7 @@ if (array_key_exists('ultimo_acceso_anterior', $_SESSION)) {
       <?php $NAV_ACTIVO = 'vistas/v_profile.php';
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-      <div class="main">
+      <div class="main" role="main">
         <div class="pf-crumbs"><i class="fa fa-home" style="color:#94a3b8"></i> <a href="../index.php">Inicio</a> <i class="fa fa-angle-right" style="color:#cbd5e1"></i> <span>Configuración</span> <i class="fa fa-angle-right" style="color:#cbd5e1"></i> <b>Perfil de Usuario</b></div>
 
         <div class="pf-top">

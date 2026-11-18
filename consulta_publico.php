@@ -161,7 +161,7 @@ if (count($eventos) > 0) {
     <a class="enl" href="mpvirtual.php"><i class="fa fa-send-o"></i> Mesa de Partes Virtual</a>
   </div>
 
-  <div class="pub-main">
+  <div class="pub-main" role="main">
     <div class="pub-hero">
       <h1>Consulta tu Expediente</h1>
       <p>Ingresa el número de expediente que recibiste al presentar tu documento y conoce en qué oficina se encuentra tu

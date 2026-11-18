@@ -118,7 +118,7 @@ $firstF = $first ? mpv_fila($first) : null;
       <?php $NAV_ACTIVO = 'vistas/v_mesa_partes_virtual.php';
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-      <div class="main">
+      <div class="main" role="main">
         <h1 class="t">Mesa de Partes Virtual <span id="mpvVivo" class="mpv-vivo" role="status"><span class="pt"></span> En vivo</span></h1>
         <div class="subt">Documentos que los ciudadanos presentan por internet. Horario de atención: <?= h(SISGEDO_HORARIO_TEXTO) ?> — lo enviado fuera de ese horario se considera presentado el siguiente día hábil.</div>
 

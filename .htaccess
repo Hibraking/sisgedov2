@@ -17,6 +17,24 @@ Require all denied
     # Política mínima que no rompe pantallas: sin plugins (<object>/<embed>),
     # sin cambiar la base de los enlaces y sin incrustar el sistema en otros sitios
     Header setifempty Content-Security-Policy "object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+
+    # No revelar la versión de PHP (el hosting la enviaba: "X-Powered-By: PHP/7.3.33")
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+
+    # Aislamiento entre sitios:
+    # - Otros sitios web no pueden cargar nuestros archivos (adjuntos, imágenes, JS).
+    #   (Firma Perú descarga el documento con su programa, no con el navegador: no le afecta.)
+    Header set Cross-Origin-Resource-Policy "same-origin"
+    # - Las páginas no comparten ventana con sitios ajenos. "allow-popups" mantiene
+    #   las ventanas que abre el sistema (cargos, reportes PDF).
+    Header set Cross-Origin-Opener-Policy "same-origin-allow-popups" "expr=%{CONTENT_TYPE} =~ m#^text/html#"
+    # - Recursos de otros sitios se cargan sin cookies. Solo en páginas HTML y NO en
+    #   "Documentos emitidos", donde el componente de Firma Perú (apps.firmaperu.gob.pe)
+    #   podría dejar de funcionar.
+    Header set Cross-Origin-Embedder-Policy "credentialless" "expr=%{CONTENT_TYPE} =~ m#^text/html# && %{REQUEST_URI} !~ m#v_docs_emitidos\.php#"
+    # - Funciones del navegador que el sistema no usa, desactivadas
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
 </IfModule>
 
 # --- Adjuntos y fotos de perfil: solo con sesión y permiso ---

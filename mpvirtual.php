@@ -27,7 +27,7 @@ require_once './conexion/conexion.php';
     <a class="enl" href="consulta_publico.php"><i class="fa fa-search"></i> Consultar expediente</a>
   </div>
 
-  <div class="pub-main mpv-main">
+  <div class="pub-main mpv-main" role="main">
     <!-- COLUMNA DE INFORMACIÓN (a la izquierda en pantallas grandes) -->
     <aside class="mpv-info">
       <div class="pub-hero">

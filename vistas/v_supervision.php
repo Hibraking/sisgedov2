@@ -175,7 +175,7 @@ function sup_hace($f)
       <?php $NAV_ACTIVO = 'vistas/v_supervision.php';
       include __DIR__ . '/../partes/nav_nuevo.php'; ?>
 
-      <div class="main" style="max-width:none">
+      <div class="main" role="main" style="max-width:none">
         <h1 class="t">Supervisión de oficinas</h1>
         <div class="subt">Situación de todas las áreas. Solo visible para el administrador.</div>
 
