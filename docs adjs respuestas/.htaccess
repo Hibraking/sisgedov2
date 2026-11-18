@@ -10,3 +10,6 @@ RemoveType .php .phtml .php3 .php4 .php5 .php7 .phar
 </FilesMatch>
 
 php_flag engine off
+
+# Ningún código del sistema usa esta carpeta: no se sirve nada por la web
+Require all denied

@@ -298,6 +298,24 @@ if (isset($_POST['Insertar'])) {
         echo 'ERROR_VALIDACION: ' . implode(' ', $errores);
         return;
     }
+    // ---- Freno contra envíos automáticos ----
+    // 1) Campo trampa: invisible para las personas; solo un robot lo llena.
+    if ($g('sitio_web') !== '') {
+        error_log('MPV: envío rechazado por campo trampa desde ' . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?'));
+        echo 'ERROR_VALIDACION: No se pudo registrar el documento. Intente nuevamente.';
+        return;
+    }
+    // 2) Límite de envíos: 10 por hora desde una misma conexión y 5 por hora con un
+    //    mismo correo (cada envío genera un expediente y correos).
+    require_once __DIR__ . '/limite.php';
+    $claveIp = 'mpv_ip|' . sgd_ip_cliente();
+    $claveCorreo = 'mpv_correo|' . strtolower($g('email'));
+    if (!sgd_limite($claveIp, 10, 3600, false) || !sgd_limite($claveCorreo, 5, 3600, false)) {
+        echo 'ERROR_VALIDACION: Se recibieron demasiados envíos en la última hora. Espere un momento e intente nuevamente, o acérquese a mesa de partes.';
+        return;
+    }
+    sgd_limite($claveIp, 10, 3600);
+    sgd_limite($claveCorreo, 5, 3600);
 
     $nombre_fichero = null;
     //cargando archivo adjunto

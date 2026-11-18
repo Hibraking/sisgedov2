@@ -12,6 +12,26 @@ if (!function_exists('hpub')) {
 $numExp = isset($_GET['num_exp']) ? trim($_GET['num_exp']) : '';
 $busco = ($numExp !== '');
 
+// Freno contra la búsqueda masiva de expedientes (probar números uno tras otro):
+// como máximo 30 consultas cada 10 minutos por cada dirección IP.
+require_once __DIR__ . '/clases/limite.php';
+$limitado = false;
+if ($busco && !sgd_limite('consulta_publico|' . sgd_ip_cliente(), 30, 600)) {
+  $limitado = true;
+  $busco = false;
+  http_response_code(429);
+}
+
+/** Muestra solo la inicial de cada palabra del nombre: "PEREZ GOMEZ JUAN" -> "P**** G**** J***" */
+function enmascarar_nombre($nombre)
+{
+  $partes = preg_split('/\s+/u', trim((string)$nombre), -1, PREG_SPLIT_NO_EMPTY);
+  foreach ($partes as $i => $p) {
+    $partes[$i] = mb_substr($p, 0, 1, 'UTF-8') . str_repeat('*', max(1, mb_strlen($p, 'UTF-8') - 1));
+  }
+  return implode(' ', $partes);
+}
+
 $cab = null;
 $eventos = array();
 $mpvEstado = null;      // Mesa de Partes Virtual: 'pendiente' | 'observado' | 'recepcionado' | 'derivado' | 'no_presentado'
@@ -161,6 +181,15 @@ if (count($eventos) > 0) {
       </form>
     </div>
 
+    <?php if ($limitado) { ?>
+      <div class="pub-card">
+        <div class="aviso">
+          <i class="fa fa-exclamation-circle"></i>
+          Realizaste demasiadas consultas en poco tiempo. Espera unos minutos e intenta nuevamente.
+        </div>
+      </div>
+    <?php } ?>
+
     <?php if ($busco && $cab === null) { ?>
       <!-- NO ENCONTRADO -->
       <div class="pub-card">
@@ -194,7 +223,7 @@ if (count($eventos) > 0) {
         <dl class="exp-datos">
           <div>
             <dt>Remitente</dt>
-            <dd><?= hpub($cab[2]) ?></dd>
+            <dd><?= hpub(enmascarar_nombre($cab[2])) ?></dd>
           </div>
           <div>
             <dt>Tipo de trámite</dt>
@@ -302,7 +331,7 @@ if (count($eventos) > 0) {
       </div>
     <?php } ?>
 
-    <?php if (!$busco) { ?>
+    <?php if (!$busco && !$limitado) { ?>
       <!-- AYUDA -->
       <div class="pub-card">
         <div style="font-size:14px;font-weight:700;color:#123a7a;margin-bottom:12px"><i class="fa fa-question-circle"

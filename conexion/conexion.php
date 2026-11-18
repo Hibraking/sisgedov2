@@ -1,5 +1,4 @@
 <?php
-//include "./config.php";
 
 /*
  * Deteccion de entorno (local Laragon vs produccion). Se ejecuta una sola vez

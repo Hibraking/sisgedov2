@@ -12,6 +12,23 @@ Require all denied
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
+    # Solo por HTTPS: el navegador recuerda usar siempre HTTPS (1 año)
+    Header always set Strict-Transport-Security "max-age=31536000" env=HTTPS
+    # Política mínima que no rompe pantallas: sin plugins (<object>/<embed>),
+    # sin cambiar la base de los enlaces y sin incrustar el sistema en otros sitios
+    Header setifempty Content-Security-Policy "object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+</IfModule>
+
+# --- Adjuntos y fotos de perfil: solo con sesión y permiso ---
+# Las mismas direcciones de siempre ("docs adjs reg_doc/archivo.pdf", etc.)
+# pasan por clases/archivo.php, que comprueba la sesión y que el usuario
+# pueda ver ese documento. Así ningún enlace existente cambia.
+# (Si mod_rewrite faltara, el .htaccess de cada carpeta niega el acceso.)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^docs\ adjs\ reg_doc/([^/]+)$ clases/archivo.php?c=reg&f=$1 [B,L,QSD]
+    RewriteRule ^docs\ adjs\ docs_emitidos/([^/]+)$ clases/archivo.php?c=emi&f=$1 [B,L,QSD]
+    RewriteRule ^images/perfiles/([^/]+)$ clases/archivo.php?c=perfil&f=$1 [B,L,QSD]
 </IfModule>
 
 # Bloquear el error_log clásico de cPanel si reaparece

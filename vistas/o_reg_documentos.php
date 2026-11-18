@@ -161,7 +161,7 @@ $tok = csrf_token();
   <link rel="stylesheet" href="../css/sisgedo-theme.css?v=<?= @filemtime(__DIR__ . '/../css/sisgedo-theme.css') ?>" />
   <link rel="stylesheet" href="../css/v_recepcion_proveido.css?v=<?= @filemtime(__DIR__ . '/../css/v_recepcion_proveido.css') ?>" />
   <link rel="stylesheet" href="../css/o_reg_documentos.css?v=<?= @filemtime(__DIR__ . '/../css/o_reg_documentos.css') ?>" />
-  <script src="../assets/js/jquery-2.1.4.min.js"></script>
+  <script src="../assets/js/jquery-3.7.1.min.js"></script>
 </head>
 
 <body data-csrf="<?= h($tok) ?>" data-idoficina="<?= h($idoficina) ?>">

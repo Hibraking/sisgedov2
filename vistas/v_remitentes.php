@@ -37,7 +37,7 @@ try {
   <link rel="stylesheet" href="../css/sisgedo-theme.css?v=<?= @filemtime(__DIR__ . '/../css/sisgedo-theme.css') ?>" />
   <link rel="stylesheet" href="../css/v_recepcion_proveido.css?v=<?= @filemtime(__DIR__ . '/../css/v_recepcion_proveido.css') ?>" />
   <link rel="stylesheet" href="../css/v_vistas.css?v=<?= @filemtime(__DIR__ . '/../css/v_vistas.css') ?>" />
-  <script src="../assets/js/jquery-2.1.4.min.js"></script>
+  <script src="../assets/js/jquery-3.7.1.min.js"></script>
 </head>
 
 <body class="v-remitentes" data-csrf="<?= h($tok) ?>">

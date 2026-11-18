@@ -11,3 +11,8 @@ RemoveType .php .phtml .php3 .php4 .php5 .php7 .phar
 </FilesMatch>
 
 php_flag engine off
+
+# Sin mod_rewrite no hay control de permisos: mejor no servir nada
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>

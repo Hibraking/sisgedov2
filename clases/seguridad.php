@@ -103,7 +103,8 @@ if (!function_exists('usuario_tiene_acceso')) {
      * Salvaguardas para NO bloquear indebidamente:
      *   - Admin (idusuario === 1) siempre tiene acceso.
      *   - Si $direccion no corresponde a un ítem de menú, se permite (no está gateado).
-     *   - Ante cualquier error de BD, se permite (fail-open).
+     *   - Ante un error de BD o sin conexión se DENIEGA (antes se permitía:
+     *     una falla de la base dejaba pasar a cualquiera).
      */
     function usuario_tiene_acceso($direccion)
     {
@@ -122,8 +123,8 @@ if (!function_exists('usuario_tiene_acceso')) {
             require_once __DIR__ . '/../conexion/conexion.php';
             $pdo = (new Conexion())->conectar();
             if (!$pdo) {
-                return true;
-            } // sin conexión -> no bloquear
+                return false;
+            } // sin conexión -> no se puede comprobar: denegar
 
             $m = $pdo->prepare("SELECT idmenu FROM menu WHERE direccion = ? LIMIT 1");
             $m->execute([$direccion]);
@@ -137,7 +138,7 @@ if (!function_exists('usuario_tiene_acceso')) {
             return ((int)$q->fetchColumn()) > 0;
         } catch (Exception $e) {
             error_log('usuario_tiene_acceso: ' . $e->getMessage());
-            return true; // ante error, no bloquear
+            return false; // ante error, denegar
         }
     }
 }
@@ -157,9 +158,10 @@ if (!function_exists('exigir_acceso_endpoint')) {
     /**
      * Autorización a nivel de endpoint (para llamadas AJAX/POST a clases/*.php).
      * Mapea el archivo actual a su permiso de menú y responde 403 si no lo tiene.
-     * Solo se mapean endpoints con relación 1:1 clara (gestión y catálogos). Los
-     * de operaciones que se invocan desde varias vistas quedan sin mapear (no-op),
-     * para no romper flujos legítimos entre módulos.
+     * Un endpoint que se usa desde varias pantallas lleva una lista: basta con
+     * tener permiso en cualquiera de ellas.
+     * Un endpoint que llame a esta función y NO esté en el mapa se DENIEGA
+     * (antes pasaba sin control): al crear uno nuevo, agréguelo aquí.
      */
     function exigir_acceso_endpoint()
     {
@@ -176,12 +178,25 @@ if (!function_exists('exigir_acceso_endpoint')) {
             'responsables.php'      => 'vistas/v_responsables.php',
             'remitentes.php'        => 'vistas/v_remitentes.php',
             'mesa_partes_virtual.php' => 'vistas/v_mesa_partes_virtual.php',
+            'reg_docs.php'          => 'vistas/o_reg_documentos.php',
+            'docs_emitidos.php'     => 'vistas/v_docs_emitidos.php',
+            'archivar_docs.php'     => 'vistas/v_archivar_docs.php',
+            // Recepción y también "Archivar" (insert_archivar desde Archivo)
+            'recepcion_proveido.php' => array('vistas/v_recepcion_proveido.php', 'vistas/v_archivar_docs.php'),
         );
         $base = basename(isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '');
-        if (!isset($mapa[$base])) {
-            return;
-        } // endpoint no mapeado -> no gateado
-        if (!usuario_tiene_acceso($mapa[$base])) {
+        $permitido = false;
+        if (isset($mapa[$base])) {
+            foreach ((array)$mapa[$base] as $direccion) {
+                if (usuario_tiene_acceso($direccion)) {
+                    $permitido = true;
+                    break;
+                }
+            }
+        } else {
+            error_log('exigir_acceso_endpoint: endpoint sin mapear ' . $base);
+        }
+        if (!$permitido) {
             http_response_code(403);
             echo 'ERROR_ACCESO: no tiene permisos para realizar esta acción.';
             exit;

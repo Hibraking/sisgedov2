@@ -120,6 +120,8 @@ function enviarTramite() {
     fd.append('nombres', (document.getElementById('f_nombres').value || '').trim());
     fd.append('direccion', document.getElementById('f_direccion').value);
     fd.append('telefono', document.getElementById('f_telefono').value);
+    var trampa = document.getElementById('f_sitio_web');
+    fd.append('sitio_web', trampa ? trampa.value : '');
     if (fichero.files && fichero.files[0]) fd.append('fichero', fichero.files[0]);
 
     var conArchivo = !!(fichero.files && fichero.files[0]);

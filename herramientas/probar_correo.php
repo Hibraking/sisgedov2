@@ -8,7 +8,9 @@
 
    USO
    - Por navegador (solo el administrador, usuario ID 1, con sesión):
-       https://<dominio>/sisgedo/herramientas/probar_correo.php?a=correo@destino.com
+       https://<dominio>/sisgedov2/herramientas/probar_correo.php
+     muestra un formulario; el envío se hace con POST y el token CSRF
+     (antes bastaba abrir un enlace con ?a=... para que se enviara).
    - Por consola:
        php herramientas/probar_correo.php correo@destino.com [dominio]
      (con [dominio] distinto de localhost usa la configuración de PRODUCCIÓN)
@@ -19,13 +21,28 @@ if ($esCli) {
     $destino = isset($argv[1]) ? $argv[1] : '';
     $_SERVER['HTTP_HOST'] = isset($argv[2]) ? $argv[2] : 'localhost';
 } else {
-    session_start();
+    require_once __DIR__ . '/../clases/seguridad.php';
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     if (empty($_SESSION['usuario']) || intval($_SESSION['usuario']) !== 1) {
         http_response_code(403);
         exit('Acceso restringido al administrador.');
     }
+    if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+        // GET: solo el formulario, no se envía nada
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Prueba de correo</title></head>'
+            . '<body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto">'
+            . '<h2>SISGEDO — Prueba de correo</h2>'
+            . '<form method="post"><input type="hidden" name="_csrf" value="' . h(csrf_token()) . '">'
+            . '<label>Correo destino<br><input type="email" name="a" required style="width:100%;padding:6px"></label>'
+            . '<p><button type="submit">Enviar correo de prueba</button></p></form></body></html>';
+        exit;
+    }
+    csrf_require();
     header('Content-Type: text/plain; charset=utf-8');
-    $destino = isset($_GET['a']) ? trim($_GET['a']) : '';
+    $destino = isset($_POST['a']) ? trim((string)$_POST['a']) : '';
 }
 
 require_once __DIR__ . '/../clases/correo.php';
@@ -39,7 +56,7 @@ echo "Bitácora     : " . (sgd_correo_bitacora_ok() ? 'tabla sgd_correo OK' : 'F
 
 if (!filter_var($destino, FILTER_VALIDATE_EMAIL)) {
     exit($esCli ? "Indique el correo destino: php herramientas/probar_correo.php correo@destino.com\n"
-                : "Indique el correo destino: ?a=correo@destino.com\n");
+                : "Indique un correo destino válido.\n");
 }
 
 // Mostrar el diálogo SMTP mientras dura la prueba

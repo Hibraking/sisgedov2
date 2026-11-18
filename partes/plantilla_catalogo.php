@@ -37,7 +37,7 @@ $CAT_first = $CAT_total > 0 ? $CAT['datos'][0] : null;
   <link rel="stylesheet" href="../css/v_recepcion_proveido.css?v=<?= @filemtime(__DIR__ . '/../css/v_recepcion_proveido.css') ?>" />
   <link rel="stylesheet" href="../css/plantilla_catalogo.css?v=<?= @filemtime(__DIR__ . '/../css/plantilla_catalogo.css') ?>" />
   <style>.rowg { grid-template-columns: <?= $CAT_grid ?> }</style>
-  <script src="../assets/js/jquery-2.1.4.min.js"></script>
+  <script src="../assets/js/jquery-3.7.1.min.js"></script>
 </head>
 
 <body data-csrf="<?= h($tok) ?>"

@@ -90,7 +90,7 @@ $firstF = $first ? mpv_fila($first) : null;
   <link rel="stylesheet" href="../css/sisgedo-theme.css?v=<?= @filemtime(__DIR__ . '/../css/sisgedo-theme.css') ?>" />
   <link rel="stylesheet" href="../css/v_recepcion_proveido.css?v=<?= @filemtime(__DIR__ . '/../css/v_recepcion_proveido.css') ?>" />
   <link rel="stylesheet" href="../css/v_mesa_partes_virtual.css?v=<?= @filemtime(__DIR__ . '/../css/v_mesa_partes_virtual.css') ?>" />
-  <script src="../assets/js/jquery-2.1.4.min.js"></script>
+  <script src="../assets/js/jquery-3.7.1.min.js"></script>
 </head>
 
 <body data-csrf="<?= h($tok) ?>" data-bandeja="<?= h($bandeja) ?>" data-plazo-dias="<?= (int)SISGEDO_PLAZO_SUBSANAR ?>"

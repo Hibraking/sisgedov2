@@ -13,7 +13,7 @@ require_once './conexion/conexion.php';
   <link rel="icon" type="image/png" href="<?= SISGEDO_IMG_FAVICON ?>" />
   <link rel="stylesheet" href="assets/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link rel="stylesheet" href="css/publico.css?v=<?= @filemtime(__DIR__ . '/css/publico.css') ?>" />
-  <script src="assets/js/jquery-2.1.4.min.js"></script>
+  <script src="assets/js/jquery-3.7.1.min.js"></script>
 </head>
 
 <body class="mpv">
@@ -80,6 +80,10 @@ require_once './conexion/conexion.php';
           <div><label>Nombres <span class="req">*</span></label><input id="f_nombres" type="text" placeholder="Nombres completos" autocomplete="given-name" /></div>
           <div><label>Dirección</label><input id="f_direccion" type="text" placeholder="Dirección (opcional)" autocomplete="street-address" /></div>
           <div><label>Teléfono</label><input id="f_telefono" type="text" placeholder="Celular o fijo (opcional)" inputmode="tel" /></div>
+          <!-- Campo trampa contra robots: las personas no lo ven ni lo llenan -->
+          <div style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+            <label for="f_sitio_web">No llenar este campo</label><input id="f_sitio_web" type="text" tabindex="-1" autocomplete="off" />
+          </div>
         </div>
         <div class="acciones">
           <span></span>
